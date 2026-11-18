@@ -7,8 +7,10 @@ import { readSession } from "./auth/session";
 import { findUser } from "./auth/users";
 import { LIMITS, type Limits } from "./decks/limits";
 import { panelRoutes } from "./decks/routes";
+import { deckCounts, listPublicDecks } from "./decks/store";
+import { childrenOf, findFolder, listFolders, pathTo } from "./folders/store";
 import { liveRoutes } from "./live/routes";
-import { homePage, notFoundPage, privacyPage, skillPage, viewerPage } from "./pages";
+import { folderPage, homePage, notFoundPage, privacyPage, skillPage, viewerPage } from "./pages";
 import { sameOrigin } from "./same-origin";
 import type { AppEnv } from "./types";
 
@@ -60,6 +62,33 @@ export function createApp(overrides: Partial<Deps> = {}) {
       : null;
     if (!deck) return c.html(notFoundPage(c.var.user), 404);
     return c.html(viewerPage({ title: deck.title, src: `${c.env.DECKS_ORIGIN}/v/${id}` }));
+  });
+
+  // Enlace de la carpeta: sus carpetas y presentaciones, en el orden del Dueño y sin notas.
+  // `?desde=` es la carpeta por la que se entró: la ruta de arriba muestra solo desde ahí,
+  // así quien recibió el enlace de una unidad no ve el curso que la contiene.
+  app.get("/f/:id", async (c) => {
+    const db = c.env.DB;
+    const folder = await findFolder(db, c.req.param("id"));
+    if (!folder) return c.html(notFoundPage(c.var.user, "carpeta"), 404);
+    const [folders, decks, counts] = await Promise.all([
+      listFolders(db, folder.ownerId),
+      listPublicDecks(db, folder.ownerId, folder.id),
+      deckCounts(db, folder.ownerId, { visibleOnly: true }),
+    ]);
+    const full = pathTo(folders, folder.id);
+    const start = full.findIndex((f) => f.id === c.req.query("desde"));
+    const path = start >= 0 ? full.slice(start) : full.slice(-1);
+    return c.html(
+      folderPage({
+        user: c.var.user,
+        folder,
+        path,
+        root: path[0]!.id,
+        children: childrenOf(folders, folder.id, counts),
+        decks,
+      }),
+    );
   });
 
   app.notFound((c) => c.html(notFoundPage(c.var.user), 404));

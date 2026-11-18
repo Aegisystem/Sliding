@@ -218,7 +218,7 @@ Papel y tinta acromáticos, con cuatro colores de pista saturados que se usan a 
 ### Hierarchy
 - **Display** (800, clamp(6.5rem, 19vw, 17rem), 0.8): solo la palabra «Sliding» en la tapa, con sangría óptica negativa (−0.04em).
 - **Headline** (800, clamp(3.5rem, 9vw, 6rem), 0.85): el h1 de los avisos y de Privacidad; el del panel usa clamp(3.5rem, 8vw, 6rem).
-- **Title** (800, clamp(2.25rem, 3.6vw, 3.25rem), 0.95): títulos de pista; títulos de sesión a clamp(1.75rem, 2.6vw, 2.25rem); nombre en la credencial a clamp(3rem, 5vw, 4rem) en la tapa y 2.25rem en el panel.
+- **Title** (800, clamp(2.25rem, 3.6vw, 3.25rem), 0.95): títulos de pista y los rótulos «Carpetas» y «Presentaciones» sobre cada lista; títulos de sesión a clamp(1.75rem, 2.6vw, 2.25rem); nombre en la credencial a clamp(3rem, 5vw, 4rem) en la tapa y 2.25rem en el panel.
 - **Title small** (800, 1.5rem): la marca de la cabecera, los rótulos de las hileras de información y el rol «Presentador».
 - **Body** (400, 1.0625rem, 1.55): texto corrido; 1rem bajo 560px. Medidas de 30ch en pistas, 52–62ch en avisos e hileras, 68ch en lectura.
 - **Control** (700, `wdth` 80, 1.1): botones; la navegación de la cabecera usa 600.
@@ -284,7 +284,16 @@ La credencial plastificada colgada de una cinta amarilla de 3rem con bordes de t
 - **Movimiento:** se balancea una vez al cargar (1.8s, `--ease`, desde 6° amortiguándose a 0°) desde su ranura y se asienta.
 
 ### Session row (Cards / Containers)
-- Una hilera del programa entre reglas, sin radio ni sombra. El código va en un campo de pista: azul con el número de diapositivas para presentaciones html-slides, amarillo con «HTML genérica» para el resto. Le siguen el título y los metadatos; los botones «Presentar con control» (tinta), «Ver diapositivas» y «Copiar enlace para compartir» (sin mostrar direcciones: son botones, no enlaces a la vista); y las acciones «Reemplazar» y «Borrar».
+- Una hilera del programa entre reglas, sin radio ni sombra. El código va en un campo de pista: azul con el número de diapositivas para presentaciones html-slides, amarillo con «HTML genérica» para el resto. Le siguen el título y los metadatos; los botones «Presentar con control» (tinta), «Ver diapositivas» y «Copiar enlace para compartir» (sin mostrar direcciones: son botones, no enlaces a la vista); y las acciones «Reemplazar», «Mover a» y «Borrar».
+- **Carpeta:** la misma hilera con el código en verde y el número de presentaciones que tiene; el título es un enlace a la carpeta y los metadatos dicen cuántas carpetas tiene dentro. Botones «Abrir carpeta» (tinta) y «Copiar enlace para compartir»; acciones «Mover a» y «Borrar». Las carpetas van en su propia lista, antes de las presentaciones; cuando hay de las dos, cada lista lleva su rótulo en la talla Title.
+- **Subir y Bajar:** dos chevrones en el color del texto del código, arriba y abajo del número, cada uno en un blanco de 2.75 × 2rem; el de la primera hilera y el de la última quedan al 30% y no hacen nada, pero conservan el foco. Aparecen solo con JS y con dos hileras o más. Con el foco en uno, las flechas del teclado también mueven. Con el mouse, además, la hilera se arrastra desde su código (cursor de mano); en el celular no se arrastra, para que el dedo siga desplazando la página. La hilera que se arrastra se vuelve amarilla, como la caja de subir al soltarle un archivo, y las hileras se deslizan a su lugar en 180ms con `--ease`. El orden se guarda solo.
+- **En el Enlace de la carpeta:** la hilera pierde las acciones del Dueño y queda con un solo botón: «Abrir carpeta» o «Ver presentación» (tinta).
+
+### Ruta de carpetas
+- Encima del h1 de una carpeta, la ruta desde «Tus presentaciones»: enlaces en 700 al 80% de ancho, sin subrayado hasta el hover, cada uno seguido de una barra en tinta suave (en tinta sobre verde). La última barra apunta al título. En el Enlace de la carpeta la ruta empieza en la carpeta por la que se entró.
+
+### Enlace de la carpeta
+- Banda verde a todo el ancho con la ruta, el nombre de la carpeta en la talla Headline y cuántas presentaciones y carpetas tiene; la regla de abajo de la banda es la de arriba de la primera lista. Sin notas, sin Enlace para presentar y sin acciones del Dueño.
 
 ### Stamp
 - Sello de goma: mayúsculas condensadas 800, borde de 3px en el color del texto, radio de 6px, girado −4°. Marca lo que todavía no existe («Por confirmar») o lo que ya no está («Cancelada»).
@@ -297,6 +306,10 @@ La credencial plastificada colgada de una cinta amarilla de 3rem con bordes de t
 
 ### Inputs / Fields
 - **Subida:** caja con regla de 2px y radio de 10px que contiene el botón de tinta con el input de archivo oculto y una nota de tinta suave (34ch). Al arrastrar un archivo sobre la página se rellena de amarillo; elegir o soltar el archivo ya lo sube. El nombre elegido pasa a tinta y 600.
+- **Crear carpeta:** caja hermana de la de subir, con el campo del nombre y el botón «Crear carpeta» en una línea; la caja crece hasta la credencial (34rem como máximo).
+- **Campo de texto:** cartulina con borde de tinta de 2px y radio de 10px, como los botones; texto en 600 y marcador en tinta suave 400.
+- **Mover a:** un select del alto de un botón pequeño (2.5rem), cartulina con chevrón de tinta, amarillo al hover. Lista cada carpeta con su ruta («Biología 2027 / Unidad 1») y marca «(aquí)» la actual; elegir una ya mueve.
+- **Carpeta abierta:** debajo del h1, botones pequeños «Copiar enlace de la carpeta», «Ver como la ven los demás», «Cambiar nombre» (abre el campo con «Guardar nombre») y «Borrar carpeta».
 - **Avisos (flash):** franja a todo el ancho con reglas arriba y abajo, amarilla para éxito y naranja para error, texto en tinta 600.
 
 ### Pantalla (Sesión en vivo)

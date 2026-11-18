@@ -33,6 +33,14 @@ _Evitar_: enlace del deck, enlace público, URL compartida
 Dirección secreta, que solo tiene el Dueño, que abre una Pantalla con su QR de control.
 _Evitar_: enlace del presentador, enlace privado
 
+**Carpeta**:
+Un grupo con nombre de presentaciones y otras carpetas de un Dueño, por ejemplo un curso, una unidad o una semana. Cada presentación está en una sola carpeta o en ninguna.
+_Evitar_: curso (es un uso de la carpeta), sección, directorio
+
+**Enlace de la carpeta**:
+Dirección no listada para ver una carpeta: sus presentaciones y subcarpetas, en el orden que les dio el Dueño y sin notas.
+_Evitar_: enlace del curso, página del curso
+
 **Notas del presentador**:
 Texto que acompaña a una diapositiva y es para quien presenta, no para el público.
 _Evitar_: notas del orador, apuntes

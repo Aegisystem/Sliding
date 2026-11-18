@@ -677,16 +677,6 @@ body > main {
   font-weight: 600;
 }
 
-/* La regla de abajo del aviso es la de arriba de la lista. */
-.flash:has(+ .program, + .empty) {
-  margin-bottom: 0;
-}
-
-.flash + .program,
-.flash + .empty {
-  border-top: 0;
-}
-
 .flash-ok {
   background: var(--amarillo);
 }
@@ -808,6 +798,306 @@ body > main {
 
 .empty p {
   max-width: 60ch;
+}
+
+/* Subir y crear carpeta, lado a lado. */
+.panel-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0.75rem;
+}
+
+/* El nombre y su botón en una línea; la caja se estira hasta la credencial. */
+.new-folder {
+  display: flex;
+  flex: 1 1 22rem;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 34rem;
+  padding: 1rem;
+  border: var(--rule);
+  border-radius: var(--radius);
+}
+
+.new-folder .field {
+  flex: 1 1 auto;
+  width: 100%;
+}
+
+.new-folder .btn {
+  flex: none;
+}
+
+/* Un campo de texto: el mismo borde y radio que los botones. */
+.field {
+  min-width: 0;
+  min-height: 3rem;
+  padding: 0.6rem 0.85rem;
+  border: var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+}
+
+.field::placeholder {
+  color: var(--ink-soft);
+  font-weight: 400;
+  opacity: 1;
+}
+
+/* «Mover a»: un botón pequeño que despliega las carpetas. */
+.select {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.45rem 2.1rem 0.45rem 0.8rem;
+  border: var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23111318' stroke-width='2'/%3E%3C/svg%3E")
+    no-repeat right 0.8rem center / 0.75rem;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-stretch: var(--semi);
+  font-weight: 700;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  appearance: none;
+  cursor: pointer;
+}
+
+.select:hover {
+  background-color: var(--amarillo);
+}
+
+/* La ruta hasta la carpeta abierta; la barra final apunta al título. */
+.crumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-stretch: var(--semi);
+  font-weight: 700;
+}
+
+.crumbs li::after {
+  content: "/";
+  margin: 0 0.5rem;
+  color: var(--ink-soft);
+}
+
+.crumbs a {
+  text-decoration: none;
+}
+
+.crumbs a:hover {
+  text-decoration: underline;
+}
+
+.crumbs + h1 {
+  margin-top: -0.75rem;
+}
+
+.panel-head h1 {
+  overflow-wrap: anywhere;
+}
+
+/* Lo que se hace con la carpeta abierta. */
+.folder-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.folder-tools form {
+  margin: 0;
+}
+
+.rename {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.folder-tools + .rename {
+  margin-top: -0.75rem;
+}
+
+.rename label {
+  font-stretch: var(--semi);
+  font-weight: 700;
+}
+
+.rename .field {
+  flex: 1 1 16rem;
+  max-width: 30rem;
+  min-height: 2.5rem;
+  padding-block: 0.4rem;
+}
+
+/* Las carpetas y las presentaciones, cada lista con su rótulo cuando hay de las dos. */
+.panel-lists > .program-label:first-child {
+  margin-top: 0.5rem;
+}
+
+.program-label {
+  margin-top: clamp(2.5rem, 5vw, 3.5rem);
+  padding-bottom: 0.75rem;
+  font-size: clamp(2.25rem, 3.6vw, 3.25rem);
+}
+
+/* El aviso se apoya en la lista: su regla de abajo es la de arriba de la lista. */
+.flash:has(+ .panel-lists > .program:first-child, + .panel-lists > .empty:first-child) {
+  margin-bottom: 0;
+}
+
+.flash + .panel-lists > .program:first-child,
+.flash + .panel-lists > .empty:first-child {
+  border-top: 0;
+}
+
+/* La lista es la referencia para saber sobre qué hilera va el puntero al arrastrar. */
+[data-sortable] {
+  position: relative;
+}
+
+/* Subir y Bajar, en los extremos del código; el número queda al medio. */
+.session-code {
+  position: relative;
+}
+
+.session-code:has(.order:not([hidden])) {
+  padding-block: 0.35rem;
+}
+
+.order {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.order-up {
+  margin-bottom: auto;
+}
+
+.order-down {
+  margin-top: auto;
+}
+
+.order:hover {
+  background: color-mix(in srgb, currentColor 18%, transparent);
+}
+
+/* En el extremo de la lista: sigue enfocable, pero no hace nada. */
+.order[aria-disabled="true"] {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.order[aria-disabled="true"]:hover {
+  background: none;
+}
+
+/* Con el mouse, la hilera se arrastra desde su código. */
+@media (pointer: fine) {
+  .is-sortable .session-code {
+    cursor: grab;
+  }
+
+  .is-sortable .session-code .order {
+    cursor: pointer;
+  }
+}
+
+/* La hilera que se arrastra se vuelve amarilla, como la caja de subir cuando le sueltas un archivo. */
+.session.is-dragging {
+  position: relative;
+  z-index: 1;
+  background: var(--amarillo);
+}
+
+.is-sorting,
+.is-sorting * {
+  cursor: grabbing !important;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.session-folder .session-title a,
+.session-public .session-title a {
+  text-decoration: none;
+}
+
+.session-folder .session-title a:hover,
+.session-public .session-title a:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 3px;
+}
+
+.session-actions {
+  width: 13rem;
+}
+
+/* ── Enlace de la carpeta ─────────────────────────────────────────────── */
+
+.page-folder main {
+  display: flex;
+  flex-direction: column;
+}
+
+.folder-band {
+  border-bottom: var(--rule);
+}
+
+.folder-band-inner {
+  display: grid;
+  gap: 1rem;
+  padding: clamp(2.5rem, 7vw, 5rem) var(--gutter) clamp(1.75rem, 4vw, 2.5rem);
+}
+
+.folder-band h1 {
+  font-size: clamp(3.5rem, 9vw, 6rem);
+  line-height: 0.85;
+  overflow-wrap: anywhere;
+}
+
+.folder-band .crumbs li::after {
+  color: var(--ink);
+}
+
+.folder-band .crumbs + h1 {
+  margin-top: -0.25rem;
+}
+
+.folder-sub {
+  font-weight: 600;
+}
+
+.folder-body {
+  padding: 0 var(--gutter) clamp(3rem, 6vw, 5rem);
+}
+
+/* La regla de abajo de la banda es la de arriba de la lista. */
+.folder-body > .program:first-child,
+.folder-body > .empty:first-child {
+  border-top: 0;
+}
+
+.session-public {
+  grid-template-columns: 7rem minmax(0, 1fr) auto;
 }
 
 /* ── Páginas de lectura y avisos ──────────────────────────────────────── */
@@ -969,6 +1259,22 @@ body > main {
     grid-column: 3;
     grid-row: 1;
   }
+
+  .session-public {
+    grid-template-columns: 6rem minmax(0, 1fr) auto;
+  }
+
+  .session-public .session-code {
+    grid-row: auto;
+  }
+
+  .session-public .session-go {
+    grid-column: auto;
+    grid-row: auto;
+    min-width: 0;
+    border-top: 0;
+    border-left: var(--rule);
+  }
 }
 
 @media (max-width: 900px) {
@@ -1102,8 +1408,38 @@ body > main {
     border-left: 0;
   }
 
+  .session-actions {
+    width: auto;
+    flex-wrap: wrap;
+  }
+
   .session-actions form {
-    flex: 1;
+    flex: 1 1 7rem;
+  }
+
+  /* «Mover a» va primero y a todo el ancho; debajo, Reemplazar y Borrar. */
+  .session-actions .move {
+    order: -1;
+    flex-basis: 100%;
+  }
+
+  .session-public {
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+  }
+
+  .session-public .session-go {
+    grid-column: 1 / -1;
+    border-left: 0;
+    border-top: var(--rule);
+  }
+
+  .new-folder,
+  .upload {
+    flex: 1 1 100%;
+  }
+
+  .new-folder {
+    max-width: none;
   }
 
   .band .stamp {

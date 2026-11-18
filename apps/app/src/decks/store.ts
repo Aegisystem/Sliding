@@ -1,4 +1,5 @@
 import { type DeckKind, inspectDeck, newDeckId } from "@sliding/core";
+import { nextPosition, ownFolder } from "../folders/store";
 import type { Limits } from "./limits";
 
 export type StoreError = "vacio" | "no-html" | "muy-grande" | "cupo-espacio" | "no-existe";
@@ -13,6 +14,9 @@ export interface DeckRow {
   presentSecret: string;
   updatedAt: number;
 }
+
+/** Lo que el Enlace de la carpeta muestra de cada presentación: nada secreto. */
+export type PublicDeck = Pick<DeckRow, "id" | "title" | "kind" | "slideCount" | "updatedAt">;
 
 export interface Usage {
   decks: number;
@@ -37,15 +41,45 @@ export async function usage(db: D1Database, ownerId: string): Promise<Usage> {
   return row ?? { decks: 0, bytes: 0 };
 }
 
-export async function listDecks(db: D1Database, ownerId: string): Promise<DeckRow[]> {
+/** Las presentaciones de una carpeta (o de la raíz, con null), en el orden que les dio el Dueño. */
+export async function listDecks(db: D1Database, ownerId: string, folderId: string | null = null): Promise<DeckRow[]> {
   const { results } = await db
     .prepare(
       `SELECT id, title, kind, size, slide_count AS slideCount, present_secret AS presentSecret, updated_at AS updatedAt
-       FROM decks WHERE owner_id = ? ORDER BY updated_at DESC`,
+       FROM decks WHERE owner_id = ? AND folder_id IS ?
+       ORDER BY position IS NULL, position, created_at DESC`,
     )
-    .bind(ownerId)
+    .bind(ownerId, folderId)
     .all<DeckRow>();
   return results;
+}
+
+/** Las presentaciones de una carpeta que ve quien tiene su enlace: sin las desactivadas. */
+export async function listPublicDecks(db: D1Database, ownerId: string, folderId: string): Promise<PublicDeck[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT id, title, kind, slide_count AS slideCount, updated_at AS updatedAt
+       FROM decks WHERE owner_id = ? AND folder_id = ? AND disabled = 0
+       ORDER BY position IS NULL, position, created_at DESC`,
+    )
+    .bind(ownerId, folderId)
+    .all<PublicDeck>();
+  return results;
+}
+
+/**
+ * Cuántas presentaciones hay en cada carpeta del Dueño (la raíz va con la
+ * clave ""). Para el Enlace de la carpeta se cuentan solo las que se ven.
+ */
+export async function deckCounts(db: D1Database, ownerId: string, { visibleOnly = false } = {}): Promise<Map<string, number>> {
+  const { results } = await db
+    .prepare(
+      `SELECT COALESCE(folder_id, '') AS folder, COUNT(*) AS n FROM decks
+       WHERE owner_id = ? ${visibleOnly ? "AND disabled = 0" : ""} GROUP BY folder_id`,
+    )
+    .bind(ownerId)
+    .all<{ folder: string; n: number }>();
+  return new Map(results.map((r) => [r.folder, r.n]));
 }
 
 /**
@@ -56,11 +90,12 @@ export async function listDecks(db: D1Database, ownerId: string): Promise<DeckRo
 export async function storeDeck(
   env: Cloudflare.Env,
   limits: Limits,
-  { ownerId, file, deckId }: { ownerId: string; file: File; deckId?: string },
+  { ownerId, file, deckId, folderId = null }: { ownerId: string; file: File; deckId?: string; folderId?: string | null },
 ): Promise<StoreResult> {
   if (file.size === 0) return { ok: false, error: "vacio" };
   if (!HTML_FILE.test(file.name) && file.type !== "text/html") return { ok: false, error: "no-html" };
   if (file.size > limits.deckBytes) return { ok: false, error: "muy-grande" };
+  if (folderId && !(await ownFolder(env.DB, ownerId, folderId))) return { ok: false, error: "no-existe" };
 
   const current = await usage(env.DB, ownerId);
   let previousSize = 0;
@@ -93,10 +128,22 @@ export async function storeDeck(
       .run();
   } else {
     await env.DB.prepare(
-      `INSERT INTO decks (id, owner_id, title, kind, size, slide_count, present_secret, disabled, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?)`,
+      `INSERT INTO decks (id, owner_id, title, kind, size, slide_count, present_secret, folder_id, position, disabled, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)`,
     )
-      .bind(id, ownerId, title, info.kind, file.size, info.slideCount, newPresentSecret(), now, now)
+      .bind(
+        id,
+        ownerId,
+        title,
+        info.kind,
+        file.size,
+        info.slideCount,
+        newPresentSecret(),
+        folderId,
+        await nextPosition(env.DB, "decks", ownerId, folderId),
+        now,
+        now,
+      )
       .run();
   }
   return { ok: true, id };

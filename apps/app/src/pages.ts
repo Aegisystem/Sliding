@@ -2,7 +2,8 @@ import { html } from "hono/html";
 import type { HtmlEscapedString } from "hono/utils/html";
 import type { User } from "./auth/users";
 import type { Limits } from "./decks/limits";
-import type { DeckRow, Usage } from "./decks/store";
+import type { DeckRow, PublicDeck, Usage } from "./decks/store";
+import { descendantsOf, type Folder } from "./folders/store";
 
 type Html = HtmlEscapedString | Promise<HtmlEscapedString>;
 
@@ -171,6 +172,10 @@ export const homePage = ({ user, error, limits }: { user: User | null; error?: s
             <dd>¿Cómo hago una presentación? Pásale a tu IA la <a href="/skill">skill html-slides</a> y pídesela: queda lista para subir.</dd>
           </div>
           <div>
+            <dt>Carpetas</dt>
+            <dd>Ordena tus presentaciones por curso, unidad o semana, en carpetas dentro de carpetas. Comparte una carpeta entera con un solo enlace.</dd>
+          </div>
+          <div>
             <dt>Espacio</dt>
             <dd>Todas las presentaciones que quieras, mientras sumen hasta ${mb(limits.bytesPerOwner)} MB, con ${mb(limits.deckBytes)} MB como máximo cada una.</dd>
           </div>
@@ -196,6 +201,11 @@ const PANEL_OK: Record<string, string> = {
   subido: "Presentación subida. Ya puedes compartir su enlace.",
   reemplazado: "Presentación reemplazada. Su enlace sigue siendo el mismo.",
   borrado: "Presentación borrada. Su enlace ya no funciona.",
+  movido: "Presentación movida. Su enlace sigue siendo el mismo.",
+  "carpeta-creada": "Carpeta creada.",
+  "carpeta-renombrada": "Nombre guardado.",
+  "carpeta-movida": "Carpeta movida.",
+  "carpeta-borrada": "Carpeta borrada. Lo que tenía dentro quedó aquí.",
 };
 
 const panelError = (code: string, usage: Usage, limits: Limits): string | null =>
@@ -204,17 +214,98 @@ const panelError = (code: string, usage: Usage, limits: Limits): string | null =
     "no-html": "Sliding solo acepta archivos .html.",
     "muy-grande": `El archivo pasa de ${mb(limits.deckBytes)} MB. Reduce sus imágenes y vuelve a subirlo.`,
     "cupo-espacio": `No queda espacio: tus presentaciones ocupan ${formatBytes(usage.bytes)} de ${mb(limits.bytesPerOwner)} MB. Borra alguna o reduce sus imágenes.`,
-    "no-existe": "Esa presentación no existe o no es tuya.",
+    "no-existe": "Esa presentación o carpeta no existe, o no es tuya.",
+    nombre: "Escribe un nombre para la carpeta, de hasta 80 caracteres.",
+    ciclo: "Una carpeta no puede ir dentro de sí misma ni de una de sus carpetas.",
   })[code] ?? null;
 
-const session = (deck: DeckRow, origin: string) => html`<li class="session">
+/** Una carpeta en la lista del panel, con lo que tiene dentro. */
+export interface FolderRow extends Folder {
+  decks: number;
+  folders: number;
+}
+
+/** Todas las carpetas en orden de árbol, cada una con su ruta: «Física / Unidad 1». */
+function folderTree(folders: Folder[]): { folder: Folder; label: string }[] {
+  const out: { folder: Folder; label: string }[] = [];
+  const seen = new Set<string>();
+  const walk = (parentId: string | null, prefix: string) => {
+    for (const folder of folders) {
+      if (folder.parentId !== parentId || seen.has(folder.id)) continue;
+      seen.add(folder.id);
+      const label = prefix ? `${prefix} / ${folder.name}` : folder.name;
+      out.push({ folder, label });
+      walk(folder.id, label);
+    }
+  };
+  walk(null, "");
+  return out;
+}
+
+const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
+
+/** El formulario vuelve a la carpeta que se está viendo. */
+const backField = (name: string, folderId: string | null) =>
+  folderId ? html`<input type="hidden" name="${name}" value="${folderId}" />` : "";
+
+/** «Mover a»: elegir la carpeta ya mueve (sin JS, con su botón). */
+const moveForm = ({
+  id,
+  action,
+  title,
+  options,
+  folderId,
+}: {
+  id: string;
+  action: string;
+  title: string;
+  options: { value: string; label: string; here: boolean }[];
+  folderId: string | null;
+}) =>
+  options.some((o) => !o.here)
+    ? html`<form class="move" method="post" action="${action}">
+        ${backField("volver", folderId)}
+        <label class="visually-hidden" for="mover-${id}">Mover «${title}» a otra carpeta</label>
+        <select class="select" id="mover-${id}" name="destino" required>
+          <option value="" selected disabled>Mover a…</option>
+          ${options.map(
+            (o) => html`<option value="${o.value}" ${o.here ? "disabled" : ""}>${o.label}${o.here ? " (aquí)" : ""}</option>`,
+          )}
+        </select>
+        <noscript><button class="btn btn-small" type="submit">Mover</button></noscript>
+      </form>`
+    : "";
+
+/**
+ * Subir y Bajar, arriba y abajo del código de la hilera. Con el mouse también
+ * se puede arrastrar el código. Solo con JS y con dos hileras o más.
+ */
+const orderButton = (dir: "up" | "down", name: string) => html`<button class="order order-${dir}" type="button" data-move="${dir}" hidden aria-describedby="orden-ayuda" aria-label="${dir === "up" ? "Subir" : "Bajar"} «${name}»">
+  <svg viewBox="0 0 16 10" width="16" height="10" aria-hidden="true" focusable="false"><path d="${dir === "up" ? "M2 8.5l6-6 6 6" : "M2 1.5l6 6 6-6"}" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</button>`;
+
+/** Un título de hilera: h3 bajo los rótulos «Carpetas» y «Presentaciones», h2 si no hay rótulos. */
+const rowTitle = (level: 2 | 3, inner: Html | string) =>
+  level === 3 ? html`<h3 class="session-title">${inner}</h3>` : html`<h2 class="session-title">${inner}</h2>`;
+
+interface PanelContext {
+  origin: string;
+  folderId: string | null;
+  tree: { folder: Folder; label: string }[];
+  folders: Folder[];
+  level: 2 | 3;
+}
+
+const deckRow = (deck: DeckRow, ctx: PanelContext) => html`<li class="session" data-id="${deck.id}">
   <div class="session-code ${deck.kind === "html-slides" ? "track-azul" : "track-amarillo"}">
+    ${orderButton("up", deck.title)}
     ${deck.kind === "html-slides"
-      ? html`<span class="session-count num">${deck.slideCount ?? 0}</span><span class="session-unit">${deck.slideCount === 1 ? "diapositiva" : "diapositivas"}</span>`
+      ? html`<span class="session-count num">${deck.slideCount ?? 0}</span><span class="session-unit">${plural(deck.slideCount ?? 0, "diapositiva", "diapositivas")}</span>`
       : html`<span class="session-count session-count-word">HTML</span><span class="session-unit">genérica</span>`}
+    ${orderButton("down", deck.title)}
   </div>
   <div class="session-main">
-    <h2 class="session-title">${deck.title}</h2>
+    ${rowTitle(ctx.level, deck.title)}
     <p class="session-meta">
       ${deck.kind === "html-slides" ? "html-slides" : "HTML genérico"} ·
       <span class="num">${formatBytes(deck.size)}</span> · actualizada el ${day.format(deck.updatedAt)}
@@ -223,21 +314,88 @@ const session = (deck: DeckRow, origin: string) => html`<li class="session">
   <div class="session-go">
     <a class="btn btn-ink" href="/p/${deck.presentSecret}" target="_blank" rel="noopener">Presentar con control</a>
     <a class="btn" href="/d/${deck.id}" target="_blank" rel="noopener">Ver diapositivas</a>
-    <button class="btn btn-small copy" type="button" data-copy="${origin}/d/${deck.id}">Copiar enlace para compartir</button>
+    <button class="btn btn-small copy" type="button" data-copy="${ctx.origin}/d/${deck.id}">Copiar enlace para compartir</button>
   </div>
   <div class="session-actions">
     <form class="replace" method="post" action="/panel/decks/${deck.id}" enctype="multipart/form-data">
+      ${backField("volver", ctx.folderId)}
       <label class="btn btn-small">
         Reemplazar
         <input class="visually-hidden" type="file" name="file" accept=".html,.htm,text/html" required />
       </label>
       <noscript><button class="btn btn-small" type="submit">Subir reemplazo</button></noscript>
     </form>
-    <form class="delete" method="post" action="/panel/decks/${deck.id}/delete" data-title="${deck.title}">
+    ${moveForm({
+      id: deck.id,
+      action: `/panel/decks/${deck.id}/mover`,
+      title: deck.title,
+      folderId: ctx.folderId,
+      options: [
+        { value: "raiz", label: "Sin carpeta", here: ctx.folderId === null },
+        ...ctx.tree.map(({ folder, label }) => ({ value: folder.id, label, here: folder.id === ctx.folderId })),
+      ],
+    })}
+    <form class="delete" method="post" action="/panel/decks/${deck.id}/delete" data-confirm="¿Borrar «${deck.title}»? Su enlace dejará de funcionar y no se puede deshacer.">
+      ${backField("volver", ctx.folderId)}
       <button class="btn btn-small btn-danger" type="submit">Borrar</button>
     </form>
   </div>
 </li>`;
+
+const folderRow = (folder: FolderRow, ctx: PanelContext) => {
+  const inside = descendantsOf(ctx.folders, folder.id);
+  return html`<li class="session session-folder" data-id="${folder.id}">
+  <div class="session-code track-verde">
+    ${orderButton("up", folder.name)}
+    <span class="session-count num">${folder.decks}</span><span class="session-unit">${plural(folder.decks, "presentación", "presentaciones")}</span>
+    ${orderButton("down", folder.name)}
+  </div>
+  <div class="session-main">
+    ${rowTitle(ctx.level, html`<a href="/panel/f/${folder.id}">${folder.name}</a>`)}
+    <p class="session-meta">
+      Carpeta${folder.folders
+        ? html` · <span class="num">${folder.folders}</span> ${plural(folder.folders, "carpeta", "carpetas")} dentro`
+        : ""}
+    </p>
+  </div>
+  <div class="session-go">
+    <a class="btn btn-ink" href="/panel/f/${folder.id}">Abrir carpeta</a>
+    <button class="btn btn-small copy" type="button" data-copy="${ctx.origin}/f/${folder.id}">Copiar enlace para compartir</button>
+  </div>
+  <div class="session-actions">
+    ${moveForm({
+      id: folder.id,
+      action: `/panel/carpetas/${folder.id}/mover`,
+      title: folder.name,
+      folderId: ctx.folderId,
+      options: [
+        { value: "raiz", label: "Sin carpeta", here: ctx.folderId === null },
+        ...ctx.tree
+          .filter(({ folder: f }) => !inside.has(f.id))
+          .map(({ folder: f, label }) => ({ value: f.id, label, here: f.id === ctx.folderId })),
+      ],
+    })}
+    <form class="delete" method="post" action="/panel/carpetas/${folder.id}/borrar" data-confirm="¿Borrar la carpeta «${folder.name}»? Lo que tiene dentro quedará aquí y su enlace dejará de funcionar.">
+      <button class="btn btn-small btn-danger" type="submit">Borrar</button>
+    </form>
+  </div>
+</li>`;
+};
+
+/** Lo que se hace con la carpeta abierta: compartirla, verla como los demás, renombrarla y borrarla. */
+const folderTools = (folder: Folder, parentName: string, origin: string) => html`<div class="folder-tools">
+  <button class="btn btn-small copy" type="button" data-copy="${origin}/f/${folder.id}">Copiar enlace de la carpeta</button>
+  <a class="btn btn-small" href="/f/${folder.id}" target="_blank" rel="noopener">Ver como la ven los demás</a>
+  <button class="btn btn-small" type="button" data-rename-toggle aria-expanded="false" aria-controls="renombrar" hidden>Cambiar nombre</button>
+  <form class="delete" method="post" action="/panel/carpetas/${folder.id}/borrar" data-confirm="¿Borrar la carpeta «${folder.name}»? Lo que tiene dentro pasará a «${parentName}» y su enlace dejará de funcionar.">
+    <button class="btn btn-small btn-danger" type="submit">Borrar carpeta</button>
+  </form>
+</div>
+<form class="rename" id="renombrar" method="post" action="/panel/carpetas/${folder.id}/nombre">
+  <label for="nombre-carpeta">Nombre de la carpeta</label>
+  <input class="field" id="nombre-carpeta" name="nombre" value="${folder.name}" maxlength="80" required autocomplete="off" />
+  <button class="btn btn-small btn-ink" type="submit">Guardar nombre</button>
+</form>`;
 
 export const panelPage = ({
   user,
@@ -247,6 +405,10 @@ export const panelPage = ({
   origin,
   ok,
   error,
+  folder = null,
+  path = [],
+  children = [],
+  folders = [],
 }: {
   user: User;
   decks: DeckRow[];
@@ -255,43 +417,188 @@ export const panelPage = ({
   origin: string;
   ok?: string;
   error?: string;
+  /** La carpeta abierta, o null en la raíz del panel. */
+  folder?: Folder | null;
+  /** La ruta desde la raíz hasta la carpeta abierta, incluida. */
+  path?: Folder[];
+  /** Las carpetas que hay aquí. */
+  children?: FolderRow[];
+  /** Todas las carpetas del Dueño, para «Mover a». */
+  folders?: Folder[];
 }) => {
   const okText = ok ? PANEL_OK[ok] : undefined;
   const errorText = error ? panelError(error, usage, limits) : null;
+  const folderId = folder?.id ?? null;
+  const labelled = children.length > 0 && decks.length > 0;
+  const ctx: PanelContext = { origin, folderId, tree: folderTree(folders), folders, level: labelled ? 3 : 2 };
+  const ancestors = path.slice(0, -1);
+  const parentName = ancestors.at(-1)?.name ?? "Tus presentaciones";
+  const title = folder ? folder.name : "Tus presentaciones";
+
   return layout({
-    title: "Tu panel · Sliding",
+    title: `${folder ? `${folder.name} · ` : ""}Tu panel · Sliding`,
     user,
     page: "panel",
     body: html`<div class="panel-head">
         <div class="panel-intro">
-          <h1>Tus presentaciones</h1>
-          <form class="upload" method="post" action="/panel/decks" enctype="multipart/form-data">
-            <label class="btn btn-ink">
-              Subir una presentación .html
-              <input class="visually-hidden" type="file" name="file" accept=".html,.htm,text/html" required />
-            </label>
-            <span class="upload-file" aria-live="polite">Hasta ${mb(limits.deckBytes)} MB. También puedes soltarla en esta página.</span>
-            <noscript><button class="btn" type="submit">Subir</button></noscript>
-          </form>
+          ${folder
+            ? html`<nav class="crumbs" aria-label="Carpetas">
+                <ol>
+                  <li><a href="/panel">Tus presentaciones</a></li>
+                  ${ancestors.map((f) => html`<li><a href="/panel/f/${f.id}">${f.name}</a></li>`)}
+                </ol>
+              </nav>`
+            : ""}
+          <h1>${title}</h1>
+          ${folder ? folderTools(folder, parentName, origin) : ""}
+          <div class="panel-tools">
+            <form class="upload" method="post" action="/panel/decks" enctype="multipart/form-data">
+              ${backField("carpeta", folderId)}
+              <label class="btn btn-ink">
+                Subir una presentación .html
+                <input class="visually-hidden" type="file" name="file" accept=".html,.htm,text/html" required />
+              </label>
+              <span class="upload-file" aria-live="polite">Hasta ${mb(limits.deckBytes)} MB. También puedes soltarla en esta página.</span>
+              <noscript><button class="btn" type="submit">Subir</button></noscript>
+            </form>
+            <form class="new-folder" method="post" action="/panel/carpetas">
+              ${backField("carpeta", folderId)}
+              <label class="visually-hidden" for="nueva-carpeta">Nombre de la carpeta nueva</label>
+              <input class="field" id="nueva-carpeta" name="nombre" maxlength="80" required autocomplete="off"
+                placeholder="${folder ? "Por ejemplo: Unidad 1" : "Por ejemplo: Física"}" />
+              <button class="btn" type="submit">Crear carpeta</button>
+            </form>
+          </div>
         </div>
         ${hangingBadge(
           html`${badgePhoto(user)}
             <h2 class="badge-name" id="badge-name">${user.name}</h2>
             <p class="badge-quota">
-              <span class="num">${usage.decks}</span> ${usage.decks === 1 ? "presentación" : "presentaciones"}<br />
+              <span class="num">${usage.decks}</span> ${plural(usage.decks, "presentación", "presentaciones")}<br />
               <span class="num">${formatBytes(usage.bytes)}</span> de <span class="num">${mb(limits.bytesPerOwner)}</span> MB
             </p>`,
           { variant: "panel" },
         )}
       </div>
+      <p class="flash flash-error" data-order-error role="alert" hidden>No se pudo guardar el orden. Recarga la página e intenta de nuevo.</p>
       ${okText ? html`<p class="flash flash-ok" role="status">${okText}</p>` : ""}
       ${errorText ? html`<p class="flash flash-error" role="alert">${errorText}</p>` : ""}
-      ${decks.length
-        ? html`<ol class="program" aria-label="Tus presentaciones">${decks.map((deck) => session(deck, origin))}</ol>`
-        : html`<div class="empty">
-            <h2>Tu programa está vacío.</h2>
-            <p>Sube tu primera presentación con el botón de arriba. ¿Todavía no tienes una? Pásale a tu IA la <a href="/skill">skill html-slides</a> y pídele una, o usa cualquier HTML de un solo archivo.</p>
-          </div>`}`,
+      <div class="panel-lists">
+        ${children.length
+          ? html`${labelled ? html`<h2 class="program-label">Carpetas</h2>` : ""}
+              <ol class="program" aria-label="Carpetas" data-sortable="folders" data-parent="${folderId ?? ""}">
+                ${children.map((f) => folderRow(f, ctx))}
+              </ol>`
+          : ""}
+        ${decks.length
+          ? html`${labelled ? html`<h2 class="program-label">Presentaciones</h2>` : ""}
+              <ol class="program" aria-label="Presentaciones" data-sortable="decks" data-parent="${folderId ?? ""}">
+                ${decks.map((deck) => deckRow(deck, ctx))}
+              </ol>`
+          : ""}
+        ${children.length || decks.length
+          ? ""
+          : folder
+            ? html`<div class="empty">
+                <h2>Esta carpeta está vacía.</h2>
+                <p>Sube aquí una presentación, crea una carpeta dentro (una unidad, una semana) o trae presentaciones que ya subiste con «Mover a».</p>
+              </div>`
+            : html`<div class="empty">
+                <h2>Tu programa está vacío.</h2>
+                <p>Sube tu primera presentación con el botón de arriba. ¿Todavía no tienes una? Pásale a tu IA la <a href="/skill">skill html-slides</a> y pídele una, o usa cualquier HTML de un solo archivo. Para ordenarlas por curso, crea una carpeta.</p>
+              </div>`}
+      </div>
+      <p class="visually-hidden" id="orden-ayuda">Cambia el orden en que la ven los demás. Con el mouse también puedes arrastrar la hilera desde su código de color.</p>
+      <p class="visually-hidden" data-order-status role="status"></p>`,
+  });
+};
+
+// ── Enlace de la carpeta ──────────────────────────────────────────────────
+
+/** Lo que ve quien tiene el Enlace de la carpeta: sus carpetas y presentaciones, sin notas ni opción de presentar. */
+export const folderPage = ({
+  user,
+  folder,
+  path,
+  root,
+  children,
+  decks,
+}: {
+  user: User | null;
+  folder: Folder;
+  /** La ruta desde la carpeta por la que se entró hasta esta, incluida. */
+  path: Folder[];
+  /** La carpeta por la que se entró: los enlaces de más adentro la recuerdan. */
+  root: string;
+  children: FolderRow[];
+  decks: PublicDeck[];
+}) => {
+  const via = (id: string) => (id === root ? `/f/${id}` : `/f/${id}?desde=${root}`);
+  const level = children.length > 0 && decks.length > 0 ? 3 : 2;
+  return layout({
+    title: `${folder.name} · Sliding`,
+    user,
+    page: "folder",
+    body: html`<header class="folder-band track-verde">
+        <div class="folder-band-inner">
+          ${path.length > 1
+            ? html`<nav class="crumbs" aria-label="Carpetas">
+                <ol>
+                  ${path.slice(0, -1).map((f) => html`<li><a href="${via(f.id)}">${f.name}</a></li>`)}
+                </ol>
+              </nav>`
+            : ""}
+          <h1>${folder.name}</h1>
+          <p class="folder-sub">
+            <span class="num">${decks.length}</span> ${plural(decks.length, "presentación", "presentaciones")}${children.length
+              ? html` · <span class="num">${children.length}</span> ${plural(children.length, "carpeta", "carpetas")}`
+              : ""}
+          </p>
+        </div>
+      </header>
+      <div class="folder-body">
+        ${children.length
+          ? html`${level === 3 ? html`<h2 class="program-label">Carpetas</h2>` : ""}
+              <ol class="program" aria-label="Carpetas">
+                ${children.map(
+                  (f) => html`<li class="session session-public">
+                    <div class="session-code track-verde">
+                      <span class="session-count num">${f.decks}</span><span class="session-unit">${plural(f.decks, "presentación", "presentaciones")}</span>
+                    </div>
+                    <div class="session-main">
+                      ${rowTitle(level, html`<a href="${via(f.id)}">${f.name}</a>`)}
+                      <p class="session-meta">
+                        Carpeta${f.folders ? html` · <span class="num">${f.folders}</span> ${plural(f.folders, "carpeta", "carpetas")} dentro` : ""}
+                      </p>
+                    </div>
+                    <div class="session-go"><a class="btn" href="${via(f.id)}">Abrir carpeta</a></div>
+                  </li>`,
+                )}
+              </ol>`
+          : ""}
+        ${decks.length
+          ? html`${level === 3 ? html`<h2 class="program-label">Presentaciones</h2>` : ""}
+              <ol class="program" aria-label="Presentaciones">
+                ${decks.map(
+                  (deck) => html`<li class="session session-public">
+                    <div class="session-code ${deck.kind === "html-slides" ? "track-azul" : "track-amarillo"}">
+                      ${deck.kind === "html-slides"
+                        ? html`<span class="session-count num">${deck.slideCount ?? 0}</span><span class="session-unit">${plural(deck.slideCount ?? 0, "diapositiva", "diapositivas")}</span>`
+                        : html`<span class="session-count session-count-word">HTML</span><span class="session-unit">genérica</span>`}
+                    </div>
+                    <div class="session-main">
+                      ${rowTitle(level, html`<a href="/d/${deck.id}">${deck.title}</a>`)}
+                      <p class="session-meta">Actualizada el ${day.format(deck.updatedAt)}</p>
+                    </div>
+                    <div class="session-go"><a class="btn btn-ink" href="/d/${deck.id}">Ver presentación</a></div>
+                  </li>`,
+                )}
+              </ol>`
+          : ""}
+        ${children.length || decks.length
+          ? ""
+          : html`<div class="empty"><h2>Esta carpeta todavía está vacía.</h2><p>Cuando tenga presentaciones, aparecerán aquí.</p></div>`}
+      </div>`,
   });
 };
 
@@ -476,6 +783,7 @@ export const privacyPage = ({ user }: { user: User | null }) =>
       <ul>
         <li><strong>Tu cuenta.</strong> Al entrar con GitHub o Google guardamos el identificador de tu cuenta en ese servicio, tu nombre y tu correo. Los usamos para mostrarte tus presentaciones y para avisarte si hay un problema con ellas.</li>
         <li><strong>Tus presentaciones.</strong> Guardamos los archivos HTML que subes y sus notas del presentador. Cualquiera con el enlace de una presentación puede verla, pero sin las notas.</li>
+        <li><strong>Tus carpetas.</strong> Guardamos sus nombres y el orden que les das. Cualquiera con el enlace de una carpeta ve sus presentaciones y las carpetas que tiene dentro, también sin las notas.</li>
         <li><strong>Tus tokens.</strong> Si creas tokens para que un agente suba presentaciones por ti, guardamos solo una huella de cada token, su nombre y la última vez que se usó.</li>
         <li><strong>Las presentaciones en vivo.</strong> Mientras presentas guardamos en qué diapositiva vas. Se borra cuando termina la sesión.</li>
       </ul>
@@ -491,22 +799,26 @@ export const privacyPage = ({ user }: { user: User | null }) =>
     </article>`,
   });
 
-// ── Errores y Enlace de la presentación ─────────────────────────────────────────────
+// ── Errores y Enlace de la presentación ───────────────────────────────────
 
-export const notFoundPage = (user: User | null = null) =>
-  layout({
-    title: "Presentación no encontrada · Sliding",
+export const notFoundPage = (user: User | null = null, what: "presentacion" | "carpeta" = "presentacion") => {
+  const folder = what === "carpeta";
+  return layout({
+    title: `${folder ? "Carpeta no encontrada" : "Presentación no encontrada"} · Sliding`,
     user,
     page: "notice",
     body: html`<section class="band track-naranja">
       <div class="band-inner">
-        <h1>Presentación no encontrada</h1>
-        <p>Esta sesión no está en el programa. Revisa el enlace; si la presentación existía, puede que su Dueño la haya borrado.</p>
+        <h1>${folder ? "Carpeta no encontrada" : "Presentación no encontrada"}</h1>
+        <p>${folder
+          ? "Esta carpeta no está en el programa. Revisa el enlace; si la carpeta existía, puede que su Dueño la haya borrado."
+          : "Esta sesión no está en el programa. Revisa el enlace; si la presentación existía, puede que su Dueño la haya borrado."}</p>
         <p><a class="btn btn-ink" href="/">Ir a la portada</a></p>
       </div>
       <span class="stamp">Cancelada</span>
     </section>`,
   });
+};
 
 /**
  * Página del Enlace de la presentación: ocupa toda la ventana, servida desde su
