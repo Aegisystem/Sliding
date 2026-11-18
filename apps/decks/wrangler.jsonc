@@ -1,0 +1,10 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  // Proyecto de Pages: queda en sliding-decks.pages.dev (ADR 0001).
+  "name": "sliding-decks",
+  "pages_build_output_dir": "./public",
+  "compatibility_date": "2026-11-01",
+  // Mismos ids que apps/app: en local comparten los datos.
+  "kv_namespaces": [{ "binding": "DECKS", "id": "local-decks" }],
+  "vars": { "APP_ORIGIN": "https://app.sliding.workers.dev" }
+}

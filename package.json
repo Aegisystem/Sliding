@@ -1,0 +1,20 @@
+{
+  "name": "sliding",
+  "private": true,
+  "type": "module",
+  "workspaces": ["packages/*", "apps/*"],
+  "engines": { "node": ">=22.12.0" },
+  "scripts": {
+    "dev": "concurrently -n app,decks -c blue,magenta \"npm -w @sliding/app run dev\" \"npm -w @sliding/decks run dev\"",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-plugin": "1.8.4",
+    "@cloudflare/workers-types": "5.20261118.1",
+    "concurrently": "10.0.7",
+    "typescript": "7.0.2",
+    "vitest": "5.1.0",
+    "wrangler": "4.164.0"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  // Queda en app.sliding.workers.dev (ADR 0001).
+  "name": "app",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-01",
+  // Los ids reales se ponen al desplegar (#12). En local basta con que
+  // coincidan con los de apps/decks para compartir los datos.
+  "kv_namespaces": [{ "binding": "DECKS", "id": "local-decks" }],
+  "vars": { "DECKS_ORIGIN": "https://sliding-decks.pages.dev" }
+}
