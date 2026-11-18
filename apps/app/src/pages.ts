@@ -168,7 +168,7 @@ export const homePage = ({ user, error, limits }: { user: User | null; error?: s
           </div>
           <div>
             <dt>Espacio</dt>
-            <dd>Hasta ${limits.decksPerOwner} presentaciones y ${mb(limits.bytesPerOwner)} MB por persona, con ${mb(limits.deckBytes)} MB como máximo por presentación.</dd>
+            <dd>Todas las presentaciones que quieras, mientras sumen hasta ${mb(limits.bytesPerOwner)} MB, con ${mb(limits.deckBytes)} MB como máximo cada una.</dd>
           </div>
           <div>
             <dt>Privacidad</dt>
@@ -199,7 +199,6 @@ const panelError = (code: string, usage: Usage, limits: Limits): string | null =
     vacio: "Elige un archivo antes de subir.",
     "no-html": "Sliding solo acepta archivos .html.",
     "muy-grande": `El archivo pasa de ${mb(limits.deckBytes)} MB. Reduce sus imágenes y vuelve a subirlo.`,
-    "cupo-decks": `Ya tienes ${limits.decksPerOwner} presentaciones. Borra una para subir otra.`,
     "cupo-espacio": `No queda espacio: tus presentaciones ocupan ${formatBytes(usage.bytes)} de ${mb(limits.bytesPerOwner)} MB. Borra alguna o reduce sus imágenes.`,
     "no-existe": "Esa presentación no existe o no es tuya.",
   })[code] ?? null;
@@ -261,7 +260,6 @@ export const panelPage = ({
 }) => {
   const okText = ok ? PANEL_OK[ok] : undefined;
   const errorText = error ? panelError(error, usage, limits) : null;
-  const full = usage.decks >= limits.decksPerOwner;
   return layout({
     title: "Tu panel · Sliding",
     user,
@@ -272,19 +270,17 @@ export const panelPage = ({
           <form class="upload" method="post" action="/panel/decks" enctype="multipart/form-data">
             <label class="btn btn-ink">
               Subir una presentación .html
-              <input class="visually-hidden" type="file" name="file" accept=".html,.htm,text/html" required ${full ? "disabled" : ""} />
+              <input class="visually-hidden" type="file" name="file" accept=".html,.htm,text/html" required />
             </label>
-            <span class="upload-file" aria-live="polite">${full
-              ? `Tienes ${limits.decksPerOwner} presentaciones: borra una para subir otra.`
-              : `Hasta ${mb(limits.deckBytes)} MB. También puedes soltarla en esta página.`}</span>
-            <noscript><button class="btn" type="submit" ${full ? "disabled" : ""}>Subir</button></noscript>
+            <span class="upload-file" aria-live="polite">Hasta ${mb(limits.deckBytes)} MB. También puedes soltarla en esta página.</span>
+            <noscript><button class="btn" type="submit">Subir</button></noscript>
           </form>
         </div>
         ${hangingBadge(
           html`${badgePhoto(user)}
             <h2 class="badge-name" id="badge-name">${user.name}</h2>
             <p class="badge-quota">
-              <span class="num">${usage.decks}</span> de <span class="num">${limits.decksPerOwner}</span> presentaciones<br />
+              <span class="num">${usage.decks}</span> ${usage.decks === 1 ? "presentación" : "presentaciones"}<br />
               <span class="num">${formatBytes(usage.bytes)}</span> de <span class="num">${mb(limits.bytesPerOwner)}</span> MB
             </p>`,
           { variant: "panel" },

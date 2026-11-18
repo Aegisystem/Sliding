@@ -5,7 +5,7 @@ import htmlSlidesDeck from "../../../fixtures/html-slides.html?raw";
 import { ada, browser } from "./helpers";
 
 const ORIGIN = "https://app.test";
-const small = { deckBytes: 10_000, decksPerOwner: 2, bytesPerOwner: 15_000 };
+const small = { deckBytes: 10_000, bytesPerOwner: 15_000 };
 let people = 0;
 
 /** Un Dueño nuevo con sesión, para que cada test tenga su propio panel. */
@@ -43,7 +43,7 @@ describe("el panel", () => {
     const b = await owner();
     const html = await (await b.request("/panel")).text();
     expect(html).toContain("Tu programa está vacío.");
-    expect(html).toMatch(/<span class="num">0<\/span> de <span class="num">2<\/span> presentaciones/);
+    expect(html).toMatch(/<span class="num">0<\/span> presentaciones/);
     expect(html).toContain(">0 MB</span> de");
   });
 });
@@ -93,14 +93,13 @@ describe("subir", () => {
     expect(await decksOf(`Dueño ${people}`)).toHaveLength(0);
   });
 
-  it("respeta el máximo de decks por Dueño", async () => {
+  it("no limita la cantidad de presentaciones, solo el peso", async () => {
     const b = await owner();
-    await upload(b, "/panel/decks", "<title>Uno</title>");
-    await upload(b, "/panel/decks", "<title>Dos</title>");
-    const response = await upload(b, "/panel/decks", "<title>Tres</title>");
-    expect(response.headers.get("location")).toBe("/panel?error=cupo-decks");
-    expect(await decksOf(`Dueño ${people}`)).toHaveLength(2);
-    expect(await (await b.request("/panel?error=cupo-decks")).text()).toContain("Ya tienes 2 presentaciones.");
+    for (const n of [1, 2, 3, 4, 5]) {
+      expect((await upload(b, "/panel/decks", `<title>Charla ${n}</title>`)).headers.get("location")).toBe("/panel?ok=subido");
+    }
+    expect(await decksOf(`Dueño ${people}`)).toHaveLength(5);
+    expect(await (await b.request("/panel")).text()).toMatch(/<span class="num">5<\/span> presentaciones/);
   });
 
   it("respeta el espacio total por Dueño", async () => {

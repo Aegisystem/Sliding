@@ -33,7 +33,7 @@ Sliding no es un editor de diapositivas: la presentación ya existe como HTML (h
 
 - El vocabulario del dominio está en `CONTEXT.md` (raíz del repo): Presentación, Diapositiva, Presentación html-slides, Presentación genérica, Dueño, Enlace de la presentación, Enlace para presentar, Notas del presentador, Agente, Sesión en vivo, Pantalla, Control, QR de control, Presentador, Público. En el código, la Presentación se llama `deck`.
 - Para subir hay que iniciar sesión con GitHub o Google; para ver una presentación no.
-- Una presentación es un solo `.html` de hasta 20 MB. Cada Dueño tiene hasta 20 presentaciones y 50 MB en total. Subir de nuevo reemplaza la presentación y mantiene su enlace.
+- Una presentación es un solo `.html` de hasta 20 MB. Cada Dueño sube cuantas presentaciones quiera, mientras sumen hasta 50 MB. Subir de nuevo reemplaza la presentación y mantiene su enlace.
 - Las presentaciones no están listadas: solo las ve quien tiene el enlace. No hay galería.
 - Las Notas del presentador nunca viajan en el HTML que ve el Público; llegan solo al Control.
 - El QR de control sirve una sola vez: el primer celular que lo escanea se vuelve el Control.

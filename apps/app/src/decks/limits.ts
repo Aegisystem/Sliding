@@ -1,11 +1,11 @@
 const MB = 1024 * 1024;
 
 export interface Limits {
-  /** Tamaño máximo de un deck. */
+  /** Tamaño máximo de una presentación: KV no guarda valores de más de 25 MiB. */
   deckBytes: number;
-  decksPerOwner: number;
-  /** Lo que pueden sumar todos los decks de un Dueño (el plan gratis de KV da 1 GB en total). */
+  /** Lo que pueden sumar todas las presentaciones de un Dueño (el plan gratis de KV da 1 GB en total). */
   bytesPerOwner: number;
 }
 
-export const LIMITS: Limits = { deckBytes: 20 * MB, decksPerOwner: 20, bytesPerOwner: 50 * MB };
+// Solo se limita el peso: cada Dueño sube cuantas presentaciones quiera mientras quepan.
+export const LIMITS: Limits = { deckBytes: 20 * MB, bytesPerOwner: 50 * MB };

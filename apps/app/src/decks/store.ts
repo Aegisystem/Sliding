@@ -1,7 +1,7 @@
 import { type DeckKind, inspectDeck, newDeckId } from "@sliding/core";
 import type { Limits } from "./limits";
 
-export type StoreError = "vacio" | "no-html" | "muy-grande" | "cupo-decks" | "cupo-espacio" | "no-existe";
+export type StoreError = "vacio" | "no-html" | "muy-grande" | "cupo-espacio" | "no-existe";
 export type StoreResult = { ok: true; id: string } | { ok: false; error: StoreError };
 
 export interface DeckRow {
@@ -70,8 +70,6 @@ export async function storeDeck(
       .first<{ size: number }>();
     if (!existing) return { ok: false, error: "no-existe" };
     previousSize = existing.size;
-  } else if (current.decks >= limits.decksPerOwner) {
-    return { ok: false, error: "cupo-decks" };
   }
   if (current.bytes - previousSize + file.size > limits.bytesPerOwner) return { ok: false, error: "cupo-espacio" };
 
