@@ -3,6 +3,8 @@
   // Queda en sliding.aegisystem.xyz (ADR 0001).
   "name": "sliding",
   "main": "src/index.ts",
+  // Fuente, estilos y el JS del panel. Se sirven antes que el Worker.
+  "assets": { "directory": "./public" },
   "compatibility_date": "2026-11-01",
   "routes": [{ "pattern": "sliding.aegisystem.xyz", "custom_domain": true }],
   // Un solo origen para la app: las URLs de vuelta de OAuth apuntan ahí.

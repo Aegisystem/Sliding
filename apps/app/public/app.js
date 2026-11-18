@@ -1,0 +1,62 @@
+// Mejoras del panel. Todo funciona sin JS; esto solo ahorra clics.
+
+// Copiar un enlace.
+document.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-copy]");
+  if (!button) return;
+  try {
+    await navigator.clipboard.writeText(button.dataset.copy);
+    button.textContent = "Copiado";
+    button.classList.add("is-copied");
+    setTimeout(() => {
+      button.textContent = "Copiar";
+      button.classList.remove("is-copied");
+    }, 2000);
+  } catch {
+    button.textContent = "Cópialo a mano";
+  }
+});
+
+// Confirmar antes de borrar: el enlace deja de funcionar.
+document.addEventListener("submit", (event) => {
+  const form = event.target;
+  if (!form.matches(".delete")) return;
+  const ok = confirm(`¿Borrar «${form.dataset.title}»? Su enlace dejará de funcionar y no se puede deshacer.`);
+  if (!ok) event.preventDefault();
+});
+
+// Reemplazar: elegir el archivo ya lo sube.
+document.addEventListener("change", (event) => {
+  const input = event.target;
+  if (input.matches(".replace input[type=file]") && input.files.length) input.form.requestSubmit();
+});
+
+// Subir: mostrar el archivo elegido y aceptar que lo suelten encima.
+const upload = document.querySelector(".upload");
+if (upload) {
+  const input = upload.querySelector("input[type=file]");
+  const label = upload.querySelector(".upload-file");
+  const show = () => {
+    if (!input.files.length) return;
+    label.textContent = input.files[0].name;
+    label.classList.add("has-file");
+  };
+  input.addEventListener("change", show);
+  const page = document.querySelector("main");
+  page.addEventListener("dragover", (event) => {
+    if (input.disabled || !event.dataTransfer.types.includes("Files")) return;
+    event.preventDefault();
+    upload.classList.add("is-dragging");
+  });
+  page.addEventListener("dragleave", (event) => {
+    if (!page.contains(event.relatedTarget)) upload.classList.remove("is-dragging");
+  });
+  page.addEventListener("drop", (event) => {
+    if (input.disabled || !event.dataTransfer.files.length) return;
+    event.preventDefault();
+    upload.classList.remove("is-dragging");
+    input.files = event.dataTransfer.files;
+    show();
+    upload.requestSubmit();
+  });
+}

@@ -1,93 +1,350 @@
 import { html } from "hono/html";
+import type { HtmlEscapedString } from "hono/utils/html";
 import type { User } from "./auth/users";
+import type { Limits } from "./decks/limits";
+import type { DeckRow, Usage } from "./decks/store";
 
-// Las páginas de decks no se indexan: el Enlace del deck no está listado.
-const head = (title: string, { index = false } = {}) => html`<meta charset="utf-8" />
+type Html = HtmlEscapedString | Promise<HtmlEscapedString>;
+
+const FONT = "/fonts/archivo-latin-wdth.woff2";
+
+// ── Piezas comunes ────────────────────────────────────────────────────────
+
+/** Las páginas de decks no se indexan: el Enlace del deck no está listado. */
+const head = (title: string, { index = false, styled = true } = {}) => html`<meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   ${index ? "" : html`<meta name="robots" content="noindex" />`}
-  <title>${title}</title>`;
+  <title>${title}</title>
+  ${styled
+    ? html`<link rel="preload" href="${FONT}" as="font" type="font/woff2" crossorigin />
+        <link rel="stylesheet" href="/styles.css" />`
+    : ""}`;
 
-const textStyle = html`<style>
-    body { max-width: 42rem; margin: 0 auto; padding: 2rem 1rem; font: 1.05rem/1.6 system-ui, sans-serif; color: #1d1d1f; }
-    h1 { line-height: 1.2; }
-    h2 { margin-top: 2rem; }
-    footer { margin-top: 3rem; color: #6e6e73; font-size: .9rem; }
-    .actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.5rem; }
-    .button { display: inline-block; padding: .7rem 1.1rem; border: 1px solid #1d1d1f; border-radius: 8px; background: #fff; color: #1d1d1f; font: inherit; text-decoration: none; cursor: pointer; }
-    .button:hover { background: #1d1d1f; color: #fff; }
-    .who { display: flex; align-items: center; gap: .75rem; }
-    .who img { width: 40px; height: 40px; border-radius: 50%; }
-    .error { padding: .75rem 1rem; border-radius: 8px; background: #fdecea; color: #8a1c13; }
-  </style>`;
+/** Cabecera corrida, como la de cada página de un programa impreso. */
+const runningHead = (user: User | null) => html`<header class="running-head">
+  <a class="wordmark" href="/">Sliding</a>
+  <nav class="running-nav" aria-label="Principal">
+    ${user
+      ? html`<a href="/panel">Tu panel</a>
+          <span class="running-user">
+            ${user.avatarUrl ? html`<img src="${user.avatarUrl}" alt="" width="24" height="24" referrerpolicy="no-referrer" />` : ""}
+            <span>${user.name}</span>
+          </span>
+          <form method="post" action="/auth/logout"><button type="submit">Cerrar sesión</button></form>`
+      : html`<a href="/#entrar">Entrar</a>`}
+  </nav>
+</header>`;
 
-const ERRORS: Record<string, string> = {
+const footer = () => html`<footer class="colophon">
+  <p>Sliding. Tus decks HTML, presentados desde el celular.</p>
+  <p><a href="/privacidad">Privacidad</a> · <a href="https://github.com/Aegisystem/Sliding">Código en GitHub</a></p>
+</footer>`;
+
+const layout = ({
+  title,
+  user,
+  body,
+  page,
+  index = false,
+}: {
+  title: string;
+  user: User | null;
+  body: Html;
+  page: string;
+  index?: boolean;
+}) => html`<!doctype html>
+<html lang="es">
+<head>
+  ${head(title, { index })}
+</head>
+<body class="page-${page}">
+  <a class="skip" href="#contenido">Saltar al contenido</a>
+  ${runningHead(user)}
+  <main id="contenido">${body}</main>
+  ${footer()}
+  <script src="/app.js" defer></script>
+</body>
+</html>`;
+
+const githubMark = html`<svg class="mark" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>`;
+
+const googleMark = html`<svg class="mark" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>`;
+
+const number = new Intl.NumberFormat("es", { maximumFractionDigits: 1 });
+const day = new Intl.DateTimeFormat("es", { day: "numeric", month: "short", timeZone: "UTC" });
+
+export function formatBytes(bytes: number): string {
+  if (bytes === 0) return "0 MB";
+  if (bytes < 1024 * 1024) return `${number.format(Math.max(1, Math.round(bytes / 1024)))} KB`;
+  return `${number.format(bytes / (1024 * 1024))} MB`;
+}
+const mb = (bytes: number) => number.format(bytes / (1024 * 1024));
+
+// ── Portada ───────────────────────────────────────────────────────────────
+
+const LOGIN_ERRORS: Record<string, string> = {
   login: "No se pudo iniciar sesión. Intenta de nuevo.",
   disabled: "Tu cuenta está desactivada.",
 };
 
-export const homePage = ({ user, error }: { user: User | null; error?: string }) => html`<!doctype html>
-<html lang="es">
-<head>
-  ${head("Sliding", { index: true })}
-  ${textStyle}
-</head>
-<body>
-  <h1>Sliding</h1>
-  <p>Sube tu deck HTML y preséntalo con el celular.</p>
-  ${error && ERRORS[error] ? html`<p class="error" role="alert">${ERRORS[error]}</p>` : ""}
-  ${user
-    ? html`<div class="who">
-        ${user.avatarUrl ? html`<img src="${user.avatarUrl}" alt="" referrerpolicy="no-referrer" />` : ""}
-        <p>Hola, ${user.name}.</p>
+const badge = (user: User | null, error?: string) => html`<div class="badge-hang" id="entrar">
+  <span class="lanyard" aria-hidden="true"></span>
+  <section class="badge" aria-labelledby="badge-name">
+    <span class="badge-slot" aria-hidden="true"></span>
+    ${user
+      ? html`${user.avatarUrl
+            ? html`<img class="badge-photo" src="${user.avatarUrl}" alt="" width="64" height="64" referrerpolicy="no-referrer" />`
+            : ""}
+          <h2 class="badge-name" id="badge-name">Hola, ${user.name}.</h2>
+          <div class="badge-actions">
+            <a class="btn btn-ink" href="/panel">Ir a tu panel</a>
+            <form method="post" action="/auth/logout"><button class="btn" type="submit">Cerrar sesión</button></form>
+          </div>`
+      : html`<h2 class="badge-name" id="badge-name">Hola.</h2>
+          <p class="badge-note">Entra para subir tus decks.</p>
+          ${error && LOGIN_ERRORS[error] ? html`<p class="badge-error" role="alert">${LOGIN_ERRORS[error]}</p>` : ""}
+          <div class="badge-actions">
+            <a class="btn btn-ink" href="/auth/github">${githubMark}<span>Entrar con GitHub</span></a>
+            <a class="btn" href="/auth/google">${googleMark}<span>Entrar con Google</span></a>
+          </div>`}
+    <p class="badge-role">Orador</p>
+  </section>
+</div>`;
+
+export const homePage = ({ user, error, limits }: { user: User | null; error?: string; limits: Limits }) =>
+  layout({
+    title: "Sliding",
+    user,
+    page: "home",
+    index: true,
+    body: html`<div class="cover">
+        <div class="cover-top">
+          <h1 class="cover-title">Sliding</h1>
+          <p class="cover-lead">Sube tu deck HTML y queda publicado, sin desplegar nada. Para presentarlo, tu celular se vuelve el control.</p>
+        </div>
+        ${badge(user, error)}
+        <ol class="tracks" aria-label="El día de tu charla">
+          <li class="track track-azul">
+            <h2>Antes de la charla</h2>
+            <p>Sube tu deck: un solo archivo .html de hasta ${mb(limits.deckBytes)} MB. Si lo hiciste con html-slides, Sliding entiende sus slides y sus notas.</p>
+          </li>
+          <li class="track track-naranja">
+            <h2>Al empezar</h2>
+            <p>Abre tu Enlace para presentar en el computador del lugar y escanea el QR con tu celular.</p>
+            <span class="stamp">Por confirmar</span>
+          </li>
+          <li class="track track-verde">
+            <h2>Durante</h2>
+            <p>Avanza desde el celular con tus notas, el cronómetro y la slide que sigue. El público solo ve el deck.</p>
+            <span class="stamp">Por confirmar</span>
+          </li>
+          <li class="track track-amarillo">
+            <h2>Después</h2>
+            <p>Comparte el Enlace del deck: cualquiera lo ve sin cuenta y sin tus notas.</p>
+          </li>
+        </ol>
       </div>
-      <form class="actions" method="post" action="/auth/logout">
-        <button class="button" type="submit">Cerrar sesión</button>
-      </form>`
-    : html`<div class="actions">
-        <a class="button" href="/auth/github">Entrar con GitHub</a>
-        <a class="button" href="/auth/google">Entrar con Google</a>
-      </div>`}
-  <footer><a href="/privacidad">Privacidad</a></footer>
-</body>
-</html>`;
+      <section class="info" aria-labelledby="info-title">
+        <h2 id="info-title">Información general</h2>
+        <dl class="info-rows">
+          <div>
+            <dt>Formatos</dt>
+            <dd>Cualquier deck de un solo archivo HTML. Con html-slides tienes control de cada slide y tus notas; con el resto, anterior y siguiente.</dd>
+          </div>
+          <div>
+            <dt>Espacio</dt>
+            <dd>Hasta ${limits.decksPerOwner} decks y ${mb(limits.bytesPerOwner)} MB por persona, con ${mb(limits.deckBytes)} MB como máximo por deck.</dd>
+          </div>
+          <div>
+            <dt>Privacidad</dt>
+            <dd>Tus decks no aparecen en buscadores ni en listas: solo los ve quien tiene el enlace. Tus notas nunca llegan a la pantalla del público.</dd>
+          </div>
+          <div>
+            <dt>Agentes</dt>
+            <dd>Por confirmar: Claude y otros agentes podrán subir decks por ti con un token.</dd>
+          </div>
+          <div>
+            <dt>Precio</dt>
+            <dd>Gratis.</dd>
+          </div>
+        </dl>
+      </section>`,
+  });
 
-export const privacyPage = () => html`<!doctype html>
-<html lang="es">
-<head>
-  ${head("Privacidad · Sliding", { index: true })}
-  ${textStyle}
-</head>
-<body>
-  <h1>Privacidad</h1>
-  <p>Última actualización: 18 de noviembre de 2026.</p>
-  <p>Sliding es un sitio para subir decks HTML y presentarlos con el celular. Esta página dice qué datos guarda, para qué y cómo borrarlos.</p>
+// ── Panel ─────────────────────────────────────────────────────────────────
 
-  <h2>Qué guardamos</h2>
-  <ul>
-    <li><strong>Tu cuenta.</strong> Al entrar con GitHub o Google guardamos el identificador de tu cuenta en ese servicio, tu nombre y tu correo. Los usamos para mostrarte tus decks y para avisarte si hay un problema con ellos.</li>
-    <li><strong>Tus decks.</strong> Guardamos los archivos HTML que subes y sus notas del orador. Cualquiera con el enlace de un deck puede verlo, pero sin las notas.</li>
-    <li><strong>Tus tokens.</strong> Si creas tokens para que un agente suba decks por ti, guardamos solo una huella de cada token, su nombre y la última vez que se usó.</li>
-    <li><strong>Las presentaciones en vivo.</strong> Mientras presentas guardamos en qué slide vas. Se borra cuando termina la sesión.</li>
-  </ul>
+const PANEL_OK: Record<string, string> = {
+  subido: "Deck subido. Ya puedes compartir su enlace.",
+  reemplazado: "Deck reemplazado. Su enlace sigue siendo el mismo.",
+  borrado: "Deck borrado. Su enlace ya no funciona.",
+};
 
-  <h2>Cookies</h2>
-  <p>Usamos una sola cookie, para que no tengas que iniciar sesión en cada visita. No usamos cookies de publicidad ni de analítica.</p>
+const panelError = (code: string, usage: Usage, limits: Limits): string | null =>
+  ({
+    vacio: "Elige un archivo antes de subir.",
+    "no-html": "Sliding solo acepta archivos .html.",
+    "muy-grande": `El archivo pasa de ${mb(limits.deckBytes)} MB. Reduce sus imágenes y vuelve a subirlo.`,
+    "cupo-decks": `Ya tienes ${limits.decksPerOwner} decks. Borra uno para subir otro.`,
+    "cupo-espacio": `No queda espacio: tus decks ocupan ${formatBytes(usage.bytes)} de ${mb(limits.bytesPerOwner)} MB. Borra alguno o reduce sus imágenes.`,
+    "no-existe": "Ese deck no existe o no es tuyo.",
+  })[code] ?? null;
 
-  <h2>Con quién compartimos tus datos</h2>
-  <p>Con nadie. Los datos viven en Cloudflare, que aloja el sitio. GitHub y Google solo intervienen cuando inicias sesión con ellos.</p>
+const room = (label: string, url: string, note: string) => html`<div class="room">
+  <span class="room-label">${label}</span>
+  <a class="room-url" href="${url}" target="_blank" rel="noopener">${url.replace(/^https?:\/\//, "")}</a>
+  <span class="room-note">${note}</span>
+  <button class="btn btn-small copy" type="button" data-copy="${url}">Copiar</button>
+</div>`;
 
-  <h2>Cómo borrar tus datos</h2>
-  <p>Puedes borrar tus decks desde tu panel cuando quieras. Para borrar tu cuenta y todo lo que contiene, abre una issue en <a href="https://github.com/Aegisystem/Sliding/issues">github.com/Aegisystem/Sliding</a> y la borramos en menos de 30 días.</p>
+const session = (deck: DeckRow, origin: string) => html`<li class="session">
+  <div class="session-code ${deck.kind === "html-slides" ? "track-azul" : "track-amarillo"}">
+    ${deck.kind === "html-slides"
+      ? html`<span class="session-count num">${deck.slideCount ?? 0}</span><span>${deck.slideCount === 1 ? "slide" : "slides"}</span>`
+      : html`<span class="session-count">HTML</span><span>genérico</span>`}
+  </div>
+  <div class="session-main">
+    <h2 class="session-title">${deck.title}</h2>
+    <p class="session-meta">
+      ${deck.kind === "html-slides" ? "html-slides" : "HTML genérico"} ·
+      <span class="num">${formatBytes(deck.size)}</span> · actualizado el ${day.format(deck.updatedAt)}
+    </p>
+  </div>
+  <div class="session-rooms">
+    ${room("Enlace del deck", `${origin}/d/${deck.id}`, "Para el público: sin tus notas.")}
+    ${room("Enlace para presentar", `${origin}/p/${deck.presentSecret}`, "Solo para ti: no lo compartas.")}
+  </div>
+  <div class="session-actions">
+    <form class="replace" method="post" action="/panel/decks/${deck.id}" enctype="multipart/form-data">
+      <label class="btn btn-small">
+        Reemplazar
+        <input class="visually-hidden" type="file" name="file" accept=".html,.htm,text/html" required />
+      </label>
+      <noscript><button class="btn btn-small" type="submit">Subir reemplazo</button></noscript>
+    </form>
+    <form class="delete" method="post" action="/panel/decks/${deck.id}/delete" data-title="${deck.title}">
+      <button class="btn btn-small btn-danger" type="submit">Borrar</button>
+    </form>
+  </div>
+</li>`;
 
-  <footer><a href="/">Sliding</a></footer>
-</body>
-</html>`;
+export const panelPage = ({
+  user,
+  decks,
+  usage,
+  limits,
+  origin,
+  ok,
+  error,
+}: {
+  user: User;
+  decks: DeckRow[];
+  usage: Usage;
+  limits: Limits;
+  origin: string;
+  ok?: string;
+  error?: string;
+}) => {
+  const okText = ok ? PANEL_OK[ok] : undefined;
+  const errorText = error ? panelError(error, usage, limits) : null;
+  const full = usage.decks >= limits.decksPerOwner;
+  return layout({
+    title: "Tu panel · Sliding",
+    user,
+    page: "panel",
+    body: html`<div class="panel-head">
+        <h1>Tus decks</h1>
+        <p class="usage">
+          <span class="num">${usage.decks}</span> de <span class="num">${limits.decksPerOwner}</span> decks ·
+          <span class="num">${formatBytes(usage.bytes)}</span> de <span class="num">${mb(limits.bytesPerOwner)}</span> MB
+        </p>
+        <form class="upload" method="post" action="/panel/decks" enctype="multipart/form-data">
+          <label class="btn btn-ink">
+            Elegir archivo .html
+            <input class="visually-hidden" type="file" name="file" accept=".html,.htm,text/html" required ${full ? "disabled" : ""} />
+          </label>
+          <span class="upload-file" aria-live="polite">${full ? `Tienes ${limits.decksPerOwner} decks: borra uno para subir otro.` : `Hasta ${mb(limits.deckBytes)} MB.`}</span>
+          <button class="btn" type="submit" ${full ? "disabled" : ""}>Subir</button>
+        </form>
+      </div>
+      ${okText ? html`<p class="flash flash-ok" role="status">${okText}</p>` : ""}
+      ${errorText ? html`<p class="flash flash-error" role="alert">${errorText}</p>` : ""}
+      ${decks.length
+        ? html`<ol class="program" aria-label="Tus decks">${decks.map((deck) => session(deck, origin))}</ol>`
+        : html`<div class="empty">
+            <h2>Tu programa está vacío.</h2>
+            <p>Sube tu primer deck con el botón de arriba. ¿Todavía no tienes uno? Pídele a Claude un deck con la skill html-slides, o usa cualquier HTML de un solo archivo.</p>
+          </div>`}`,
+  });
+};
 
-/** Página del Enlace del deck: el deck ocupa toda la ventana, servido desde su propio origen. */
+// ── Enlace para presentar ─────────────────────────────────────────────────
+
+export const presentPage = ({ user, title, deckUrl }: { user: User | null; title: string; deckUrl: string }) =>
+  layout({
+    title: `Presentar ${title} · Sliding`,
+    user,
+    page: "notice",
+    body: html`<div class="notice">
+      <h1>Presentar «${title}»</h1>
+      <p>La Pantalla con el QR de control está por confirmar: llega en la próxima versión. Mientras tanto, puedes mostrar el deck a pantalla completa desde su enlace.</p>
+      <p><a class="btn btn-ink" href="${deckUrl}">Abrir el deck</a></p>
+    </div>`,
+  });
+
+// ── Privacidad ────────────────────────────────────────────────────────────
+
+export const privacyPage = ({ user }: { user: User | null }) =>
+  layout({
+    title: "Privacidad · Sliding",
+    user,
+    page: "read",
+    index: true,
+    body: html`<article class="read">
+      <h1>Privacidad</h1>
+      <p class="read-date">Última actualización: 18 de noviembre de 2026.</p>
+      <p>Sliding es un sitio para subir decks HTML y presentarlos con el celular. Esta página dice qué datos guarda, para qué y cómo borrarlos.</p>
+
+      <h2>Qué guardamos</h2>
+      <ul>
+        <li><strong>Tu cuenta.</strong> Al entrar con GitHub o Google guardamos el identificador de tu cuenta en ese servicio, tu nombre y tu correo. Los usamos para mostrarte tus decks y para avisarte si hay un problema con ellos.</li>
+        <li><strong>Tus decks.</strong> Guardamos los archivos HTML que subes y sus notas del orador. Cualquiera con el enlace de un deck puede verlo, pero sin las notas.</li>
+        <li><strong>Tus tokens.</strong> Si creas tokens para que un agente suba decks por ti, guardamos solo una huella de cada token, su nombre y la última vez que se usó.</li>
+        <li><strong>Las presentaciones en vivo.</strong> Mientras presentas guardamos en qué slide vas. Se borra cuando termina la sesión.</li>
+      </ul>
+
+      <h2>Cookies</h2>
+      <p>Usamos una sola cookie, para que no tengas que iniciar sesión en cada visita. No usamos cookies de publicidad ni de analítica.</p>
+
+      <h2>Con quién compartimos tus datos</h2>
+      <p>Con nadie. Los datos viven en Cloudflare, que aloja el sitio. GitHub y Google solo intervienen cuando inicias sesión con ellos.</p>
+
+      <h2>Cómo borrar tus datos</h2>
+      <p>Puedes borrar tus decks desde tu panel cuando quieras. Para borrar tu cuenta y todo lo que contiene, abre una issue en <a href="https://github.com/Aegisystem/Sliding/issues">github.com/Aegisystem/Sliding</a> y la borramos en menos de 30 días.</p>
+    </article>`,
+  });
+
+// ── Errores y Enlace del deck ─────────────────────────────────────────────
+
+export const notFoundPage = (user: User | null = null) =>
+  layout({
+    title: "Deck no encontrado · Sliding",
+    user,
+    page: "notice",
+    body: html`<div class="notice">
+      <h1>Deck no encontrado</h1>
+      <p>Esta sesión no está en el programa. Revisa el enlace; si el deck existía, puede que su Dueño lo haya borrado.</p>
+      <p><a class="btn" href="/">Ir a la portada</a></p>
+    </div>`,
+  });
+
+/**
+ * Página del Enlace del deck: el deck ocupa toda la ventana, servido desde su
+ * propio origen. Sliding no le pone nada encima (el deck es del Dueño).
+ */
 export const viewerPage = ({ title, src }: { title: string; src: string }) => html`<!doctype html>
 <html lang="es">
 <head>
-  ${head(`${title} · Sliding`)}
+  ${head(`${title} · Sliding`, { styled: false })}
   <style>
     html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
     iframe { display: block; width: 100%; height: 100%; border: 0; }
@@ -105,16 +362,5 @@ export const viewerPage = ({ title, src }: { title: string; src: string }) => ht
     const frame = document.querySelector("iframe");
     frame.addEventListener("load", () => frame.focus());
   </script>
-</body>
-</html>`;
-
-export const notFoundPage = () => html`<!doctype html>
-<html lang="es">
-<head>
-  ${head("Deck no encontrado · Sliding")}
-</head>
-<body>
-  <h1>Deck no encontrado</h1>
-  <p>Revisa el enlace. Si el deck existía, puede que su Dueño lo haya borrado.</p>
 </body>
 </html>`;

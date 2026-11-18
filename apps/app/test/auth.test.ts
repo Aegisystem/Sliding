@@ -1,45 +1,6 @@
 import { env } from "cloudflare:workers";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { OAuthProvider, ProviderProfile } from "../src/auth/providers";
-import { createApp } from "../src/index";
-
-const ada: ProviderProfile = { id: "42", name: "Ada", email: "ada@example.com", avatarUrl: "https://avatars.test/ada.png" };
-
-function fakeProvider(result: () => ProviderProfile): OAuthProvider {
-  return {
-    start: () => ({ url: new URL("https://proveedor.test/autorizar"), state: "estado-123", verifier: "verificador" }),
-    finish: async (code, verifier) => {
-      if (code !== "codigo" || verifier !== "verificador") throw new Error("código inesperado");
-      return result();
-    },
-  };
-}
-
-/** Un navegador mínimo: guarda las cookies que pone la app y las manda de vuelta. */
-function browser({ origin = "https://app.test", profile = () => ada } = {}) {
-  const app = createApp({ providers: () => ({ github: fakeProvider(profile), google: fakeProvider(profile) }) });
-  const jar = new Map<string, string>();
-  const setCookies: string[] = [];
-  async function request(path: string, init: RequestInit = {}) {
-    const headers = new Headers(init.headers);
-    if (jar.size) headers.set("cookie", [...jar].map(([k, v]) => `${k}=${v}`).join("; "));
-    const response = await app.request(`${origin}${path}`, { ...init, headers }, env);
-    for (const line of response.headers.getSetCookie()) {
-      setCookies.push(line);
-      const pair = line.split(";")[0]!;
-      const name = pair.slice(0, pair.indexOf("="));
-      if (/max-age=0/i.test(line)) jar.delete(name);
-      else jar.set(name, pair.slice(pair.indexOf("=") + 1));
-    }
-    return response;
-  }
-  const login = async (provider = "github", state = "estado-123") => {
-    await request(`/auth/${provider}`);
-    return request(`/auth/${provider}/callback?code=codigo&state=${state}`);
-  };
-  const home = async () => (await request("/")).text();
-  return { request, login, home, jar, setCookies };
-}
+import { ada, browser } from "./helpers";
 
 const countUsers = async (providerId: string) =>
   (await env.DB.prepare("SELECT COUNT(*) AS n FROM users WHERE provider_id = ?").bind(providerId).first<{ n: number }>())!.n;
@@ -63,7 +24,7 @@ describe("iniciar sesión", () => {
     const b = browser({ profile: () => profile });
     const response = await b.login(provider);
     expect(response.status).toBe(302);
-    expect(response.headers.get("location")).toBe("/");
+    expect(response.headers.get("location")).toBe("/panel");
     const cookie = b.setCookies.find((line) => line.startsWith("__Host-session="))!;
     for (const attr of ["HttpOnly", "Secure", "SameSite=Lax", "Path=/"]) expect(cookie).toContain(attr);
     expect(await countUsers(profile.id)).toBe(1);

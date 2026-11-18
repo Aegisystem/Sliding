@@ -7,3 +7,8 @@ dist/
 .DS_Store
 coverage/
 *.log
+# impeccable: capturas, bocetos y estado de las rondas (el brief en surfaces/ sí va)
+**/.impeccable/review/
+**/.impeccable/questions/
+**/.impeccable/mocks/
+**/.impeccable/config.local.json

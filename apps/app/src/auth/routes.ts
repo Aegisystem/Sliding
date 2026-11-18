@@ -47,7 +47,7 @@ export function authRoutes(getProviders: (c: Context<AppEnv>) => Providers) {
     const user = await upsertUser(c.env.DB, provider, profile);
     if (user.disabled) return c.redirect("/?error=disabled", 302);
     await startSession(c, user.id);
-    return c.redirect("/", 302);
+    return c.redirect("/panel", 302);
   });
 
   return auth;
