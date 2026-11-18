@@ -1,0 +1,6 @@
+# Copia este archivo como .dev.vars, o corre `bash scripts/setup.sh` para llenarlo.
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+SESSION_SECRET=
