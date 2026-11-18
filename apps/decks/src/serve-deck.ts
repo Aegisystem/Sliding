@@ -25,7 +25,7 @@ export async function serveDeck(id: string, env: Cloudflare.Env): Promise<Respon
 }
 
 function notFound(): Response {
-  return new Response("Deck no encontrado", {
+  return new Response("Presentación no encontrada", {
     status: 404,
     headers: { "content-type": "text/plain; charset=utf-8", "x-robots-tag": "noindex" },
   });

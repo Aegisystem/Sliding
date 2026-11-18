@@ -1,0 +1,402 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-18T14:03:38+00:00",
+  "title": "Design System: Sliding",
+  "extensions": {
+    "colorMeta": {
+      "paper": {
+        "role": "neutral",
+        "displayName": "Cartulina",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Tinta",
+        "canonical": "#111318",
+        "tonalRamp": [
+          "#090b10",
+          "#23252a",
+          "#3f4248",
+          "#5e6168",
+          "#7f8289",
+          "#a2a5ac",
+          "#c6c9d0",
+          "#ebeef6"
+        ]
+      },
+      "ink-soft": {
+        "role": "neutral",
+        "displayName": "Tinta suave",
+        "canonical": "#5b6170",
+        "tonalRamp": [
+          "#090b10",
+          "#22252c",
+          "#3e424c",
+          "#5b6170",
+          "#7d828f",
+          "#a1a5af",
+          "#c6c9d1",
+          "#eceef3"
+        ]
+      },
+      "azul": {
+        "role": "primary",
+        "displayName": "Azul de pista",
+        "canonical": "#1f4bd8",
+        "tonalRamp": [
+          "#000331",
+          "#061a62",
+          "#14349a",
+          "#2451d6",
+          "#4d7aeb",
+          "#7ca2f9",
+          "#abc9ff",
+          "#dbefff"
+        ],
+        "textPairing": "Texto en paper (6,87:1)."
+      },
+      "naranja": {
+        "role": "secondary",
+        "displayName": "Naranja de pista",
+        "canonical": "#ff6a13",
+        "tonalRamp": [
+          "#200000",
+          "#470e00",
+          "#732400",
+          "#a43a00",
+          "#d35509",
+          "#fc7a3d",
+          "#ffa97a",
+          "#ffd6b0"
+        ],
+        "textPairing": "Texto en ink (6,48:1)."
+      },
+      "verde": {
+        "role": "secondary",
+        "displayName": "Verde de pista",
+        "canonical": "#12a574",
+        "tonalRamp": [
+          "#001106",
+          "#002f1b",
+          "#005034",
+          "#00744f",
+          "#18996c",
+          "#5bbb91",
+          "#93dcb9",
+          "#c6fee2"
+        ],
+        "textPairing": "Texto en ink (5,89:1)."
+      },
+      "amarillo": {
+        "role": "tertiary",
+        "displayName": "Amarillo de pista",
+        "canonical": "#ffd23f",
+        "tonalRamp": [
+          "#130900",
+          "#312300",
+          "#533f00",
+          "#785e00",
+          "#9e7e07",
+          "#c3a138",
+          "#e9c65d",
+          "#ffec91"
+        ],
+        "textPairing": "Texto en ink (12,87:1)."
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Tapa",
+        "purpose": "Solo la palabra «Sliding» en la tapa."
+      },
+      "headline": {
+        "displayName": "Titular",
+        "purpose": "h1 de avisos, Privacidad y panel."
+      },
+      "title": {
+        "displayName": "Título",
+        "purpose": "Pistas, sesiones, nombre en la credencial."
+      },
+      "title-small": {
+        "displayName": "Rótulo",
+        "purpose": "Marca, rótulos de hilera, rol «Presentador»."
+      },
+      "body": {
+        "displayName": "Texto",
+        "purpose": "Texto corrido; 1rem bajo 560px."
+      },
+      "body-small": {
+        "displayName": "Texto menor",
+        "purpose": "Metadatos, URLs, colofón."
+      },
+      "control": {
+        "displayName": "Control",
+        "purpose": "Botones; Archivo al 80% de ancho."
+      },
+      "label": {
+        "displayName": "Sello",
+        "purpose": "Sellos de goma en mayúsculas condensadas."
+      },
+      "numeral": {
+        "displayName": "Cifra",
+        "purpose": "Número de diapositivas en el código de sesión; cifras tabulares."
+      }
+    },
+    "fonts": [
+      {
+        "family": "Archivo",
+        "src": "/fonts/archivo-latin-wdth.woff2",
+        "axes": {
+          "wdth": "62–125",
+          "wght": "100–900"
+        },
+        "license": "OFL (public/fonts/OFL.txt)",
+        "selfHosted": true,
+        "preloaded": true
+      }
+    ],
+    "typographyCorrections": [
+      {
+        "name": "--condensed-words",
+        "value": "0.1em",
+        "purpose": "word-spacing en todo texto con font-stretch 62%: a ese ancho el espacio entre palabras casi desaparece."
+      }
+    ],
+    "shadows": [
+      {
+        "name": "badge-hang",
+        "value": "0 1.5rem 2.5rem -1.25rem rgb(17 19 24 / 0.45), 0 0.25rem 0.5rem rgb(17 19 24 / 0.12)",
+        "purpose": "Solo la credencial colgada; el resto del sistema es plano."
+      }
+    ],
+    "borders": [
+      {
+        "name": "rule",
+        "value": "2px solid var(--ink)",
+        "purpose": "Toda división: hileras, pistas, sesiones, colofón, controles, cinta."
+      },
+      {
+        "name": "badge",
+        "value": "3px solid var(--ink)",
+        "purpose": "Credencial."
+      },
+      {
+        "name": "stamp",
+        "value": "3px solid currentColor",
+        "purpose": "Sellos, girados -4deg."
+      },
+      {
+        "name": "disabled",
+        "value": "2px dashed var(--ink)",
+        "purpose": "Control deshabilitado."
+      }
+    ],
+    "focus": [
+      {
+        "name": "default",
+        "value": "outline: 3px solid var(--ink); outline-offset: 3px"
+      },
+      {
+        "name": "on-azul",
+        "value": "outline-color: var(--paper)"
+      },
+      {
+        "name": "in-running-head",
+        "value": "outline-color: var(--amarillo)"
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Curva única del sistema."
+      },
+      {
+        "name": "state-transition",
+        "value": "160ms var(--ease)",
+        "purpose": "Fondo y color de botones y zona de subida."
+      },
+      {
+        "name": "press",
+        "value": "translateY(1px)",
+        "purpose": "Botón al pulsar."
+      },
+      {
+        "name": "swing",
+        "value": "1.8s var(--ease) both; 6deg → -3.5deg → 1.6deg → -0.6deg → 0",
+        "purpose": "La credencial se balancea una vez desde su ranura (transform-origin 50% 0) y se asienta."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "animation: none; transition: none",
+        "purpose": "Con prefers-reduced-motion: reduce."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "session-stack",
+        "value": "1100px"
+      },
+      {
+        "name": "tablet",
+        "value": "900px"
+      },
+      {
+        "name": "phone",
+        "value": "560px"
+      }
+    ],
+    "openDecisions": [
+      {
+        "name": "Control y Pantalla (#5, #6)",
+        "status": "sin construir",
+        "note": "Heredan el mundo; el brief anota que el Control será oscuro por su escena de uso (celular, sala con poca luz). Sin tokens hasta que se construya."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botón",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "Control por defecto: cartulina y tinta, se invierte al hover.",
+      "html": "<button class=\"ds-btn\" type=\"button\">Cerrar sesión</button>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:0.6rem;min-height:3rem;padding:0.7rem 1.1rem;border:var(--rule,2px solid #111318);border-radius:var(--radius,10px);background:var(--paper,#fff);color:var(--ink,#111318);font-family:Archivo,system-ui,sans-serif;font-size:1.0625rem;font-stretch:80%;font-weight:700;line-height:1.1;text-decoration:none;cursor:pointer;transition:background-color 160ms cubic-bezier(0.16,1,0.3,1),color 160ms cubic-bezier(0.16,1,0.3,1),transform 160ms cubic-bezier(0.16,1,0.3,1);}.ds-btn:focus-visible{outline:3px solid #111318;outline-offset:3px;}.ds-btn:active{transform:translateY(1px);}.ds-btn:hover{background:#111318;color:#fff;}"
+    },
+    {
+      "name": "Botón de tinta",
+      "kind": "button",
+      "refersTo": "button-ink",
+      "description": "Acción primaria; pasa a azul al hover.",
+      "html": "<button class=\"ds-btn ds-btn-ink\" type=\"button\">Subir una presentación .html</button>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:0.6rem;min-height:3rem;padding:0.7rem 1.1rem;border:var(--rule,2px solid #111318);border-radius:var(--radius,10px);background:var(--paper,#fff);color:var(--ink,#111318);font-family:Archivo,system-ui,sans-serif;font-size:1.0625rem;font-stretch:80%;font-weight:700;line-height:1.1;text-decoration:none;cursor:pointer;transition:background-color 160ms cubic-bezier(0.16,1,0.3,1),color 160ms cubic-bezier(0.16,1,0.3,1),transform 160ms cubic-bezier(0.16,1,0.3,1);}.ds-btn:focus-visible{outline:3px solid #111318;outline-offset:3px;}.ds-btn:active{transform:translateY(1px);}.ds-btn-ink{background:#111318;color:#fff;}.ds-btn-ink:hover{background:#1f4bd8;border-color:#1f4bd8;}"
+    },
+    {
+      "name": "Botón Borrar",
+      "kind": "button",
+      "refersTo": "button-danger-hover",
+      "description": "Pequeño; naranja con tinta al hover.",
+      "html": "<button class=\"ds-btn ds-btn-small ds-btn-danger\" type=\"button\">Borrar</button>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:0.6rem;min-height:3rem;padding:0.7rem 1.1rem;border:var(--rule,2px solid #111318);border-radius:var(--radius,10px);background:var(--paper,#fff);color:var(--ink,#111318);font-family:Archivo,system-ui,sans-serif;font-size:1.0625rem;font-stretch:80%;font-weight:700;line-height:1.1;text-decoration:none;cursor:pointer;transition:background-color 160ms cubic-bezier(0.16,1,0.3,1),color 160ms cubic-bezier(0.16,1,0.3,1),transform 160ms cubic-bezier(0.16,1,0.3,1);}.ds-btn:focus-visible{outline:3px solid #111318;outline-offset:3px;}.ds-btn:active{transform:translateY(1px);}.ds-btn-small{min-height:2.5rem;padding:0.45rem 0.8rem;font-size:0.9375rem;}.ds-btn-danger:hover{background:#ff6a13;color:#111318;}"
+    },
+    {
+      "name": "Cabecera corrida",
+      "kind": "nav",
+      "refersTo": "running-head",
+      "description": "Barra de tinta de 3rem con marca condensada y navegación.",
+      "html": "<header class=\"ds-head\"><a class=\"ds-mark\" href=\"#\">Sliding</a><nav class=\"ds-nav\"><a href=\"#\">Tu panel</a><span class=\"ds-user\">Ana</span><a href=\"#\">Cerrar sesión</a></nav></header>",
+      "css": ".ds-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;min-height:3rem;padding:0 1.5rem;background:#111318;color:#fff;font-family:Archivo,system-ui,sans-serif;}.ds-mark{font-family:Archivo,'Arial Narrow',sans-serif;font-stretch:62%;font-weight:800;font-size:1.5rem;letter-spacing:-0.01em;word-spacing:0.1em;color:inherit;text-decoration:none;}.ds-nav{display:flex;gap:1.25rem;font-stretch:80%;font-weight:600;}.ds-nav a{color:inherit;text-decoration:none;}.ds-nav a:hover{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:0.2em;}.ds-nav a:focus-visible{outline:3px solid #ffd23f;outline-offset:3px;}.ds-user{color:#ffd23f;}"
+    },
+    {
+      "name": "Pistas",
+      "kind": "custom",
+      "refersTo": "track-azul",
+      "description": "Las cuatro pistas a color de página con su tinta medida.",
+      "html": "<ol class=\"ds-tracks\"><li class=\"ds-track ds-azul\"><h2>Antes de la charla</h2><p>Sube tu presentación.</p></li><li class=\"ds-track ds-naranja\"><h2>Al empezar</h2><p>Escanea el QR.</p><span class=\"ds-stamp\">Por confirmar</span></li><li class=\"ds-track ds-verde\"><h2>Durante</h2><p>Avanza desde el celular.</p></li><li class=\"ds-track ds-amarillo\"><h2>Después</h2><p>Comparte el enlace.</p></li></ol>",
+      "css": ".ds-tracks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:0;padding:0;list-style:none;border-top:2px solid #111318;font-family:Archivo,system-ui,sans-serif;color:#111318;}.ds-track{display:flex;flex-direction:column;gap:1rem;min-height:14rem;padding:1.25rem;}.ds-track+.ds-track{border-left:2px solid #111318;}.ds-track h2{margin:0;font-family:Archivo,'Arial Narrow',sans-serif;font-stretch:62%;font-weight:800;font-size:2.25rem;line-height:0.95;letter-spacing:-0.02em;word-spacing:0.1em;}.ds-track p{margin:0;max-width:30ch;}.ds-azul{background:#1f4bd8;color:#fff;}.ds-naranja{background:#ff6a13;}.ds-verde{background:#12a574;}.ds-amarillo{background:#ffd23f;}.ds-stamp{align-self:flex-start;margin-top:auto;padding:0.35rem 0.7rem;border:3px solid currentColor;border-radius:6px;font-family:Archivo,'Arial Narrow',sans-serif;font-stretch:62%;font-weight:800;font-size:1.125rem;text-transform:uppercase;letter-spacing:0.04em;word-spacing:0.1em;transform:rotate(-4deg);}"
+    },
+    {
+      "name": "Credencial colgada",
+      "kind": "custom",
+      "refersTo": "badge",
+      "description": "Firma del sistema: credencial plastificada en cinta amarilla que se balancea una vez al cargar.",
+      "html": "<div class=\"ds-hang\"><span class=\"ds-lanyard\"></span><section class=\"ds-badge\"><span class=\"ds-slot\"></span><h2 class=\"ds-name\">Hola.</h2><p class=\"ds-note\">Entra para subir tus presentaciones.</p><button class=\"ds-btn ds-btn-ink\" type=\"button\">Entrar con GitHub</button><button class=\"ds-btn\" type=\"button\">Entrar con Google</button><p class=\"ds-role\">Presentador</p></section></div>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:0.6rem;min-height:3rem;padding:0.7rem 1.1rem;border:var(--rule,2px solid #111318);border-radius:var(--radius,10px);background:var(--paper,#fff);color:var(--ink,#111318);font-family:Archivo,system-ui,sans-serif;font-size:1.0625rem;font-stretch:80%;font-weight:700;line-height:1.1;text-decoration:none;cursor:pointer;transition:background-color 160ms cubic-bezier(0.16,1,0.3,1),color 160ms cubic-bezier(0.16,1,0.3,1),transform 160ms cubic-bezier(0.16,1,0.3,1);}.ds-btn:focus-visible{outline:3px solid #111318;outline-offset:3px;}.ds-btn:active{transform:translateY(1px);}.ds-btn:hover{background:#111318;color:#fff;}.ds-btn-ink{background:#111318;color:#fff;}.ds-btn-ink:hover{background:#1f4bd8;border-color:#1f4bd8;}.ds-hang{display:flex;flex-direction:column;align-items:center;width:17rem;font-family:Archivo,system-ui,sans-serif;color:#111318;}.ds-lanyard{width:3rem;height:2.5rem;background:#ffd23f;border-inline:2px solid #111318;}.ds-badge{position:relative;display:flex;flex-direction:column;gap:0.75rem;width:100%;padding:2.25rem 1.5rem 0;border:3px solid #111318;border-radius:16px;background:#fff;box-shadow:0 1.5rem 2.5rem -1.25rem rgb(17 19 24 / 0.45),0 0.25rem 0.5rem rgb(17 19 24 / 0.12);overflow:hidden;transform-origin:50% 0;animation:ds-swing 1.8s cubic-bezier(0.16,1,0.3,1) both;}.ds-slot{position:absolute;top:0.9rem;left:50%;width:4.5rem;height:0.75rem;margin-left:-2.25rem;border-radius:1rem;background:#111318;}.ds-name{margin:0;font-family:Archivo,'Arial Narrow',sans-serif;font-stretch:62%;font-weight:800;font-size:3rem;line-height:0.9;word-spacing:0.1em;}.ds-note{margin:-0.25rem 0 0;color:#5b6170;}.ds-role{margin:0.5rem -1.5rem 0;padding:0.75rem 1.5rem;background:#111318;color:#ffd23f;font-family:Archivo,'Arial Narrow',sans-serif;font-stretch:62%;font-weight:800;font-size:1.5rem;letter-spacing:0.08em;text-transform:uppercase;word-spacing:0.1em;}@keyframes ds-swing{0%{transform:rotate(6deg);}30%{transform:rotate(-3.5deg);}55%{transform:rotate(1.6deg);}78%{transform:rotate(-0.6deg);}100%{transform:rotate(0);}}@media (prefers-reduced-motion:reduce){.ds-badge{animation:none;}}"
+    },
+    {
+      "name": "Sesión del programa",
+      "kind": "card",
+      "refersTo": "track-azul",
+      "description": "Hilera de una presentación entre reglas: código en campo de pista, título, salas y acciones.",
+      "html": "<div class=\"ds-session\"><div class=\"ds-code\"><span class=\"ds-count\">12</span><span class=\"session-unit\">diapositivas</span></div><div class=\"ds-main\"><h2 class=\"ds-title\">Introducción a Workers</h2><p class=\"ds-meta\">html-slides · 1,2 MB · actualizado el 18 nov</p></div><div class=\"ds-rooms\"><span class=\"ds-room\">Enlace de la presentación</span><a class=\"ds-url\" href=\"#\">sliding.aegisystem.xyz/d/abc123</a><span class=\"ds-meta\">Para el público: sin tus notas.</span></div></div>",
+      "css": ".ds-session{display:grid;grid-template-columns:7rem minmax(0,1fr) minmax(0,1.35fr);min-height:9rem;border-block:2px solid #111318;font-family:Archivo,system-ui,sans-serif;color:#111318;}.ds-code{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.15rem;background:#1f4bd8;color:#fff;border-right:2px solid #111318;font-family:Archivo,'Arial Narrow',sans-serif;font-stretch:62%;font-weight:700;line-height:1;word-spacing:0.1em;}.ds-count{font-weight:800;font-size:2.75rem;letter-spacing:-0.02em;font-variant-numeric:tabular-nums lining-nums;}.ds-main{display:flex;flex-direction:column;justify-content:center;gap:0.5rem;padding:1.25rem 1.5rem;}.ds-title{margin:0;font-family:Archivo,'Arial Narrow',sans-serif;font-stretch:62%;font-weight:800;font-size:2rem;line-height:1;word-spacing:0.1em;}.ds-meta{margin:0;color:#5b6170;font-size:0.9375rem;}.ds-rooms{display:grid;align-content:center;gap:0.25rem;padding:1rem 1.5rem;border-left:2px solid #111318;}.ds-room{font-family:Archivo,'Arial Narrow',sans-serif;font-stretch:62%;font-weight:800;font-size:1.125rem;word-spacing:0.1em;}.ds-url{color:inherit;font-size:0.9375rem;text-decoration-thickness:2px;text-underline-offset:0.2em;font-variant-numeric:tabular-nums;}.ds-url:hover{text-decoration-thickness:3px;}.ds-url:focus-visible{outline:3px solid #111318;outline-offset:3px;}"
+    },
+    {
+      "name": "Aviso a página",
+      "kind": "custom",
+      "refersTo": "track-naranja",
+      "description": "404 y Enlace para presentar: banda naranja con sello girado.",
+      "html": "<section class=\"ds-band\"><div><h1>Presentación no encontrada</h1><p>Esta sesión no está en el programa.</p></div><span class=\"ds-stamp\">Cancelada</span></section>",
+      "css": ".ds-band{position:relative;display:flex;align-items:center;min-height:18rem;padding:3rem 2rem;background:#ff6a13;color:#111318;font-family:Archivo,system-ui,sans-serif;}.ds-band h1{margin:0 0 1rem;font-family:Archivo,'Arial Narrow',sans-serif;font-stretch:62%;font-weight:800;font-size:4rem;line-height:0.85;letter-spacing:-0.02em;word-spacing:0.1em;}.ds-band p{margin:0;max-width:52ch;font-size:1.1875rem;}.ds-stamp{position:absolute;right:2rem;bottom:1.5rem;padding:0.35rem 0.7rem;border:3px solid currentColor;border-radius:6px;font-family:Archivo,'Arial Narrow',sans-serif;font-stretch:62%;font-weight:800;font-size:1.5rem;text-transform:uppercase;letter-spacing:0.04em;word-spacing:0.1em;transform:rotate(-4deg);}"
+    },
+    {
+      "name": "Zona de subida",
+      "kind": "input",
+      "refersTo": "upload-dragging",
+      "description": "Caja con regla; amarilla al arrastrar un archivo.",
+      "html": "<form class=\"ds-upload\"><label class=\"ds-btn ds-btn-ink\">Subir una presentación .html<input type=\"file\" style=\"position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)\"></label><span class=\"ds-file\">Hasta 20 MB. También puedes soltarlo en esta página.</span></form>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:0.6rem;min-height:3rem;padding:0.7rem 1.1rem;border:var(--rule,2px solid #111318);border-radius:var(--radius,10px);background:var(--paper,#fff);color:var(--ink,#111318);font-family:Archivo,system-ui,sans-serif;font-size:1.0625rem;font-stretch:80%;font-weight:700;line-height:1.1;text-decoration:none;cursor:pointer;transition:background-color 160ms cubic-bezier(0.16,1,0.3,1),color 160ms cubic-bezier(0.16,1,0.3,1),transform 160ms cubic-bezier(0.16,1,0.3,1);}.ds-btn:focus-visible{outline:3px solid #111318;outline-offset:3px;}.ds-btn:active{transform:translateY(1px);}.ds-btn-ink{background:#111318;color:#fff;}.ds-btn-ink:hover{background:#1f4bd8;border-color:#1f4bd8;}.ds-btn:focus-within{outline:3px solid #111318;outline-offset:3px;}.ds-upload{display:flex;flex-wrap:wrap;align-items:center;gap:0.75rem 1rem;padding:1rem;border:2px solid #111318;border-radius:10px;font-family:Archivo,system-ui,sans-serif;transition:background-color 160ms cubic-bezier(0.16,1,0.3,1);}.ds-upload:hover{background:#ffd23f;}.ds-file{max-width:34ch;color:#5b6170;font-size:0.9375rem;}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Programa de congreso",
+    "overview": "Sliding se ve como el programa impreso de un congreso con su credencial colgada de la cinta. Cartulina blanca, tinta negra y cuatro pistas de color que ocupan regiones enteras de la página, nunca detalles sueltos. Cada presentación es una sesión del programa: tiene su código (cuántas diapositivas, o «HTML genérica»), su título y sus dos salas, ver y presentar. La información vive en hileras entre reglas negras de 2px, como las tablas del final de un programa.\n\nLa densidad es de impreso, no de aplicación: títulos condensados muy grandes, texto corrido de ancho normal, cifras tabulares, y casi ningún adorno que no exista en papel. El único objeto con volumen es la credencial plastificada, que cuelga de una cinta amarilla, se balancea una vez al cargar y se asienta. Es el control para entrar y, ya dentro, la identidad del Dueño en el panel.\n\nEl mundo rechaza la landing SaaS de titular, degradado y maqueta de laptop con celular. Y se detiene en la puerta de la presentación: la página del Enlace de la presentación (`/d/<id>`) no lleva nada de Sliding, porque la presentación es del Dueño.",
+    "keyCharacteristics": [
+      "Cartulina blanca y tinta negra; el color llega como campos de página, no como texto.",
+      "Cuatro pistas (azul, naranja, verde, amarillo), cada una con su tinta de texto medida.",
+      "Archivo variable: condensada al 62% y peso 800 para títulos; ancho normal para texto; 80% para controles.",
+      "Reglas negras de 2px separan todo: hileras, pistas, sesiones, cabecera y colofón.",
+      "Una sola cosa con sombra y movimiento: la credencial en su cinta.",
+      "Sellos de goma girados (−4°) marcan el estado: «Por confirmar», «Cancelada»."
+    ],
+    "rules": [
+      {
+        "name": "The Track Ink Rule",
+        "body": "Sobre azul se escribe en cartulina; sobre naranja, verde y amarillo, en tinta. Todas las parejas pasan AA medidas; no se invierten.",
+        "section": "colors"
+      },
+      {
+        "name": "The Page-Scale Color Rule",
+        "body": "Un color de pista ocupa una región entera (pista, banda, código de sesión, aviso, campo de la credencial) o un estado completo de un control. No se usa como texto sobre cartulina, salvo las viñetas azules de las listas.",
+        "section": "colors"
+      },
+      {
+        "name": "The Condensed Word-Space Rule",
+        "body": "Todo texto condensado lleva `word-spacing: var(--condensed-words)` (0.1em). A 62% de ancho el espacio entre palabras casi desaparece; esta corrección lo devuelve. Aplica a h1–h3, marca, sellos, rol, rótulos de hilera, código de sesión y rótulos de sala.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Figures Rule",
+        "body": "Las cifras que se comparan (diapositivas, MB, presentaciones, fechas) van tabulares y de caja.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Object Rule",
+        "body": "Solo la credencial tiene sombra y movimiento propio. Todo lo demás está impreso en la cartulina.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Ruled Program Rule",
+        "body": "Las divisiones son reglas negras de 2px (`--rule`), no tarjetas ni fondos grises. Donde dos reglas coincidirían (un aviso sobre la lista), queda una sola.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** emparejar cartulina sobre azul y tinta sobre naranja, verde y amarillo.",
+      "**Do** usar los colores de pista como regiones enteras o estados completos, y reutilizar la clase de pista para cualquier campo de color nuevo.",
+      "**Do** separar con reglas de tinta de 2px (`--rule`) y fusionar las reglas que coincidan.",
+      "**Do** poner `word-spacing: var(--condensed-words)` en todo texto con `font-stretch: var(--condensed)`.",
+      "**Do** escribir las cifras comparables con `tabular-nums lining-nums`.",
+      "**Do** marcar estados con el sello girado: «Por confirmar» para lo que falta, «Cancelada» para lo que ya no existe.",
+      "**Do** desactivar animaciones y transiciones con `prefers-reduced-motion: reduce`."
+    ],
+    "donts": [
+      "**Don't** escribir en blanco sobre naranja, verde o amarillo, ni en tinta sobre azul.",
+      "**Don't** dar sombra, radio o movimiento a nada que no sea un objeto aparte; la sombra es solo de la credencial.",
+      "**Don't** usar degradados, maquetas de dispositivos ni titulares de landing SaaS.",
+      "**Don't** usar tarjetas con fondo gris para agrupar: la agrupación es la hilera entre reglas.",
+      "**Don't** poner estilos, marca ni cabecera de Sliding en la página del Enlace de la presentación.",
+      "**Don't** dar por resuelta la Pantalla o el Control (#5, #6): heredan este mundo, pero la decisión de que el Control sea oscuro por su escena de uso (celular, sala con poca luz) sigue abierta y aún no tiene tokens."
+    ]
+  }
+}

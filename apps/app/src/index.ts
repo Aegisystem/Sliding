@@ -46,7 +46,7 @@ export function createApp(overrides: Partial<Deps> = {}) {
   // Google la pide para publicar el inicio de sesión (#12).
   app.get("/privacidad", (c) => c.html(privacyPage({ user: c.var.user })));
 
-  // Enlace del deck: cualquiera con el enlace lo ve, sin notas ni opción de presentar.
+  // Enlace de la presentación: cualquiera con el enlace la ve, sin notas ni opción de presentar.
   app.get("/d/:id", async (c) => {
     const id = c.req.param("id");
     const deck = isDeckId(id)

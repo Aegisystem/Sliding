@@ -730,6 +730,13 @@ body > main {
   font-size: 2rem;
 }
 
+/* «diapositivas» es larga: va más chica que el número, en la talla de nota. */
+.session-unit {
+  max-width: 100%;
+  font-size: 0.9375rem;
+  text-align: center;
+}
+
 .session-main {
   display: flex;
   flex-direction: column;
@@ -1049,7 +1056,7 @@ body > main {
   }
 
   .session {
-    grid-template-columns: 4.75rem minmax(0, 1fr);
+    grid-template-columns: 5.5rem minmax(0, 1fr);
   }
 
   .session-code {

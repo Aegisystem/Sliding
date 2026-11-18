@@ -10,7 +10,7 @@ const FONT = "/fonts/archivo-latin-wdth.woff2";
 
 // ── Piezas comunes ────────────────────────────────────────────────────────
 
-/** Las páginas de decks no se indexan: el Enlace del deck no está listado. */
+/** Las páginas de presentaciones no se indexan: su enlace no está listado. */
 const head = (title: string, { index = false, styled = true } = {}) => html`<meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   ${index ? "" : html`<meta name="robots" content="noindex" />`}
@@ -36,7 +36,7 @@ const runningHead = (user: User | null) => html`<header class="running-head">
 </header>`;
 
 const footer = () => html`<footer class="colophon">
-  <p>Sliding. Tus decks HTML, presentados desde el celular.</p>
+  <p>Sliding. Tus presentaciones HTML, desde el celular.</p>
   <p><a href="/privacidad">Privacidad</a> · <a href="https://github.com/Aegisystem/Sliding">Código en GitHub</a></p>
 </footer>`;
 
@@ -96,7 +96,7 @@ const hangingBadge = (inner: Html, { id, variant }: { id?: string; variant: "cov
   <section class="badge" aria-labelledby="badge-name">
     <span class="badge-slot" aria-hidden="true"></span>
     ${inner}
-    <p class="badge-role">Orador</p>
+    <p class="badge-role">Presentador</p>
   </section>
 </div>`;
 
@@ -115,7 +115,7 @@ const coverBadge = (user: User | null, error?: string) =>
             <form method="post" action="/auth/logout"><button class="btn" type="submit">Cerrar sesión</button></form>
           </div>`
       : html`<h2 class="badge-name" id="badge-name">Hola.</h2>
-          <p class="badge-note">Entra para subir tus decks.</p>
+          <p class="badge-note">Entra para subir tus presentaciones.</p>
           ${error && LOGIN_ERRORS[error] ? html`<p class="badge-error" role="alert">${LOGIN_ERRORS[error]}</p>` : ""}
           <div class="badge-actions">
             <a class="btn btn-ink" href="/auth/github">${githubMark}<span>Entrar con GitHub</span></a>
@@ -133,14 +133,14 @@ export const homePage = ({ user, error, limits }: { user: User | null; error?: s
     body: html`<div class="cover">
         <div class="cover-top">
           <h1 class="cover-title">Sliding</h1>
-          <p class="cover-lead">Sube tu deck HTML y queda publicado, sin desplegar nada. Para presentarlo, tu celular se vuelve el control.</p>
+          <p class="cover-lead">Sube tu presentación HTML y queda publicada, sin desplegar nada. Para presentarla, tu celular se vuelve el control.</p>
         </div>
         <div class="cover-tracks">
         ${coverBadge(user, error)}
         <ol class="tracks" aria-label="El día de tu charla">
           <li class="track track-azul">
             <h2>Antes de la charla</h2>
-            <p>Sube tu deck: un solo archivo .html de hasta ${mb(limits.deckBytes)} MB. Si lo hiciste con html-slides, Sliding entiende sus slides y sus notas.</p>
+            <p>Sube tu presentación: un solo archivo .html de hasta ${mb(limits.deckBytes)} MB. Si la hiciste con html-slides, Sliding entiende sus diapositivas y sus notas.</p>
           </li>
           <li class="track track-naranja">
             <h2>Al empezar</h2>
@@ -149,12 +149,12 @@ export const homePage = ({ user, error, limits }: { user: User | null; error?: s
           </li>
           <li class="track track-verde">
             <h2>Durante</h2>
-            <p>Avanza desde el celular con tus notas, el cronómetro y la slide que sigue. El público solo ve el deck.</p>
+            <p>Avanza desde el celular con tus notas, el cronómetro y la diapositiva que sigue. El público solo ve la presentación.</p>
             <span class="stamp">Por confirmar</span>
           </li>
           <li class="track track-amarillo">
             <h2>Después</h2>
-            <p>Comparte el Enlace del deck: cualquiera lo ve sin cuenta y sin tus notas.</p>
+            <p>Comparte el enlace de la presentación: cualquiera la ve sin cuenta y sin tus notas.</p>
           </li>
         </ol>
         </div>
@@ -164,19 +164,19 @@ export const homePage = ({ user, error, limits }: { user: User | null; error?: s
         <dl class="info-rows">
           <div>
             <dt>Formatos</dt>
-            <dd>Cualquier deck de un solo archivo HTML. Con html-slides tienes control de cada slide y tus notas; con el resto, anterior y siguiente.</dd>
+            <dd>Cualquier presentación de un solo archivo HTML. Con html-slides tienes control de cada diapositiva y tus notas; con el resto, anterior y siguiente.</dd>
           </div>
           <div>
             <dt>Espacio</dt>
-            <dd>Hasta ${limits.decksPerOwner} decks y ${mb(limits.bytesPerOwner)} MB por persona, con ${mb(limits.deckBytes)} MB como máximo por deck.</dd>
+            <dd>Hasta ${limits.decksPerOwner} presentaciones y ${mb(limits.bytesPerOwner)} MB por persona, con ${mb(limits.deckBytes)} MB como máximo por presentación.</dd>
           </div>
           <div>
             <dt>Privacidad</dt>
-            <dd>Tus decks no aparecen en buscadores ni en listas: solo los ve quien tiene el enlace. Tus notas nunca llegan a la pantalla del público.</dd>
+            <dd>Tus presentaciones no aparecen en buscadores ni en listas: solo las ve quien tiene el enlace. Tus notas nunca llegan a la pantalla del público.</dd>
           </div>
           <div>
             <dt>Agentes</dt>
-            <dd>Por confirmar: Claude y otros agentes podrán subir decks por ti con un token.</dd>
+            <dd>Por confirmar: Claude y otros agentes podrán subir presentaciones por ti con un token.</dd>
           </div>
           <div>
             <dt>Precio</dt>
@@ -189,9 +189,9 @@ export const homePage = ({ user, error, limits }: { user: User | null; error?: s
 // ── Panel ─────────────────────────────────────────────────────────────────
 
 const PANEL_OK: Record<string, string> = {
-  subido: "Deck subido. Ya puedes compartir su enlace.",
-  reemplazado: "Deck reemplazado. Su enlace sigue siendo el mismo.",
-  borrado: "Deck borrado. Su enlace ya no funciona.",
+  subido: "Presentación subida. Ya puedes compartir su enlace.",
+  reemplazado: "Presentación reemplazada. Su enlace sigue siendo el mismo.",
+  borrado: "Presentación borrada. Su enlace ya no funciona.",
 };
 
 const panelError = (code: string, usage: Usage, limits: Limits): string | null =>
@@ -199,9 +199,9 @@ const panelError = (code: string, usage: Usage, limits: Limits): string | null =
     vacio: "Elige un archivo antes de subir.",
     "no-html": "Sliding solo acepta archivos .html.",
     "muy-grande": `El archivo pasa de ${mb(limits.deckBytes)} MB. Reduce sus imágenes y vuelve a subirlo.`,
-    "cupo-decks": `Ya tienes ${limits.decksPerOwner} decks. Borra uno para subir otro.`,
-    "cupo-espacio": `No queda espacio: tus decks ocupan ${formatBytes(usage.bytes)} de ${mb(limits.bytesPerOwner)} MB. Borra alguno o reduce sus imágenes.`,
-    "no-existe": "Ese deck no existe o no es tuyo.",
+    "cupo-decks": `Ya tienes ${limits.decksPerOwner} presentaciones. Borra una para subir otra.`,
+    "cupo-espacio": `No queda espacio: tus presentaciones ocupan ${formatBytes(usage.bytes)} de ${mb(limits.bytesPerOwner)} MB. Borra alguna o reduce sus imágenes.`,
+    "no-existe": "Esa presentación no existe o no es tuya.",
   })[code] ?? null;
 
 const room = (label: string, url: string, note: string) => html`<div class="room">
@@ -214,18 +214,18 @@ const room = (label: string, url: string, note: string) => html`<div class="room
 const session = (deck: DeckRow, origin: string) => html`<li class="session">
   <div class="session-code ${deck.kind === "html-slides" ? "track-azul" : "track-amarillo"}">
     ${deck.kind === "html-slides"
-      ? html`<span class="session-count num">${deck.slideCount ?? 0}</span><span>${deck.slideCount === 1 ? "slide" : "slides"}</span>`
-      : html`<span class="session-count session-count-word">HTML</span><span>genérico</span>`}
+      ? html`<span class="session-count num">${deck.slideCount ?? 0}</span><span class="session-unit">${deck.slideCount === 1 ? "diapositiva" : "diapositivas"}</span>`
+      : html`<span class="session-count session-count-word">HTML</span><span class="session-unit">genérica</span>`}
   </div>
   <div class="session-main">
     <h2 class="session-title">${deck.title}</h2>
     <p class="session-meta">
       ${deck.kind === "html-slides" ? "html-slides" : "HTML genérico"} ·
-      <span class="num">${formatBytes(deck.size)}</span> · actualizado el ${day.format(deck.updatedAt)}
+      <span class="num">${formatBytes(deck.size)}</span> · actualizada el ${day.format(deck.updatedAt)}
     </p>
   </div>
   <div class="session-rooms">
-    ${room("Enlace del deck", `${origin}/d/${deck.id}`, "Para el público: sin tus notas.")}
+    ${room("Enlace de la presentación", `${origin}/d/${deck.id}`, "Para el público: sin tus notas.")}
     ${room("Enlace para presentar", `${origin}/p/${deck.presentSecret}`, "Solo para ti: no lo compartas.")}
   </div>
   <div class="session-actions">
@@ -268,15 +268,15 @@ export const panelPage = ({
     page: "panel",
     body: html`<div class="panel-head">
         <div class="panel-intro">
-          <h1>Tus decks</h1>
+          <h1>Tus presentaciones</h1>
           <form class="upload" method="post" action="/panel/decks" enctype="multipart/form-data">
             <label class="btn btn-ink">
-              Subir un deck .html
+              Subir una presentación .html
               <input class="visually-hidden" type="file" name="file" accept=".html,.htm,text/html" required ${full ? "disabled" : ""} />
             </label>
             <span class="upload-file" aria-live="polite">${full
-              ? `Tienes ${limits.decksPerOwner} decks: borra uno para subir otro.`
-              : `Hasta ${mb(limits.deckBytes)} MB. También puedes soltarlo en esta página.`}</span>
+              ? `Tienes ${limits.decksPerOwner} presentaciones: borra una para subir otra.`
+              : `Hasta ${mb(limits.deckBytes)} MB. También puedes soltarla en esta página.`}</span>
             <noscript><button class="btn" type="submit" ${full ? "disabled" : ""}>Subir</button></noscript>
           </form>
         </div>
@@ -284,7 +284,7 @@ export const panelPage = ({
           html`${badgePhoto(user)}
             <h2 class="badge-name" id="badge-name">${user.name}</h2>
             <p class="badge-quota">
-              <span class="num">${usage.decks}</span> de <span class="num">${limits.decksPerOwner}</span> decks<br />
+              <span class="num">${usage.decks}</span> de <span class="num">${limits.decksPerOwner}</span> presentaciones<br />
               <span class="num">${formatBytes(usage.bytes)}</span> de <span class="num">${mb(limits.bytesPerOwner)}</span> MB
             </p>`,
           { variant: "panel" },
@@ -293,10 +293,10 @@ export const panelPage = ({
       ${okText ? html`<p class="flash flash-ok" role="status">${okText}</p>` : ""}
       ${errorText ? html`<p class="flash flash-error" role="alert">${errorText}</p>` : ""}
       ${decks.length
-        ? html`<ol class="program" aria-label="Tus decks">${decks.map((deck) => session(deck, origin))}</ol>`
+        ? html`<ol class="program" aria-label="Tus presentaciones">${decks.map((deck) => session(deck, origin))}</ol>`
         : html`<div class="empty">
             <h2>Tu programa está vacío.</h2>
-            <p>Sube tu primer deck con el botón de arriba. ¿Todavía no tienes uno? Pídele a Claude un deck con la skill html-slides, o usa cualquier HTML de un solo archivo.</p>
+            <p>Sube tu primera presentación con el botón de arriba. ¿Todavía no tienes una? Pídele a Claude una presentación con la skill html-slides, o usa cualquier HTML de un solo archivo.</p>
           </div>`}`,
   });
 };
@@ -311,8 +311,8 @@ export const presentPage = ({ user, title, deckUrl }: { user: User | null; title
     body: html`<section class="band track-naranja">
       <div class="band-inner">
         <h1>Presentar «${title}»</h1>
-        <p>La Pantalla con el QR de control llega en la próxima versión. Mientras tanto, puedes mostrar el deck a pantalla completa desde su enlace.</p>
-        <p><a class="btn btn-ink" href="${deckUrl}">Abrir el deck</a></p>
+        <p>La Pantalla con el QR de control llega en la próxima versión. Mientras tanto, puedes mostrar la presentación a pantalla completa desde su enlace.</p>
+        <p><a class="btn btn-ink" href="${deckUrl}">Abrir la presentación</a></p>
       </div>
       <span class="stamp">Por confirmar</span>
     </section>`,
@@ -333,14 +333,14 @@ export const privacyPage = ({ user }: { user: User | null }) =>
         </div>
       </header>
       <article class="read">
-      <p class="read-lead">Sliding es un sitio para subir decks HTML y presentarlos con el celular. Esta página dice qué datos guarda, para qué y cómo borrarlos.</p>
+      <p class="read-lead">Sliding es un sitio para subir presentaciones HTML y presentarlas con el celular. Esta página dice qué datos guarda, para qué y cómo borrarlos.</p>
 
       <h2>Qué guardamos</h2>
       <ul>
-        <li><strong>Tu cuenta.</strong> Al entrar con GitHub o Google guardamos el identificador de tu cuenta en ese servicio, tu nombre y tu correo. Los usamos para mostrarte tus decks y para avisarte si hay un problema con ellos.</li>
-        <li><strong>Tus decks.</strong> Guardamos los archivos HTML que subes y sus notas del orador. Cualquiera con el enlace de un deck puede verlo, pero sin las notas.</li>
-        <li><strong>Tus tokens.</strong> Si creas tokens para que un agente suba decks por ti, guardamos solo una huella de cada token, su nombre y la última vez que se usó.</li>
-        <li><strong>Las presentaciones en vivo.</strong> Mientras presentas guardamos en qué slide vas. Se borra cuando termina la sesión.</li>
+        <li><strong>Tu cuenta.</strong> Al entrar con GitHub o Google guardamos el identificador de tu cuenta en ese servicio, tu nombre y tu correo. Los usamos para mostrarte tus presentaciones y para avisarte si hay un problema con ellas.</li>
+        <li><strong>Tus presentaciones.</strong> Guardamos los archivos HTML que subes y sus notas del presentador. Cualquiera con el enlace de una presentación puede verla, pero sin las notas.</li>
+        <li><strong>Tus tokens.</strong> Si creas tokens para que un agente suba presentaciones por ti, guardamos solo una huella de cada token, su nombre y la última vez que se usó.</li>
+        <li><strong>Las presentaciones en vivo.</strong> Mientras presentas guardamos en qué diapositiva vas. Se borra cuando termina la sesión.</li>
       </ul>
 
       <h2>Cookies</h2>
@@ -350,21 +350,21 @@ export const privacyPage = ({ user }: { user: User | null }) =>
       <p>Con nadie. Los datos viven en Cloudflare, que aloja el sitio. GitHub y Google solo intervienen cuando inicias sesión con ellos.</p>
 
       <h2>Cómo borrar tus datos</h2>
-      <p>Puedes borrar tus decks desde tu panel cuando quieras. Para borrar tu cuenta y todo lo que contiene, abre una issue en <a href="https://github.com/Aegisystem/Sliding/issues">github.com/Aegisystem/Sliding</a> y la borramos en menos de 30 días.</p>
+      <p>Puedes borrar tus presentaciones desde tu panel cuando quieras. Para borrar tu cuenta y todo lo que contiene, abre una issue en <a href="https://github.com/Aegisystem/Sliding/issues">github.com/Aegisystem/Sliding</a> y la borramos en menos de 30 días.</p>
     </article>`,
   });
 
-// ── Errores y Enlace del deck ─────────────────────────────────────────────
+// ── Errores y Enlace de la presentación ─────────────────────────────────────────────
 
 export const notFoundPage = (user: User | null = null) =>
   layout({
-    title: "Deck no encontrado · Sliding",
+    title: "Presentación no encontrada · Sliding",
     user,
     page: "notice",
     body: html`<section class="band track-naranja">
       <div class="band-inner">
-        <h1>Deck no encontrado</h1>
-        <p>Esta sesión no está en el programa. Revisa el enlace; si el deck existía, puede que su Dueño lo haya borrado.</p>
+        <h1>Presentación no encontrada</h1>
+        <p>Esta sesión no está en el programa. Revisa el enlace; si la presentación existía, puede que su Dueño la haya borrado.</p>
         <p><a class="btn btn-ink" href="/">Ir a la portada</a></p>
       </div>
       <span class="stamp">Cancelada</span>
@@ -372,8 +372,8 @@ export const notFoundPage = (user: User | null = null) =>
   });
 
 /**
- * Página del Enlace del deck: el deck ocupa toda la ventana, servido desde su
- * propio origen. Sliding no le pone nada encima (el deck es del Dueño).
+ * Página del Enlace de la presentación: ocupa toda la ventana, servida desde su
+ * propio origen. Sliding no le pone nada encima (la presentación es del Dueño).
  */
 export const viewerPage = ({ title, src }: { title: string; src: string }) => html`<!doctype html>
 <html lang="es">
@@ -392,7 +392,7 @@ export const viewerPage = ({ title, src }: { title: string; src: string }) => ht
     sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-downloads"
   ></iframe>
   <script>
-    // El teclado mueve el deck solo si el iframe tiene el foco.
+    // El teclado mueve la presentación solo si el iframe tiene el foco.
     const frame = document.querySelector("iframe");
     frame.addEventListener("load", () => frame.focus());
   </script>

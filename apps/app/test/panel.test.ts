@@ -43,7 +43,7 @@ describe("el panel", () => {
     const b = await owner();
     const html = await (await b.request("/panel")).text();
     expect(html).toContain("Tu programa está vacío.");
-    expect(html).toMatch(/<span class="num">0<\/span> de <span class="num">2<\/span> decks/);
+    expect(html).toMatch(/<span class="num">0<\/span> de <span class="num">2<\/span> presentaciones/);
     expect(html).toContain(">0 MB</span> de");
   });
 });
@@ -62,7 +62,7 @@ describe("subir", () => {
     expect(JSON.parse((await env.DECKS.get(`notes:${deck!.id}`))!)).toHaveLength(3);
 
     const html = await (await b.request("/panel?ok=subido")).text();
-    expect(html).toContain("Deck subido.");
+    expect(html).toContain("Presentación subida.");
     expect(html).toContain(`${ORIGIN}/d/${deck!.id}`);
     expect(html).toContain(`${ORIGIN}/p/${deck!.secret}`);
     expect(html).toContain("Deck de prueba");
@@ -100,7 +100,7 @@ describe("subir", () => {
     const response = await upload(b, "/panel/decks", "<title>Tres</title>");
     expect(response.headers.get("location")).toBe("/panel?error=cupo-decks");
     expect(await decksOf(`Dueño ${people}`)).toHaveLength(2);
-    expect(await (await b.request("/panel?error=cupo-decks")).text()).toContain("Ya tienes 2 decks.");
+    expect(await (await b.request("/panel?error=cupo-decks")).text()).toContain("Ya tienes 2 presentaciones.");
   });
 
   it("respeta el espacio total por Dueño", async () => {

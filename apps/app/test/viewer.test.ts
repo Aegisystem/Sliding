@@ -15,7 +15,7 @@ async function saveDeck(title: string, { disabled = false } = {}): Promise<strin
 
 const get = (path: string) => exports.default.fetch(`https://app.test${path}`);
 
-describe("Enlace del deck", () => {
+describe("Enlace de la presentación", () => {
   it("muestra el deck en un iframe servido desde el origen de los decks", async () => {
     const id = await saveDeck("Mi charla");
     const response = await get(`/d/${id}`);
@@ -37,7 +37,7 @@ describe("Enlace del deck", () => {
     for (const path of [`/d/${newDeckId()}`, `/d/${disabled}`, "/d/no-es-un-id"]) {
       const response = await get(path);
       expect(response.status, path).toBe(404);
-      expect(await response.text()).toContain("Deck no encontrado");
+      expect(await response.text()).toContain("Presentación no encontrada");
     }
   });
 });
