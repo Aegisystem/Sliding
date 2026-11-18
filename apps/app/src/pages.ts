@@ -87,14 +87,28 @@ const LOGIN_ERRORS: Record<string, string> = {
   disabled: "Tu cuenta está desactivada.",
 };
 
-const badge = (user: User | null, error?: string) => html`<div class="badge-hang" id="entrar">
+/** La credencial colgada de su cinta: el control para entrar y, ya dentro, tu identidad. */
+const hangingBadge = (inner: Html, { id, variant }: { id?: string; variant: "cover" | "panel" }) => html`<div
+  class="badge-hang badge-hang-${variant}"
+  ${id ? html`id="${id}"` : ""}
+>
   <span class="lanyard" aria-hidden="true"></span>
   <section class="badge" aria-labelledby="badge-name">
     <span class="badge-slot" aria-hidden="true"></span>
-    ${user
-      ? html`${user.avatarUrl
-            ? html`<img class="badge-photo" src="${user.avatarUrl}" alt="" width="64" height="64" referrerpolicy="no-referrer" />`
-            : ""}
+    ${inner}
+    <p class="badge-role">Orador</p>
+  </section>
+</div>`;
+
+const badgePhoto = (user: User) =>
+  user.avatarUrl
+    ? html`<img class="badge-photo" src="${user.avatarUrl}" alt="" width="64" height="64" referrerpolicy="no-referrer" />`
+    : "";
+
+const coverBadge = (user: User | null, error?: string) =>
+  hangingBadge(
+    user
+      ? html`${badgePhoto(user)}
           <h2 class="badge-name" id="badge-name">Hola, ${user.name}.</h2>
           <div class="badge-actions">
             <a class="btn btn-ink" href="/panel">Ir a tu panel</a>
@@ -106,10 +120,9 @@ const badge = (user: User | null, error?: string) => html`<div class="badge-hang
           <div class="badge-actions">
             <a class="btn btn-ink" href="/auth/github">${githubMark}<span>Entrar con GitHub</span></a>
             <a class="btn" href="/auth/google">${googleMark}<span>Entrar con Google</span></a>
-          </div>`}
-    <p class="badge-role">Orador</p>
-  </section>
-</div>`;
+          </div>`,
+    { id: "entrar", variant: "cover" },
+  );
 
 export const homePage = ({ user, error, limits }: { user: User | null; error?: string; limits: Limits }) =>
   layout({
@@ -122,7 +135,8 @@ export const homePage = ({ user, error, limits }: { user: User | null; error?: s
           <h1 class="cover-title">Sliding</h1>
           <p class="cover-lead">Sube tu deck HTML y queda publicado, sin desplegar nada. Para presentarlo, tu celular se vuelve el control.</p>
         </div>
-        ${badge(user, error)}
+        <div class="cover-tracks">
+        ${coverBadge(user, error)}
         <ol class="tracks" aria-label="El día de tu charla">
           <li class="track track-azul">
             <h2>Antes de la charla</h2>
@@ -143,6 +157,7 @@ export const homePage = ({ user, error, limits }: { user: User | null; error?: s
             <p>Comparte el Enlace del deck: cualquiera lo ve sin cuenta y sin tus notas.</p>
           </li>
         </ol>
+        </div>
       </div>
       <section class="info" aria-labelledby="info-title">
         <h2 id="info-title">Información general</h2>
@@ -200,7 +215,7 @@ const session = (deck: DeckRow, origin: string) => html`<li class="session">
   <div class="session-code ${deck.kind === "html-slides" ? "track-azul" : "track-amarillo"}">
     ${deck.kind === "html-slides"
       ? html`<span class="session-count num">${deck.slideCount ?? 0}</span><span>${deck.slideCount === 1 ? "slide" : "slides"}</span>`
-      : html`<span class="session-count">HTML</span><span>genérico</span>`}
+      : html`<span class="session-count session-count-word">HTML</span><span>genérico</span>`}
   </div>
   <div class="session-main">
     <h2 class="session-title">${deck.title}</h2>
@@ -252,19 +267,28 @@ export const panelPage = ({
     user,
     page: "panel",
     body: html`<div class="panel-head">
-        <h1>Tus decks</h1>
-        <p class="usage">
-          <span class="num">${usage.decks}</span> de <span class="num">${limits.decksPerOwner}</span> decks ·
-          <span class="num">${formatBytes(usage.bytes)}</span> de <span class="num">${mb(limits.bytesPerOwner)}</span> MB
-        </p>
-        <form class="upload" method="post" action="/panel/decks" enctype="multipart/form-data">
-          <label class="btn btn-ink">
-            Elegir archivo .html
-            <input class="visually-hidden" type="file" name="file" accept=".html,.htm,text/html" required ${full ? "disabled" : ""} />
-          </label>
-          <span class="upload-file" aria-live="polite">${full ? `Tienes ${limits.decksPerOwner} decks: borra uno para subir otro.` : `Hasta ${mb(limits.deckBytes)} MB.`}</span>
-          <button class="btn" type="submit" ${full ? "disabled" : ""}>Subir</button>
-        </form>
+        <div class="panel-intro">
+          <h1>Tus decks</h1>
+          <form class="upload" method="post" action="/panel/decks" enctype="multipart/form-data">
+            <label class="btn btn-ink">
+              Subir un deck .html
+              <input class="visually-hidden" type="file" name="file" accept=".html,.htm,text/html" required ${full ? "disabled" : ""} />
+            </label>
+            <span class="upload-file" aria-live="polite">${full
+              ? `Tienes ${limits.decksPerOwner} decks: borra uno para subir otro.`
+              : `Hasta ${mb(limits.deckBytes)} MB. También puedes soltarlo en esta página.`}</span>
+            <noscript><button class="btn" type="submit" ${full ? "disabled" : ""}>Subir</button></noscript>
+          </form>
+        </div>
+        ${hangingBadge(
+          html`${badgePhoto(user)}
+            <h2 class="badge-name" id="badge-name">${user.name}</h2>
+            <p class="badge-quota">
+              <span class="num">${usage.decks}</span> de <span class="num">${limits.decksPerOwner}</span> decks<br />
+              <span class="num">${formatBytes(usage.bytes)}</span> de <span class="num">${mb(limits.bytesPerOwner)}</span> MB
+            </p>`,
+          { variant: "panel" },
+        )}
       </div>
       ${okText ? html`<p class="flash flash-ok" role="status">${okText}</p>` : ""}
       ${errorText ? html`<p class="flash flash-error" role="alert">${errorText}</p>` : ""}
@@ -284,11 +308,14 @@ export const presentPage = ({ user, title, deckUrl }: { user: User | null; title
     title: `Presentar ${title} · Sliding`,
     user,
     page: "notice",
-    body: html`<div class="notice">
-      <h1>Presentar «${title}»</h1>
-      <p>La Pantalla con el QR de control está por confirmar: llega en la próxima versión. Mientras tanto, puedes mostrar el deck a pantalla completa desde su enlace.</p>
-      <p><a class="btn btn-ink" href="${deckUrl}">Abrir el deck</a></p>
-    </div>`,
+    body: html`<section class="band track-naranja">
+      <div class="band-inner">
+        <h1>Presentar «${title}»</h1>
+        <p>La Pantalla con el QR de control llega en la próxima versión. Mientras tanto, puedes mostrar el deck a pantalla completa desde su enlace.</p>
+        <p><a class="btn btn-ink" href="${deckUrl}">Abrir el deck</a></p>
+      </div>
+      <span class="stamp">Por confirmar</span>
+    </section>`,
   });
 
 // ── Privacidad ────────────────────────────────────────────────────────────
@@ -299,10 +326,14 @@ export const privacyPage = ({ user }: { user: User | null }) =>
     user,
     page: "read",
     index: true,
-    body: html`<article class="read">
-      <h1>Privacidad</h1>
-      <p class="read-date">Última actualización: 18 de noviembre de 2026.</p>
-      <p>Sliding es un sitio para subir decks HTML y presentarlos con el celular. Esta página dice qué datos guarda, para qué y cómo borrarlos.</p>
+    body: html`<header class="read-band track-azul">
+        <div class="read-band-inner">
+          <h1>Privacidad</h1>
+          <p class="read-date">Última actualización: 18 de noviembre de 2026.</p>
+        </div>
+      </header>
+      <article class="read">
+      <p class="read-lead">Sliding es un sitio para subir decks HTML y presentarlos con el celular. Esta página dice qué datos guarda, para qué y cómo borrarlos.</p>
 
       <h2>Qué guardamos</h2>
       <ul>
@@ -330,11 +361,14 @@ export const notFoundPage = (user: User | null = null) =>
     title: "Deck no encontrado · Sliding",
     user,
     page: "notice",
-    body: html`<div class="notice">
-      <h1>Deck no encontrado</h1>
-      <p>Esta sesión no está en el programa. Revisa el enlace; si el deck existía, puede que su Dueño lo haya borrado.</p>
-      <p><a class="btn" href="/">Ir a la portada</a></p>
-    </div>`,
+    body: html`<section class="band track-naranja">
+      <div class="band-inner">
+        <h1>Deck no encontrado</h1>
+        <p>Esta sesión no está en el programa. Revisa el enlace; si el deck existía, puede que su Dueño lo haya borrado.</p>
+        <p><a class="btn btn-ink" href="/">Ir a la portada</a></p>
+      </div>
+      <span class="stamp">Cancelada</span>
+    </section>`,
   });
 
 /**

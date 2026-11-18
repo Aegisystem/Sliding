@@ -31,7 +31,7 @@ document.addEventListener("change", (event) => {
   if (input.matches(".replace input[type=file]") && input.files.length) input.form.requestSubmit();
 });
 
-// Subir: mostrar el archivo elegido y aceptar que lo suelten encima.
+// Subir: elegir o soltar un archivo lo sube.
 const upload = document.querySelector(".upload");
 if (upload) {
   const input = upload.querySelector("input[type=file]");
@@ -41,7 +41,11 @@ if (upload) {
     label.textContent = input.files[0].name;
     label.classList.add("has-file");
   };
-  input.addEventListener("change", show);
+  // Elegir el archivo ya lo sube, como en Reemplazar.
+  input.addEventListener("change", () => {
+    show();
+    if (input.files.length) upload.requestSubmit();
+  });
   const page = document.querySelector("main");
   page.addEventListener("dragover", (event) => {
     if (input.disabled || !event.dataTransfer.types.includes("Files")) return;
