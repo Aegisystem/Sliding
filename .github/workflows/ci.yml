@@ -14,6 +14,8 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      # La misma versión de npm que en local: npm 10 y 11 no escriben igual el lockfile.
+      - run: npm install -g npm@11.6.1
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
@@ -34,6 +36,8 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      # La misma versión de npm que en local: npm 10 y 11 no escriben igual el lockfile.
+      - run: npm install -g npm@11.6.1
       - run: npm ci
       - name: Migraciones de D1
         working-directory: apps/app

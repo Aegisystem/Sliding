@@ -2,12 +2,14 @@
   "name": "sliding",
   "private": true,
   "type": "module",
+  "packageManager": "npm@11.6.1",
   "workspaces": [
     "packages/*",
     "apps/*"
   ],
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=22.12.0",
+    "npm": ">=11.6.1"
   },
   "scripts": {
     "dev": "npm -w @sliding/app run db:migrate && concurrently -n app,decks -c blue,magenta \"npm -w @sliding/app run dev\" \"curl -s --retry 60 --retry-connrefused --retry-delay 1 -o /dev/null http://localhost:8787/ && npm -w @sliding/decks run dev\"",
