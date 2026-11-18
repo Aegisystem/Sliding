@@ -164,7 +164,7 @@ components:
 
 **Creative North Star: "Programa de congreso"**
 
-Sliding se ve como el programa impreso de un congreso con su credencial colgada de la cinta. Cartulina blanca, tinta negra y cuatro pistas de color que ocupan regiones enteras de la página, nunca detalles sueltos. Cada presentación es una sesión del programa: tiene su código (cuántas diapositivas, o «HTML genérica»), su título y sus dos salas, ver y presentar. La información vive en hileras entre reglas negras de 2px, como las tablas del final de un programa.
+Sliding se ve como el programa impreso de un congreso con su credencial colgada de la cinta. Cartulina blanca, tinta negra y cuatro pistas de color que ocupan regiones enteras de la página, nunca detalles sueltos. Cada presentación es una sesión del programa: tiene su código (cuántas diapositivas, o «HTML genérica»), su título y lo que se hace con ella: presentarla con control, verla o compartirla. La información vive en hileras entre reglas negras de 2px, como las tablas del final de un programa.
 
 La densidad es de impreso, no de aplicación: títulos condensados muy grandes, texto corrido de ancho normal, cifras tabulares, y casi ningún adorno que no exista en papel. El único objeto con volumen es la credencial plastificada, que cuelga de una cinta amarilla, se balancea una vez al cargar y se asienta. Es el control para entrar y, ya dentro, la identidad del Dueño en el panel.
 
@@ -231,11 +231,11 @@ Página a sangre con un margen fluido (`--gutter`, clamp(1rem, 3vw, 2.5rem)) y u
 
 - **Tapa:** ocupa la ventana menos la cabecera. Arriba a la izquierda, la palabra «Sliding» y una frase; el lado derecho queda libre (22rem más el margen) para la credencial. Abajo, cuatro pistas a todo el ancho en una rejilla de 4 columnas iguales, separadas por reglas de 2px. La credencial cuelga sobre la última pista, que se empuja hacia abajo para dejarle su franja (`--overlap`, 4.5rem).
 - **Información general:** rótulo a la izquierda (1fr) y hileras a la derecha (2.2fr); todas las hileras miden lo que la más alta (`grid-auto-rows: 1fr`), rótulo de 10rem y texto.
-- **Panel:** cabecera de dos columnas (título y subida a la izquierda, credencial a la derecha) y después el programa: una sesión por hilera de al menos 9rem, en cuatro columnas (código 7rem, título, salas 1.35fr, acciones) separadas por reglas.
+- **Panel:** cabecera de dos columnas (título y subida a la izquierda, credencial a la derecha) y después el programa: una sesión por hilera de al menos 9rem, en cuatro columnas (código 7rem, título, botones de presentar, ver y compartir, acciones) separadas por reglas.
 - **Lectura:** banda de título azul a todo el ancho y columna centrada de 68ch.
 - **Avisos:** una banda de pista que llena el `main` entre cabecera y colofón.
 
-**Responsive:** a 1100px la sesión pasa a tres columnas y las salas bajan a una segunda fila. A 900px la tapa deja de ocupar la ventana, las pistas pasan a 2×2, la credencial de la tapa cuelga en flujo desde la regla superior de las pistas sobre un campo azul, la información pasa a una columna y la credencial del panel sube antes del título. A 560px las pistas van en una columna, las hileras apilan rótulo y texto, la sesión queda en código + título con salas y acciones debajo (acciones en fila), el sello del aviso pasa al flujo y la cabecera oculta el nombre del usuario.
+**Responsive:** a 1100px la sesión pasa a tres columnas y los botones de presentar, ver y compartir bajan a una segunda fila. A 900px la tapa deja de ocupar la ventana, las pistas pasan a 2×2, la credencial de la tapa cuelga en flujo desde la regla superior de las pistas sobre un campo azul, la información pasa a una columna y la credencial del panel sube antes del título. A 560px las pistas van en una columna, las hileras apilan rótulo y texto, la sesión queda en código + título con los botones y las acciones debajo (acciones en fila), el sello del aviso pasa al flujo y la cabecera oculta el nombre del usuario.
 
 ## Elevation & Depth
 
@@ -279,7 +279,7 @@ La credencial plastificada colgada de una cinta amarilla de 3rem con bordes de t
 - **Movimiento:** se balancea una vez al cargar (1.8s, `--ease`, desde 6° amortiguándose a 0°) desde su ranura y se asienta.
 
 ### Session row (Cards / Containers)
-- Una hilera del programa entre reglas, sin radio ni sombra. El código va en un campo de pista: azul con el número de diapositivas para presentaciones html-slides, amarillo con «HTML genérica» para el resto. Le siguen el título y los metadatos, las dos salas (rótulo condensado, URL tabular truncada, nota y botón «Copiar») y las acciones «Reemplazar» y «Borrar».
+- Una hilera del programa entre reglas, sin radio ni sombra. El código va en un campo de pista: azul con el número de diapositivas para presentaciones html-slides, amarillo con «HTML genérica» para el resto. Le siguen el título y los metadatos; los botones «Presentar con control» (tinta), «Ver diapositivas» y «Copiar enlace para compartir» (sin mostrar direcciones: son botones, no enlaces a la vista); y las acciones «Reemplazar» y «Borrar».
 
 ### Stamp
 - Sello de goma: mayúsculas condensadas 800, borde de 3px en el color del texto, radio de 6px, girado −4°. Marca lo que todavía no existe («Por confirmar») o lo que ya no está («Cancelada»).

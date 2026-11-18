@@ -159,10 +159,28 @@ addEventListener("keydown", (event) => {
 });
 
 document.querySelector("[data-fullscreen]").addEventListener("click", fullscreen);
+
+// Abierta en un celular no tiene sentido mostrar un QR: se explica y se ofrece mandarla al computador.
+const isPhone = matchMedia("(hover: none) and (pointer: coarse)").matches && Math.min(screen.width, screen.height) <= 600;
+
+document.querySelector("[data-share]").addEventListener("click", async () => {
+  if (navigator.share) {
+    await navigator.share({ title: document.title, url: location.href }).catch(() => {});
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(location.href);
+    toast("Enlace copiado. Ábrelo en el computador del proyector.");
+  } catch {
+    toast("No se pudo copiar. Copia la dirección de esta página.");
+  }
+});
+document.querySelector("[data-here]").addEventListener("click", () => setState("here"));
 restart.addEventListener("click", () => {
   store.clear();
   location.reload();
 });
 frame.addEventListener("load", () => toDeck({ type: "hello" }));
 
-start();
+if (isPhone) setState("phone");
+else start();

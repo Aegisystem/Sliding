@@ -5,15 +5,16 @@ document.addEventListener("click", async (event) => {
   const button = event.target.closest("[data-copy]");
   if (!button) return;
   try {
+    button.dataset.label ??= button.textContent;
     await navigator.clipboard.writeText(button.dataset.copy);
-    button.textContent = "Copiado";
+    button.textContent = "Enlace copiado";
     button.classList.add("is-copied");
     setTimeout(() => {
-      button.textContent = "Copiar";
+      button.textContent = button.dataset.label;
       button.classList.remove("is-copied");
     }, 2000);
   } catch {
-    button.textContent = "Cópialo a mano";
+    button.textContent = "No se pudo copiar";
   }
 });
 

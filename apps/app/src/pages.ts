@@ -203,13 +203,6 @@ const panelError = (code: string, usage: Usage, limits: Limits): string | null =
     "no-existe": "Esa presentación no existe o no es tuya.",
   })[code] ?? null;
 
-const room = (label: string, url: string, note: string) => html`<div class="room">
-  <span class="room-label">${label}</span>
-  <a class="room-url" href="${url}" target="_blank" rel="noopener">${url.replace(/^https?:\/\//, "")}</a>
-  <span class="room-note">${note}</span>
-  <button class="btn btn-small copy" type="button" data-copy="${url}">Copiar</button>
-</div>`;
-
 const session = (deck: DeckRow, origin: string) => html`<li class="session">
   <div class="session-code ${deck.kind === "html-slides" ? "track-azul" : "track-amarillo"}">
     ${deck.kind === "html-slides"
@@ -223,9 +216,10 @@ const session = (deck: DeckRow, origin: string) => html`<li class="session">
       <span class="num">${formatBytes(deck.size)}</span> · actualizada el ${day.format(deck.updatedAt)}
     </p>
   </div>
-  <div class="session-rooms">
-    ${room("Enlace de la presentación", `${origin}/d/${deck.id}`, "Para el público: sin tus notas.")}
-    ${room("Enlace para presentar", `${origin}/p/${deck.presentSecret}`, "Solo para ti: no lo compartas.")}
+  <div class="session-go">
+    <a class="btn btn-ink" href="/p/${deck.presentSecret}" target="_blank" rel="noopener">Presentar con control</a>
+    <a class="btn" href="/d/${deck.id}" target="_blank" rel="noopener">Ver diapositivas</a>
+    <button class="btn btn-small copy" type="button" data-copy="${origin}/d/${deck.id}">Copiar enlace para compartir</button>
   </div>
   <div class="session-actions">
     <form class="replace" method="post" action="/panel/decks/${deck.id}" enctype="multipart/form-data">
@@ -351,6 +345,13 @@ export const screenPage = ({
       <div class="prep-message" data-message hidden>
         <p class="prep-message-text" data-message-text></p>
         <button class="btn" type="button" data-restart hidden>Empezar otra sesión</button>
+      </div>
+      <div class="prep-phone">
+        <p class="prep-phone-text">Esta es la Pantalla, lo que ve el público. Ábrela en el computador conectado al proyector y escanea su QR con este celular.</p>
+        <div class="prep-phone-actions">
+          <button class="btn" type="button" data-share>Enviar el enlace a mi computador</button>
+          <button class="btn btn-ghost" type="button" data-here>Ver la presentación aquí</button>
+        </div>
       </div>
     </div>
     <figure class="prep-qr">

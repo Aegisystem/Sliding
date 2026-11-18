@@ -49,7 +49,7 @@ describe("el panel", () => {
 });
 
 describe("subir", () => {
-  it("guarda un Deck html-slides con sus notas aparte y muestra sus dos enlaces", async () => {
+  it("guarda una Presentación html-slides con sus notas aparte y ofrece presentarla, verla y compartirla", async () => {
     const b = await owner();
     const response = await upload(b, "/panel/decks", htmlSlidesDeck);
     expect(response.status).toBe(303);
@@ -63,8 +63,13 @@ describe("subir", () => {
 
     const html = await (await b.request("/panel?ok=subido")).text();
     expect(html).toContain("Presentación subida.");
-    expect(html).toContain(`${ORIGIN}/d/${deck!.id}`);
-    expect(html).toContain(`${ORIGIN}/p/${deck!.secret}`);
+    // Botones, no direcciones: presentar, ver y copiar el enlace público.
+    expect(html).toContain(`href="/p/${deck!.secret}"`);
+    expect(html).toContain(`href="/d/${deck!.id}"`);
+    expect(html).toContain(`data-copy="${ORIGIN}/d/${deck!.id}"`);
+    expect(html).toContain("Presentar con control");
+    expect(html).toContain("Ver diapositivas");
+    expect(html).not.toContain(`>${ORIGIN.replace("https://", "")}/p/`);
     expect(html).toContain("Deck de prueba");
   });
 

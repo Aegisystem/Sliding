@@ -203,6 +203,7 @@ describe("las rutas", () => {
     expect(html).toContain(`src="${env.DECKS_ORIGIN}/v/${id}"`);
     expect(html).toContain(`data-secret="${secret}"`);
     expect(html).toContain("Este QR es el control de tus diapositivas. No lo compartas.");
+    expect(html).toContain("Esta es la Pantalla, lo que ve el público.");
     expect((await app("/p/AAAAAAAAAAAAAAAAAAAAAA")).status).toBe(404);
   });
 

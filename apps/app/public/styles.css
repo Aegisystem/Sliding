@@ -704,7 +704,7 @@ body > main {
 
 .session {
   display: grid;
-  grid-template-columns: 7rem minmax(0, 1fr) minmax(0, 1.35fr) auto;
+  grid-template-columns: 7rem minmax(0, 1fr) auto auto;
   min-height: 9rem;
   border-bottom: var(--rule);
 }
@@ -762,50 +762,14 @@ body > main {
   font-size: 0.9375rem;
 }
 
-.session-rooms {
+/* Lo que se hace con la presentación: presentarla, verla o compartirla. */
+.session-go {
   display: grid;
   align-content: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
+  min-width: 15rem;
   padding: 1rem 1.5rem;
   border-left: var(--rule);
-  min-width: 0;
-}
-
-.room {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0 0.75rem;
-}
-
-.room-label {
-  font-family: var(--display);
-  font-stretch: var(--condensed);
-  font-weight: 800;
-  font-size: 1.125rem;
-  line-height: 1.1;
-  word-spacing: var(--condensed-words);
-}
-
-.room-url {
-  grid-column: 1;
-  overflow: hidden;
-  font-size: 0.9375rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-
-.room-note {
-  grid-column: 1;
-  color: var(--ink-soft);
-  font-size: 0.875rem;
-}
-
-.room .copy {
-  grid-column: 2;
-  grid-row: 1 / span 3;
-  min-width: 6.5rem;
 }
 
 .copy.is-copied {
@@ -946,9 +910,10 @@ body > main {
     grid-template-columns: 6rem minmax(0, 1fr) auto;
   }
 
-  .session-rooms {
+  .session-go {
     grid-column: 2 / -1;
     grid-row: 2;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
     border-left: 0;
     border-top: var(--rule);
   }
@@ -1080,8 +1045,9 @@ body > main {
     padding: 1rem;
   }
 
-  .session-rooms {
+  .session-go {
     grid-column: 1 / -1;
+    min-width: 0;
     padding: 1rem;
   }
 
@@ -1141,7 +1107,8 @@ body > main {
   transition: opacity 600ms var(--ease), visibility 600ms var(--ease);
 }
 
-.prep[data-state="paired"] {
+.prep[data-state="paired"],
+.prep[data-state="here"] {
   opacity: 0;
   visibility: hidden;
 }
@@ -1203,13 +1170,44 @@ body > main {
 
 /* Sin QR que mostrar: solo el título y el aviso. */
 .prep[data-state="ended"],
-.prep[data-state="error"] {
+.prep[data-state="error"],
+.prep[data-state="phone"] {
   grid-template-columns: minmax(0, 1fr);
 }
 
-.prep[data-state="ended"] :is(.prep-steps, .prep-actions, .prep-qr),
-.prep[data-state="error"] :is(.prep-steps, .prep-actions, .prep-qr) {
+.prep:is([data-state="ended"], [data-state="error"], [data-state="phone"]) :is(.prep-steps, .prep-actions, .prep-qr) {
   display: none;
+}
+
+/* Abierta en un celular: la Pantalla va en el computador del proyector. */
+.prep-phone {
+  display: none;
+  gap: 1.5rem;
+}
+
+.prep[data-state="phone"] .prep-phone {
+  display: grid;
+}
+
+.prep-phone-text {
+  font-size: 1.5rem;
+  line-height: 1.35;
+}
+
+.prep-phone-actions {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.btn-ghost {
+  border-color: var(--paper);
+  background: transparent;
+  color: var(--paper);
+}
+
+.btn-ghost:hover {
+  background: var(--paper);
+  color: var(--ink);
 }
 
 .prep-qr {
