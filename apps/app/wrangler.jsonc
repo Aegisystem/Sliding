@@ -7,5 +7,8 @@
   // Los ids reales se ponen al desplegar (#12). En local basta con que
   // coincidan con los de apps/decks para compartir los datos.
   "kv_namespaces": [{ "binding": "DECKS", "id": "local-decks" }],
+  "d1_databases": [
+    { "binding": "DB", "database_name": "sliding", "database_id": "local-sliding", "migrations_dir": "migrations" }
+  ],
   "vars": { "DECKS_ORIGIN": "https://sliding-decks.pages.dev" }
 }

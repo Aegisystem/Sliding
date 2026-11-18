@@ -1,13 +1,23 @@
+import { isDeckId } from "@sliding/core";
 import { Hono } from "hono";
+import { homePage, notFoundPage, viewerPage } from "./pages";
 
 const app = new Hono<{ Bindings: Cloudflare.Env }>();
 
-app.get("/", (c) =>
-  c.html(`<!doctype html>
-<html lang="es">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Sliding</title></head>
-<body><h1>Sliding</h1><p>Sube tu deck HTML y preséntalo con el celular.</p></body>
-</html>`),
-);
+app.get("/", (c) => c.html(homePage()));
+
+// Enlace del deck: cualquiera con el enlace lo ve, sin notas ni opción de presentar.
+app.get("/d/:id", async (c) => {
+  const id = c.req.param("id");
+  const deck = isDeckId(id)
+    ? await c.env.DB.prepare("SELECT title FROM decks WHERE id = ? AND disabled = 0")
+        .bind(id)
+        .first<{ title: string }>()
+    : null;
+  if (!deck) return c.html(notFoundPage(), 404);
+  return c.html(viewerPage({ title: deck.title, src: `${c.env.DECKS_ORIGIN}/v/${id}` }));
+});
+
+app.notFound((c) => c.html(notFoundPage(), 404));
 
 export default app;
