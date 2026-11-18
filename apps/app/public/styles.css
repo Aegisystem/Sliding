@@ -422,7 +422,8 @@ body > main {
 .badge-hang-cover {
   position: absolute;
   z-index: 2;
-  right: calc(12.5% - var(--badge-w) / 2);
+  /* Centrada en la última pista, pero nunca más allá del margen. */
+  right: max(var(--gutter), calc(12.5% - var(--badge-w) / 2));
   bottom: calc(100% - var(--overlap));
   width: var(--badge-w);
 }
@@ -551,7 +552,10 @@ body > main {
   font-size: clamp(2.5rem, 5vw, 4rem);
 }
 
+/* Todas las hileras miden lo que la más alta, a cualquier ancho. */
 .info-rows {
+  display: grid;
+  grid-auto-rows: 1fr;
   margin: 0;
   border-top: var(--rule);
 }
@@ -561,7 +565,6 @@ body > main {
   grid-template-columns: 10rem minmax(0, 1fr);
   align-items: start;
   gap: 1rem;
-  min-height: 7.25rem;
   padding: 1.1rem 0;
   border-bottom: var(--rule);
 }
@@ -667,6 +670,16 @@ body > main {
   padding: 0.9rem 1.1rem;
   border-block: var(--rule);
   font-weight: 600;
+}
+
+/* La regla de abajo del aviso es la de arriba de la lista. */
+.flash:has(+ .program, + .empty) {
+  margin-bottom: 0;
+}
+
+.flash + .program,
+.flash + .empty {
+  border-top: 0;
 }
 
 .flash-ok {
@@ -990,8 +1003,8 @@ body > main {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .info-rows > div {
-    min-height: 0;
+  .info-rows {
+    grid-auto-rows: auto;
   }
 
   .panel-head {
