@@ -184,9 +184,10 @@ finish() {
 # Replace the example below. Set TOTAL_STAGES to match the stages you write.
 # ──────────────────────────────────────────────────────────────────────────
 #
-# Configura Sliding en sliding.aegisystem.xyz: cuenta de Cloudflare, token para desplegar desde GitHub,
-# OAuth de GitHub y Google, y llaves de sesión. Córrelo desde cualquier lugar:
-#   bash scripts/setup.sh
+# Configura Sliding en sliding.aegisystem.xyz: cuenta de Cloudflare, token
+# para desplegar desde GitHub, OAuth de GitHub y Google, y llaves de sesión.
+#   bash scripts/setup.sh            # todo, desde la etapa 1
+#   FROM=4 bash scripts/setup.sh     # retoma desde la etapa 4
 # Los valores locales quedan en apps/app/.dev.vars (fuera de git) y los de
 # producción en los secretos de GitHub Actions, que la CI copia al Worker.
 
@@ -194,20 +195,37 @@ cd "$(dirname "$0")/.."
 ENV_FILE="apps/app/.dev.vars"
 APP_URL="https://sliding.aegisystem.xyz"
 LOCAL_URL="http://localhost:8787"
+FROM="${FROM:-1}"
 
 TOTAL_STAGES=8
+
+# todo: verdadero si la próxima etapa debe correr; si no, la cuenta como hecha.
+todo() {
+  if (( _STAGE_INDEX + 1 < FROM )); then _STAGE_INDEX=$((_STAGE_INDEX + 1)); return 1; fi
+}
+# save_secret / save_env: como set_secret / write_env, pero un valor vacío
+# (Enter sin pegar nada) deja intacto lo que ya estaba guardado.
+save_secret() {
+  if [[ -n "$2" ]]; then set_secret "$1" "$2"; else note "Sin valor nuevo: $1 queda como estaba."; fi
+}
+save_env() {
+  if [[ -n "$2" ]]; then write_env "$1" "$2"; else note "Sin valor nuevo: $1 queda como estaba."; fi
+}
 
 banner "Sliding: cuentas, OAuth y despliegue"
 
 # ── 1 ─────────────────────────────────────────────────────────────────────
+if todo; then
 stage "Cloudflare: cuenta"
 say "La app vivirá en $APP_URL, así que usa la cuenta donde está aegisystem.xyz."
 open_url "https://dash.cloudflare.com/login"
 step "Entra a Cloudflare con la cuenta que tiene el dominio aegisystem.xyz."
 step "Comprueba que aegisystem.xyz aparezca en la lista de dominios con estado Active."
 pause "Enter para seguir"
+fi
 
 # ── 2 ─────────────────────────────────────────────────────────────────────
+if todo; then
 stage "Cloudflare: conectar wrangler"
 say "Esto deja a wrangler (y a Claude, en esta máquina) crear KV, D1 y el proyecto de Pages."
 step "Se abrirá el navegador: acepta los permisos que pide wrangler."
@@ -215,12 +233,13 @@ pause "Enter para abrir el inicio de sesión"
 npx wrangler login
 npx wrangler whoami
 pause "Si arriba aparece tu cuenta, Enter para seguir"
+fi
 
 # ── 3 ─────────────────────────────────────────────────────────────────────
+if todo; then
 stage "Cloudflare: token para desplegar desde GitHub"
 open_url "https://dash.cloudflare.com/profile/api-tokens"
-step "Create Token → al fondo, 'Create Custom Token' → Get started."
-step "Nombre: Sliding GitHub Actions"
+step "Create Token → al fondo, 'Create Custom Token' → Get started. Nombre: Sliding GitHub Actions"
 step "Permisos, una fila cada uno, todos en 'Edit':"
 note "    Account · Workers Scripts      Account · Cloudflare Pages"
 note "    Account · D1                   Account · Workers KV Storage"
@@ -228,24 +247,34 @@ note "    Zone · Workers Routes   (para poner la app en sliding.aegisystem.xyz)
 step "Account Resources: Include → tu cuenta."
 step "Zone Resources: Include → Specific zone → aegisystem.xyz."
 step "Continue to summary → Create Token → copia el token (se muestra una sola vez)."
-ask_secret CLOUDFLARE_API_TOKEN "Pega el token:"
-set_secret CLOUDFLARE_API_TOKEN "$CLOUDFLARE_API_TOKEN"
+note "¿Ya lo creaste? Ábrelo con Edit, agrega lo que falte y guarda: el token no cambia."
+note "En ese caso deja vacío el campo de abajo y presiona Enter."
+ask_secret CLOUDFLARE_API_TOKEN "Pega el token (o Enter para mantener el guardado):"
+save_secret CLOUDFLARE_API_TOKEN "$CLOUDFLARE_API_TOKEN"
+pause "Enter para seguir"
+fi
 
 # ── 4 ─────────────────────────────────────────────────────────────────────
+if todo; then
 stage "GitHub: app de OAuth para producción"
-open_url "https://github.com/settings/applications/new"
-step "Application name: Sliding"
-step "Homepage URL: $APP_URL"
-step "Authorization callback URL: $APP_URL/auth/github/callback"
-step "Deja 'Enable Device Flow' sin marcar → Register application."
+open_url "https://github.com/settings/developers"
+step "¿Ya creaste 'Sliding'? Ábrela y corrige las dos URLs de abajo → Update application."
+step "Si no existe: New OAuth App, con estos datos:"
+note "    Application name: Sliding"
+note "    Homepage URL: $APP_URL"
+note "    Authorization callback URL: $APP_URL/auth/github/callback"
+note "    'Enable Device Flow' sin marcar → Register application."
 step "Copia el Client ID."
 ask OAUTH_GITHUB_CLIENT_ID "Pega el Client ID:"
 step "Haz clic en 'Generate a new client secret' y cópialo."
 ask_secret OAUTH_GITHUB_CLIENT_SECRET "Pega el client secret:"
-set_secret OAUTH_GITHUB_CLIENT_ID "$OAUTH_GITHUB_CLIENT_ID"
-set_secret OAUTH_GITHUB_CLIENT_SECRET "$OAUTH_GITHUB_CLIENT_SECRET"
+save_secret OAUTH_GITHUB_CLIENT_ID "$OAUTH_GITHUB_CLIENT_ID"
+save_secret OAUTH_GITHUB_CLIENT_SECRET "$OAUTH_GITHUB_CLIENT_SECRET"
+pause "Enter para seguir"
+fi
 
 # ── 5 ─────────────────────────────────────────────────────────────────────
+if todo; then
 stage "GitHub: app de OAuth para local"
 say "GitHub acepta una sola URL de vuelta por app, así que local necesita la suya."
 open_url "https://github.com/settings/applications/new"
@@ -256,10 +285,13 @@ step "Register application → copia el Client ID."
 ask GITHUB_CLIENT_ID "Pega el Client ID:"
 step "Haz clic en 'Generate a new client secret' y cópialo."
 ask_secret GITHUB_CLIENT_SECRET "Pega el client secret:"
-write_env GITHUB_CLIENT_ID "$GITHUB_CLIENT_ID"
-write_env GITHUB_CLIENT_SECRET "$GITHUB_CLIENT_SECRET"
+save_env GITHUB_CLIENT_ID "$GITHUB_CLIENT_ID"
+save_env GITHUB_CLIENT_SECRET "$GITHUB_CLIENT_SECRET"
+pause "Enter para seguir"
+fi
 
 # ── 6 ─────────────────────────────────────────────────────────────────────
+if todo; then
 stage "Google: proyecto y pantalla de inicio de sesión"
 open_url "https://console.cloud.google.com/projectcreate"
 step "Nombre del proyecto: Sliding → Create. Espera a que arriba diga 'Sliding'."
@@ -272,8 +304,10 @@ open_url "https://console.cloud.google.com/auth/audience"
 step "En Audience, 'Publish app' → Confirm. Así cualquiera puede entrar, no solo usuarios de prueba."
 note "Si las pantallas se ven distintas, busca 'Google Auth Platform' en el buscador de la consola."
 pause "Enter cuando la app esté publicada"
+fi
 
 # ── 7 ─────────────────────────────────────────────────────────────────────
+if todo; then
 stage "Google: cliente de OAuth"
 say "Google acepta varias URLs de vuelta, así que un solo cliente sirve para local y producción."
 open_url "https://console.cloud.google.com/auth/clients/create"
@@ -284,13 +318,16 @@ note "    $LOCAL_URL/auth/google/callback"
 step "Create → copia el Client ID y el Client secret (el secret se muestra una sola vez)."
 ask GOOGLE_CLIENT_ID "Pega el Client ID:"
 ask_secret GOOGLE_CLIENT_SECRET "Pega el client secret:"
-write_env GOOGLE_CLIENT_ID "$GOOGLE_CLIENT_ID"
-write_env GOOGLE_CLIENT_SECRET "$GOOGLE_CLIENT_SECRET"
-set_secret OAUTH_GOOGLE_CLIENT_ID "$GOOGLE_CLIENT_ID"
-set_secret OAUTH_GOOGLE_CLIENT_SECRET "$GOOGLE_CLIENT_SECRET"
+save_env GOOGLE_CLIENT_ID "$GOOGLE_CLIENT_ID"
+save_env GOOGLE_CLIENT_SECRET "$GOOGLE_CLIENT_SECRET"
+save_secret OAUTH_GOOGLE_CLIENT_ID "$GOOGLE_CLIENT_ID"
+save_secret OAUTH_GOOGLE_CLIENT_SECRET "$GOOGLE_CLIENT_SECRET"
 note "Los cambios de Google pueden tardar unos minutos en aplicarse."
+pause "Enter para seguir"
+fi
 
 # ── 8 ─────────────────────────────────────────────────────────────────────
+if todo; then
 stage "Llaves de sesión"
 say "Firman la cookie de sesión. Se generan solas: una para local y otra distinta para producción."
 if [[ -z "$(_existing SESSION_SECRET || true)" ]]; then
@@ -300,6 +337,7 @@ else
 fi
 if confirm "¿Generar la llave de producción? (si ya existía, se cierran las sesiones abiertas)"; then
   set_secret SESSION_SECRET "$(openssl rand -base64 32)"
+fi
 fi
 
 finish
