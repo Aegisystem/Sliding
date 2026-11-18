@@ -42,6 +42,11 @@ typography:
     fontSize: "1.0625rem"
     fontWeight: 400
     lineHeight: 1.55
+  notes:
+    fontFamily: "Archivo, system-ui, sans-serif"
+    fontSize: "1.25rem"
+    fontWeight: 400
+    lineHeight: 1.45
   body-small:
     fontFamily: "Archivo, system-ui, sans-serif"
     fontSize: "0.9375rem"
@@ -285,7 +290,7 @@ La credencial plastificada colgada de una cinta amarilla de 3rem con bordes de t
 - Sello de goma: mayúsculas condensadas 800, borde de 3px en el color del texto, radio de 6px, girado −4°. Marca lo que todavía no existe («Por confirmar») o lo que ya no está («Cancelada»).
 
 ### Notices
-- Una sesión del programa a escala de página: la banda naranja llena el espacio entre cabecera y colofón, con titular, texto de 52ch, un botón de tinta y el sello en la esquina inferior derecha (en flujo bajo 560px). El 404 dice «Cancelada»; el Enlace para presentar, «Por confirmar».
+- Una sesión del programa a escala de página: la banda naranja llena el espacio entre cabecera y colofón, con titular, texto de 52ch, un botón de tinta y el sello en la esquina inferior derecha (en flujo bajo 560px). El 404 dice «Cancelada».
 
 ### Reading page
 - Banda de título azul con texto en cartulina sobre una regla; debajo, texto de lectura en tinta sobre cartulina a 68ch, con secciones abiertas por una regla de 2px y viñetas azules.
@@ -293,6 +298,15 @@ La credencial plastificada colgada de una cinta amarilla de 3rem con bordes de t
 ### Inputs / Fields
 - **Subida:** caja con regla de 2px y radio de 10px que contiene el botón de tinta con el input de archivo oculto y una nota de tinta suave (34ch). Al arrastrar un archivo sobre la página se rellena de amarillo; elegir o soltar el archivo ya lo sube. El nombre elegido pasa a tinta y 600.
 - **Avisos (flash):** franja a todo el ancho con reglas arriba y abajo, amarilla para éxito y naranja para error, texto en tinta 600.
+
+### Pantalla (Sesión en vivo)
+- La presentación a toda la ventana y, encima, la preparación en tinta (la sala suele estar a oscuras): titular, pasos numerados en amarillo, botón «Pantalla completa» y, a la derecha, la tarjeta del QR de control en cartulina con su banda naranja «Este QR es el control de tus diapositivas. No lo compartas.». Al emparejar, la preparación se desvanece (600ms). Los avisos breves salen abajo a la izquierda en amarillo. Abierta en un celular, en vez del QR explica que la Pantalla va en el computador del proyector y ofrece enviar el enlace o ver la presentación ahí mismo.
+
+### Control (Sesión en vivo)
+- Oscuro, porque se usa de pie y con poca luz: fondo de tinta y texto en cartulina. Arriba, el título y el contador en amarillo; debajo, el reloj y el cronómetro (verde lleno cuando corre, solo borde cuando está pausado o sin empezar; se pausa al tocarlo).
+- Con una Presentación html-slides: las miniaturas «Ahora» y «Sigue» (la misma presentación dibujada a 1280 y escalada, con regla de cartulina y radio de 6px), las notas del presentador a 1.25rem con saltos de línea, «Siguiente» azul de al menos 7rem al alcance del pulgar, «Anterior» y «Diapositivas» con borde de cartulina, y «Terminar sesión» con borde naranja.
+- «Diapositivas» abre una hoja a pantalla completa con la lista numerada (número condensado y título de cada diapositiva); la actual va en amarillo.
+- Con una Presentación genérica: sin notas, miniaturas, lista ni contador; «Siguiente» ocupa casi toda la pantalla.
 
 ### Visor de la presentación
 - La página del Enlace de la presentación no carga la hoja de estilos ni la fuente de Sliding: un iframe a toda la ventana sobre negro, sin marca encima.
@@ -314,4 +328,4 @@ La credencial plastificada colgada de una cinta amarilla de 3rem con bordes de t
 - **Don't** usar degradados, maquetas de dispositivos ni titulares de landing SaaS.
 - **Don't** usar tarjetas con fondo gris para agrupar: la agrupación es la hilera entre reglas.
 - **Don't** poner estilos, marca ni cabecera de Sliding en la página del Enlace de la presentación.
-- **Don't** dar por resuelta la Pantalla o el Control (#5, #6): heredan este mundo, pero la decisión de que el Control sea oscuro por su escena de uso (celular, sala con poca luz) sigue abierta y aún no tiene tokens.
+- **Do** mantener oscuros la preparación de la Pantalla y el Control: su escena es una sala con la luz baja. La cartulina queda para lo que es papel o plástico (la tarjeta del QR, el botón «Cerrar»).

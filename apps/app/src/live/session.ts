@@ -1,6 +1,16 @@
-import type { DeckKind } from "@sliding/core";
+import type { DeckKind, SlideInfo } from "@sliding/core";
 import { DurableObject } from "cloudflare:workers";
 import { renderSVG } from "uqr";
+
+/** Lo que el Control recibe de cada diapositiva. Nunca llega a la Pantalla. */
+async function slidesFor(env: Cloudflare.Env, deckId: string): Promise<SlideInfo[] | null> {
+  const stored = await env.DECKS.get<unknown[]>(`notes:${deckId}`, "json");
+  if (!Array.isArray(stored)) return null;
+  // Las presentaciones subidas antes de guardar títulos tienen solo las notas.
+  return stored.map((item) =>
+    typeof item === "string" ? { title: "", notes: item } : { title: String((item as SlideInfo).title ?? ""), notes: String((item as SlideInfo).notes ?? "") },
+  );
+}
 
 /** Una Sesión en vivo sin nadie conectado termina sola a los 30 minutos. */
 export const IDLE_MS = 30 * 60 * 1000;
@@ -108,7 +118,10 @@ export class LiveSession extends DurableObject<Cloudflare.Env> {
       }
       this.closeRole("control", CLOSE.replaced);
       this.accept(server, "control");
-      server.send(JSON.stringify({ ...this.hello(meta, "control"), ...(controlKey ? { controlKey } : {}) }));
+      const slides = meta.kind === "html-slides" ? await slidesFor(this.env, meta.deckId) : null;
+      server.send(
+        JSON.stringify({ ...this.hello(meta, "control"), deckId: meta.deckId, slides, ...(controlKey ? { controlKey } : {}) }),
+      );
       this.sendRole("screen", { type: "control", connected: true });
     }
     await this.ctx.storage.deleteAlarm();

@@ -59,7 +59,11 @@ describe("subir", () => {
     expect(deck).toMatchObject({ title: "Deck de prueba", kind: "html-slides", slideCount: 3 });
     expect(deck!.secret).toMatch(/^[A-Za-z0-9_-]{22}$/);
     expect(await env.DECKS.get(`deck:${deck!.id}`)).toBe(htmlSlidesDeck);
-    expect(JSON.parse((await env.DECKS.get(`notes:${deck!.id}`))!)).toHaveLength(3);
+    expect(JSON.parse((await env.DECKS.get(`notes:${deck!.id}`))!)).toEqual([
+      { title: "Deck de prueba", notes: "Nota 1: saluda y presenta el tema." },
+      { title: "Segunda slide", notes: "Nota 2: explica la idea con un ejemplo." },
+      { title: "Fin", notes: "Nota 3: abre la ronda de preguntas." },
+    ]);
 
     const html = await (await b.request("/panel?ok=subido")).text();
     expect(html).toContain("Presentación subida.");

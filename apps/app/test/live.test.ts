@@ -9,8 +9,9 @@ const app = (path: string, init?: RequestInit) => exports.default.fetch(`${ORIGI
 
 type Msg = Record<string, unknown> & { type: string };
 
-async function presentable({ kind = "html-slides", total = 3 } = {}) {
+async function presentable({ kind = "html-slides", total = 3, notes }: { kind?: string; total?: number; notes?: unknown } = {}) {
   const id = newDeckId();
+  if (notes !== undefined) await env.DECKS.put(`notes:${id}`, JSON.stringify(notes));
   const secret = newPresentSecret();
   const now = Date.now();
   await env.DB.prepare(
@@ -127,6 +128,51 @@ describe("el QR de control", () => {
 
     const old = await socket(`/live/${sessionId}/control?key=${controlKey}`);
     expect(await old.next("denied")).toMatchObject({ reason: "key" });
+  });
+});
+
+describe("las Notas del presentador", () => {
+  const slides = [
+    { title: "Hola", notes: "Saluda." },
+    { title: "Idea", notes: "Explica la idea." },
+  ];
+
+  it("llegan al Control con el título de cada diapositiva, y nunca a la Pantalla", async () => {
+    const { id, secret } = await presentable({ total: 2, notes: slides });
+    const { sessionId, screenKey } = await newSession(secret);
+    const screen = await socket(`/live/${sessionId}/screen?key=${screenKey}`);
+    const screenHello = await screen.next("hello");
+    expect(screenHello).not.toHaveProperty("slides");
+    expect(JSON.stringify(screenHello)).not.toContain("Saluda");
+    const pair = await screen.next("pair");
+
+    const control = await socket(`/live/${sessionId}/control?pair=${new URL(pair.url as string).hash.slice(1)}`);
+    expect(await control.next("hello")).toMatchObject({ deckId: id, slides });
+  });
+
+  it("también se leen las notas guardadas antes de que hubiera títulos", async () => {
+    const { secret } = await presentable({ total: 2, notes: ["Saluda.", "Explica la idea."] });
+    const { sessionId, screenKey } = await newSession(secret);
+    const screen = await socket(`/live/${sessionId}/screen?key=${screenKey}`);
+    await screen.next("hello");
+    const pair = await screen.next("pair");
+    const control = await socket(`/live/${sessionId}/control?pair=${new URL(pair.url as string).hash.slice(1)}`);
+    expect(await control.next("hello")).toMatchObject({
+      slides: [
+        { title: "", notes: "Saluda." },
+        { title: "", notes: "Explica la idea." },
+      ],
+    });
+  });
+
+  it("una Presentación genérica no manda notas", async () => {
+    const { secret } = await presentable({ kind: "generic" });
+    const { sessionId, screenKey } = await newSession(secret);
+    const screen = await socket(`/live/${sessionId}/screen?key=${screenKey}`);
+    await screen.next("hello");
+    const pair = await screen.next("pair");
+    const control = await socket(`/live/${sessionId}/control?pair=${new URL(pair.url as string).hash.slice(1)}`);
+    expect(await control.next("hello")).toMatchObject({ kind: "generic", slides: null });
   });
 });
 

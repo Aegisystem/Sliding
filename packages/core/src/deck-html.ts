@@ -24,25 +24,39 @@ export function stripNotes(response: Response): Response {
     .transform(response);
 }
 
+/** Una diapositiva de una Presentación html-slides, como la ve el Control. */
+export interface SlideInfo {
+  /** Su primer título (h1, h2, h3, .big o blockquote), o "" si no tiene. */
+  title: string;
+  /** Sus Notas del presentador, o "" si no tiene. */
+  notes: string;
+}
+
 export interface DeckInfo {
   kind: DeckKind;
   /** El texto de <title>, o null si no tiene. */
   title: string | null;
-  /** Solo en un Deck html-slides: cuántas slides tiene. */
+  /** Solo en una Presentación html-slides: cuántas diapositivas tiene. */
   slideCount: number | null;
   /**
-   * Solo en un Deck html-slides: la nota de cada slide, en orden, como texto
-   * plano ("" si esa slide no tiene). Nunca HTML: el Control la muestra tal cual.
+   * Solo en una Presentación html-slides: título y notas de cada diapositiva,
+   * en orden y como texto plano. Nunca HTML: el Control los muestra tal cual.
    */
-  notes: string[] | null;
+  slides: SlideInfo[] | null;
 }
+
+const SLIDE_TITLES = ["h1", "h2", "h3", ".big", "blockquote"];
+const MAX_SLIDE_TITLE = 120;
 
 export async function inspectDeck(html: string): Promise<DeckInfo> {
   const kind = detectKind(html);
   let title = "";
   let titles = 0;
-  const notes: string[] = [];
+  const slides: SlideInfo[] = [];
   let slide = -1;
+  // El título de cada diapositiva es el texto del primer elemento que calce.
+  let capturing: string | null = null;
+  let titleTaken = false;
 
   const rewriter = new HTMLRewriter().on("title", {
     element() {
@@ -58,20 +72,36 @@ export async function inspectDeck(html: string): Promise<DeckInfo> {
       .on("section.slide", {
         element() {
           slide += 1;
-          notes[slide] = "";
+          slides[slide] = { title: "", notes: "" };
+          titleTaken = false;
         },
       })
       // Cada párrafo, salto o ítem de la nota empieza en una línea nueva.
       .on(`${inNotes} p, ${inNotes} br, ${inNotes} li, ${inNotes} div`, {
         element() {
-          if (slide >= 0) notes[slide] += "\n";
+          if (slide >= 0) slides[slide]!.notes += "\n";
         },
       })
       .on(inNotes, {
         text(chunk) {
-          if (slide >= 0) notes[slide] += chunk.text;
+          if (slide >= 0) slides[slide]!.notes += chunk.text;
         },
       });
+    for (const selector of SLIDE_TITLES) {
+      rewriter.on(`section.slide ${selector}`, {
+        element(element) {
+          if (slide < 0 || titleTaken || capturing) return;
+          capturing = selector;
+          element.onEndTag(() => {
+            capturing = null;
+            titleTaken = true;
+          });
+        },
+        text(chunk) {
+          if (capturing === selector && slide >= 0) slides[slide]!.title += chunk.text;
+        },
+      });
+    }
   }
   await rewriter.transform(new Response(html)).arrayBuffer();
 
@@ -79,8 +109,14 @@ export async function inspectDeck(html: string): Promise<DeckInfo> {
   return {
     kind,
     title: cleanTitle || null,
-    slideCount: kind === "html-slides" ? notes.length : null,
-    notes: kind === "html-slides" ? notes.map(toPlainText) : null,
+    slideCount: kind === "html-slides" ? slides.length : null,
+    slides:
+      kind === "html-slides"
+        ? slides.map((s) => ({
+            title: toPlainText(s.title).replace(/\s+/g, " ").slice(0, MAX_SLIDE_TITLE),
+            notes: toPlainText(s.notes),
+          }))
+        : null,
   };
 }
 

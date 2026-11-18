@@ -1,36 +1,225 @@
 // El Control: se une a la Sesión en vivo con el QR de control (una sola vez)
 // y después se reconecta con la llave que queda guardada en este celular.
+// Muestra las notas, las vistas previas, el cronómetro, el reloj y la lista
+// para saltar; con una presentación genérica, solo anterior y siguiente.
 
-const sessionId = document.body.dataset.session;
+const body = document.body;
+const sessionId = body.dataset.session;
+const decksOrigin = body.dataset.decksOrigin;
 const $ = (selector) => document.querySelector(selector);
-const title = $("[data-title]");
-const count = $("[data-count]");
-const main = $("[data-main]");
-const foot = $("[data-foot]");
-const box = $("[data-state-box]");
-const boxTitle = $("[data-state-title]");
-const boxText = $("[data-state-text]");
 
-const keyName = `sliding:control:${sessionId}`;
-const store = {
+const ui = {
+  title: $("[data-title]"),
+  count: $("[data-count]"),
+  meta: $("[data-meta]"),
+  clock: $("[data-clock]"),
+  timer: $("[data-timer]"),
+  timerReset: $("[data-timer-reset]"),
+  main: $("[data-main]"),
+  previews: $("[data-previews]"),
+  current: $('[data-preview="current"]'),
+  next: $('[data-preview="next"]'),
+  previewEnd: $("[data-preview-end]"),
+  notesBox: $("[data-notes-box]"),
+  notes: $("[data-notes]"),
+  openList: $("[data-open-list]"),
+  list: $("[data-list]"),
+  listItems: $("[data-list-items]"),
+  foot: $("[data-foot]"),
+  box: $("[data-state-box]"),
+  boxTitle: $("[data-state-title]"),
+  boxText: $("[data-state-text]"),
+};
+
+const saved = (key) => ({
   get() {
     try {
-      return localStorage.getItem(keyName);
+      return localStorage.getItem(key);
     } catch {
       return null;
     }
   },
   set(value) {
     try {
-      localStorage.setItem(keyName, value);
+      localStorage.setItem(key, value);
     } catch {}
   },
   clear() {
     try {
-      localStorage.removeItem(keyName);
+      localStorage.removeItem(key);
     } catch {}
   },
-};
+});
+const controlKey = saved(`sliding:control:${sessionId}`);
+const timerStore = saved(`sliding:timer:${sessionId}`);
+
+// ── Estado de la presentación ─────────────────────────────────────────────
+
+const state = { title: "", kind: "generic", index: 0, total: null, slides: null, deckId: null };
+
+function render() {
+  if (state.title) {
+    ui.title.textContent = state.title;
+    document.title = `Control · ${state.title} · Sliding`;
+  }
+  const known = Number.isInteger(state.total);
+  ui.count.textContent = known ? `${state.index + 1} / ${state.total}` : "";
+
+  const slides = state.kind === "html-slides" && Array.isArray(state.slides) ? state.slides : null;
+  body.classList.toggle("is-generic", !slides);
+  ui.previews.hidden = !slides || !state.deckId;
+  ui.notesBox.hidden = !slides;
+  ui.openList.hidden = !slides;
+  if (slides) {
+    const notes = slides[state.index]?.notes ?? "";
+    ui.notes.textContent = notes || "Esta diapositiva no tiene notas.";
+    ui.notes.classList.toggle("is-empty", !notes);
+    ui.notesBox.scrollTop = 0;
+    renderList(slides);
+  }
+  showPreviews();
+}
+
+// ── Vistas previas: la misma presentación, en miniatura ───────────────────
+
+const PREVIEW_WIDTH = 1280;
+let previewsLoaded = false;
+
+function loadPreviews() {
+  if (previewsLoaded || ui.previews.hidden || !state.deckId) return;
+  previewsLoaded = true;
+  for (const frame of [ui.current, ui.next]) {
+    frame.addEventListener("load", showPreviews);
+    frame.src = `${decksOrigin}/v/${state.deckId}`;
+  }
+}
+
+function showPreviews() {
+  if (ui.previews.hidden) return;
+  loadPreviews();
+  const go = (frame, to) => frame.contentWindow?.postMessage({ sliding: 1, type: "go", to }, decksOrigin);
+  go(ui.current, state.index);
+  const last = Number.isInteger(state.total) && state.index + 1 >= state.total;
+  ui.previewEnd.hidden = !last;
+  if (!last) go(ui.next, state.index + 1);
+}
+
+// Las miniaturas se dibujan a 1280 de ancho y se escalan a su caja.
+const resize = new ResizeObserver((entries) => {
+  for (const entry of entries) {
+    entry.target.style.setProperty("--preview-scale", String(entry.contentRect.width / PREVIEW_WIDTH));
+  }
+});
+for (const frame of document.querySelectorAll(".preview-frame")) resize.observe(frame);
+
+// ── Lista para saltar ─────────────────────────────────────────────────────
+
+function renderList(slides) {
+  ui.listItems.replaceChildren(
+    ...slides.map((slide, index) => {
+      const item = document.createElement("li");
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.jump = String(index);
+      if (index === state.index) button.setAttribute("aria-current", "true");
+      const number = document.createElement("span");
+      number.className = "num";
+      number.textContent = String(index + 1);
+      const label = document.createElement("span");
+      label.textContent = slide.title || `Diapositiva ${index + 1}`;
+      button.append(number, label);
+      item.append(button);
+      return item;
+    }),
+  );
+}
+
+ui.openList.addEventListener("click", () => {
+  ui.list.showModal();
+  ui.listItems.querySelector('[aria-current="true"]')?.scrollIntoView({ block: "center" });
+});
+
+ui.listItems.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-jump]");
+  if (!button) return;
+  go(Number(button.dataset.jump));
+  ui.list.close();
+});
+
+// ── Cronómetro y reloj ────────────────────────────────────────────────────
+
+// El cronómetro arranca con la primera diapositiva que se avanza y se pausa al tocarlo.
+let timer = { startedAt: null, pausedAt: null };
+try {
+  timer = { ...timer, ...JSON.parse(timerStore.get() ?? "{}") };
+} catch {}
+const saveTimer = () => timerStore.set(JSON.stringify(timer));
+
+function elapsed() {
+  if (!timer.startedAt) return 0;
+  return (timer.pausedAt ?? Date.now()) - timer.startedAt;
+}
+
+function startTimer() {
+  if (timer.startedAt) return;
+  timer = { startedAt: Date.now(), pausedAt: null };
+  saveTimer();
+}
+
+function formatElapsed(ms) {
+  const total = Math.floor(ms / 1000);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = String(total % 60).padStart(2, "0");
+  return h ? `${h}:${String(m).padStart(2, "0")}:${s}` : `${m}:${s}`;
+}
+
+const clockFormat = new Intl.DateTimeFormat("es", { hour: "2-digit", minute: "2-digit" });
+
+function tick() {
+  ui.timer.textContent = formatElapsed(elapsed());
+  ui.timer.classList.toggle("is-paused", Boolean(timer.pausedAt));
+  ui.timer.classList.toggle("is-idle", !timer.startedAt);
+  ui.clock.textContent = clockFormat.format(new Date());
+}
+
+ui.timer.addEventListener("click", () => {
+  if (!timer.startedAt) startTimer();
+  else if (timer.pausedAt) {
+    timer.startedAt += Date.now() - timer.pausedAt;
+    timer.pausedAt = null;
+    saveTimer();
+  } else {
+    timer.pausedAt = Date.now();
+    saveTimer();
+  }
+  tick();
+});
+
+ui.timerReset.addEventListener("click", () => {
+  timer = { startedAt: null, pausedAt: null };
+  saveTimer();
+  tick();
+});
+
+setInterval(tick, 1000);
+tick();
+
+// ── Pantalla encendida ────────────────────────────────────────────────────
+
+let wakeLock = null;
+async function keepAwake() {
+  if (!("wakeLock" in navigator) || document.visibilityState !== "visible" || wakeLock) return;
+  try {
+    wakeLock = await navigator.wakeLock.request("screen");
+    wakeLock.addEventListener("release", () => {
+      wakeLock = null;
+    });
+  } catch {}
+}
+document.addEventListener("visibilitychange", keepAwake);
+
+// ── Conexión ──────────────────────────────────────────────────────────────
 
 let pairToken = location.hash.slice(1);
 let socket = null;
@@ -38,38 +227,39 @@ let retries = 0;
 let finished = false;
 
 function show(heading, text = "") {
-  main.hidden = true;
-  foot.hidden = true;
-  box.hidden = false;
-  boxTitle.textContent = heading;
-  boxText.textContent = text;
+  ui.main.hidden = true;
+  ui.meta.hidden = true;
+  ui.foot.hidden = true;
+  ui.box.hidden = false;
+  ui.boxTitle.textContent = heading;
+  ui.boxText.textContent = text;
 }
 
 function ready() {
-  main.hidden = false;
-  foot.hidden = false;
-  box.hidden = true;
+  ui.main.hidden = false;
+  ui.meta.hidden = false;
+  ui.foot.hidden = false;
+  ui.box.hidden = true;
+  keepAwake();
 }
 
 function finish(heading, text) {
   finished = true;
+  if (ui.list.open) ui.list.close();
   show(heading, text);
-}
-
-function render(msg) {
-  if (msg.title) {
-    title.textContent = msg.title;
-    document.title = `Control · ${msg.title} · Sliding`;
-  }
-  if (Number.isInteger(msg.index) && Number.isInteger(msg.total)) count.textContent = `${msg.index + 1} / ${msg.total}`;
 }
 
 const send = (msg) => {
   if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify(msg));
 };
 
+function go(to) {
+  startTimer();
+  send({ type: "go", to });
+}
+
 function connect() {
-  const key = store.get();
+  const key = controlKey.get();
   const query = key ? `key=${encodeURIComponent(key)}` : pairToken ? `pair=${encodeURIComponent(pairToken)}` : null;
   if (!query) {
     return finish("Escanea el QR de la Pantalla", "Abre el Enlace para presentar en el computador y escanea su QR con este celular.");
@@ -91,11 +281,11 @@ function connect() {
     if (current !== socket || finished || event.code === 4003) return;
     if (event.code === 4000) return finish("La sesión terminó", "Puedes cerrar esta página.");
     if (event.code === 4001) {
-      store.clear();
+      controlKey.clear();
       return finish("Otro celular tomó el control", "Para recuperarlo, presiona Q en la Pantalla y escanea el QR nuevo.");
     }
     if (event.code === 4004) {
-      store.clear();
+      controlKey.clear();
       return finish("Esta sesión ya no existe", "Escanea otra vez el QR de la Pantalla.");
     }
     show("Sin conexión", "Reconectando…");
@@ -106,23 +296,34 @@ function connect() {
 function handle(msg, usedKey) {
   if (msg.type === "hello") {
     if (msg.controlKey) {
-      store.set(msg.controlKey);
+      controlKey.set(msg.controlKey);
       pairToken = "";
       history.replaceState(null, "", location.pathname);
     }
-    render(msg);
+    Object.assign(state, {
+      title: msg.title ?? state.title,
+      kind: msg.kind ?? state.kind,
+      index: msg.index ?? 0,
+      total: msg.total ?? null,
+      slides: msg.slides ?? null,
+      deckId: msg.deckId ?? null,
+    });
     ready();
+    render();
   } else if (msg.type === "slide") {
-    render(msg);
+    if (msg.index > 0) startTimer();
+    state.index = msg.index;
+    if (Number.isInteger(msg.total)) state.total = msg.total;
+    render();
   } else if (msg.type === "ended") {
     finish("La sesión terminó", "Puedes cerrar esta página.");
   } else if (msg.type === "denied") {
     if (usedKey && pairToken) {
       // La llave guardada ya no sirve, pero este celular trae un QR nuevo: se usa ese.
-      store.clear();
+      controlKey.clear();
       return setTimeout(connect, 0);
     }
-    store.clear();
+    controlKey.clear();
     finish(
       msg.reason === "qr" ? "Este QR ya se usó" : "Este celular ya no es el control",
       "Presiona Q en la Pantalla para mostrar un QR nuevo y escanéalo.",
@@ -138,7 +339,7 @@ addEventListener("hashchange", () => {
   pairToken = token;
   finished = false;
   retries = 0;
-  store.clear();
+  controlKey.clear();
   const old = socket;
   socket = null;
   old?.close(1000, "");
@@ -148,7 +349,7 @@ addEventListener("hashchange", () => {
 
 document.addEventListener("click", (event) => {
   const button = event.target.closest("[data-go]");
-  if (button) send({ type: "go", to: button.dataset.go });
+  if (button) go(button.dataset.go);
 });
 
 $("[data-end]").addEventListener("click", () => {

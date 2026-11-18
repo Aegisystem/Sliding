@@ -62,7 +62,7 @@ export function liveRoutes() {
   live.get("/c/:id", (c) => {
     const id = c.req.param("id");
     if (!isToken(id)) return c.html(notFoundPage(c.var.user), 404);
-    return c.html(controlPage({ sessionId: id }));
+    return c.html(controlPage({ sessionId: id, decksOrigin: c.env.DECKS_ORIGIN }));
   });
 
   return live;

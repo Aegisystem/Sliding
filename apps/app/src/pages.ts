@@ -363,19 +363,49 @@ export const screenPage = ({
   });
 
 /** El Control: lo que ve el Presentador en su celular. Oscuro: se usa con la luz baja. */
-export const controlPage = ({ sessionId }: { sessionId: string }) =>
+export const controlPage = ({ sessionId, decksOrigin }: { sessionId: string; decksOrigin: string }) =>
   bareLayout({
     title: "Control · Sliding",
     page: "control",
-    attrs: html`data-session="${sessionId}"`,
+    attrs: html`data-session="${sessionId}" data-decks-origin="${decksOrigin}"`,
     script: "/control.js",
     body: html`<header class="control-head">
     <p class="control-title" data-title>Sliding</p>
     <p class="control-count num" data-count aria-live="polite"></p>
   </header>
+  <div class="control-meta" data-meta hidden>
+    <p class="control-clock num" data-clock></p>
+    <p class="control-timer-wrap">
+      <button class="control-timer num" type="button" data-timer aria-label="Cronómetro. Toca para pausar o seguir.">0:00</button>
+      <button class="control-reset" type="button" data-timer-reset>Reiniciar</button>
+    </p>
+  </div>
   <main class="control-main" data-main hidden>
-    <button class="control-next" type="button" data-go="next">Siguiente</button>
-    <button class="control-prev" type="button" data-go="prev">Anterior</button>
+    <div class="control-previews" data-previews hidden>
+      <figure class="preview">
+        <div class="preview-frame">
+          <iframe data-preview="current" title="Diapositiva actual" tabindex="-1" aria-hidden="true" sandbox="${SANDBOX}"></iframe>
+        </div>
+        <figcaption>Ahora</figcaption>
+      </figure>
+      <figure class="preview">
+        <div class="preview-frame">
+          <iframe data-preview="next" title="Diapositiva siguiente" tabindex="-1" aria-hidden="true" sandbox="${SANDBOX}"></iframe>
+          <p class="preview-end" data-preview-end hidden>Fin</p>
+        </div>
+        <figcaption>Sigue</figcaption>
+      </figure>
+    </div>
+    <section class="control-notes" data-notes-box hidden aria-label="Notas del presentador" aria-live="polite">
+      <p data-notes></p>
+    </section>
+    <div class="control-buttons">
+      <button class="control-next" type="button" data-go="next">Siguiente</button>
+      <div class="control-row">
+        <button class="control-prev" type="button" data-go="prev">Anterior</button>
+        <button class="control-list" type="button" data-open-list hidden>Diapositivas</button>
+      </div>
+    </div>
   </main>
   <section class="control-state" data-state-box aria-live="polite">
     <h1 data-state-title>Conectando…</h1>
@@ -383,7 +413,12 @@ export const controlPage = ({ sessionId }: { sessionId: string }) =>
   </section>
   <footer class="control-foot" data-foot hidden>
     <button class="control-end" type="button" data-end>Terminar sesión</button>
-  </footer>`,
+  </footer>
+  <dialog class="control-jump" data-list aria-labelledby="jump-title">
+    <h2 id="jump-title">Ir a una diapositiva</h2>
+    <ol class="jump-items" data-list-items></ol>
+    <form method="dialog"><button class="control-close" type="submit">Cerrar</button></form>
+  </dialog>`,
   });
 
 // ── Privacidad ────────────────────────────────────────────────────────────

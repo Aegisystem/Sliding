@@ -33,15 +33,22 @@ describe("stripNotes", () => {
 });
 
 describe("inspectDeck", () => {
+  it("toma como título de cada diapositiva su primer encabezado, aunque esté anidado", async () => {
+    const html = `<section class="slide"><p class="big">La clase es <em>el plano</em></p><h2>Después</h2></section>
+      <section class="slide"><blockquote><h1>Cita</h1></blockquote></section>
+      <script>new CustomEvent('slidechange')</script>`;
+    expect((await inspectDeck(html)).slides!.map((s) => s.title)).toEqual(["La clase es el plano", "Cita"]);
+  });
+
   it("lee título, slides y notas de un Deck html-slides", async () => {
     expect(await inspectDeck(htmlSlidesDeck)).toEqual({
       kind: "html-slides",
       title: "Deck de prueba",
       slideCount: 3,
-      notes: [
-        "Nota 1: saluda y presenta el tema.",
-        "Nota 2: explica la idea con un ejemplo.",
-        "Nota 3: abre la ronda de preguntas.",
+      slides: [
+        { title: "Deck de prueba", notes: "Nota 1: saluda y presenta el tema." },
+        { title: "Segunda slide", notes: "Nota 2: explica la idea con un ejemplo." },
+        { title: "Fin", notes: "Nota 3: abre la ronda de preguntas." },
       ],
     });
   });
@@ -51,7 +58,7 @@ describe("inspectDeck", () => {
       kind: "generic",
       title: "Deck genérico de prueba",
       slideCount: null,
-      notes: null,
+      slides: null,
     });
   });
 
@@ -66,7 +73,10 @@ describe("inspectDeck", () => {
     const info = await inspectDeck(html);
     expect(info.title).toBe("Charla & más");
     expect(info.slideCount).toBe(2);
-    expect(info.notes).toEqual(["", "Primero esto <b>\nDespués aquello!\n\na\nb"]);
+    expect(info.slides).toEqual([
+      { title: "Uno", notes: "" },
+      { title: "", notes: "Primero esto <b>\nDespués aquello!\n\na\nb" },
+    ]);
   });
 
   it("devuelve null si no hay título y lo recorta si es muy largo", async () => {

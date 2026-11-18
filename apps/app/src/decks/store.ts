@@ -79,9 +79,10 @@ export async function storeDeck(
   const id = deckId ?? newDeckId();
   const now = Date.now();
 
-  // Primero los archivos: una fila en D1 nunca apunta a un deck que falta.
+  // Primero los archivos: una fila en D1 nunca apunta a una presentación que falta.
+  // `notes:<id>` guarda el título y las notas de cada diapositiva, solo para el Control.
   await env.DECKS.put(`deck:${id}`, html);
-  if (info.notes) await env.DECKS.put(`notes:${id}`, JSON.stringify(info.notes));
+  if (info.slides) await env.DECKS.put(`notes:${id}`, JSON.stringify(info.slides));
   else await env.DECKS.delete(`notes:${id}`);
 
   if (deckId) {
