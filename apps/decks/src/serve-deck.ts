@@ -1,4 +1,5 @@
 import { type DeckKind, isDeckId, stripNotes } from "@sliding/core";
+import { withBridge } from "./bridge";
 
 export async function serveDeck(id: string, env: Cloudflare.Env): Promise<Response> {
   if (!isDeckId(id)) return notFound();
@@ -21,7 +22,8 @@ export async function serveDeck(id: string, env: Cloudflare.Env): Promise<Respon
       "cache-control": "no-cache",
     },
   });
-  return deck.kind === "html-slides" ? stripNotes(response) : response;
+  const served = deck.kind === "html-slides" ? stripNotes(response) : response;
+  return withBridge(served, env.APP_ORIGIN, deck.kind);
 }
 
 function notFound(): Response {

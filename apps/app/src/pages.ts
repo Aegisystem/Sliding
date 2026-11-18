@@ -297,21 +297,92 @@ export const panelPage = ({
   });
 };
 
-// ── Enlace para presentar ─────────────────────────────────────────────────
+// ── Sesión en vivo: Pantalla y Control ────────────────────────────────────
 
-export const presentPage = ({ user, title, deckUrl }: { user: User | null; title: string; deckUrl: string }) =>
-  layout({
-    title: `Presentar ${title} · Sliding`,
-    user,
-    page: "notice",
-    body: html`<section class="band track-naranja">
-      <div class="band-inner">
-        <h1>Presentar «${title}»</h1>
-        <p>La Pantalla con el QR de control llega en la próxima versión. Mientras tanto, puedes mostrar la presentación a pantalla completa desde su enlace.</p>
-        <p><a class="btn btn-ink" href="${deckUrl}">Abrir la presentación</a></p>
+const SANDBOX = "allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-downloads";
+
+/** Página sin cabecera ni pie: la Pantalla y el Control ocupan toda la ventana. */
+const bareLayout = ({ title, page, attrs, body, script }: { title: string; page: string; attrs: Html; body: Html; script: string }) =>
+  html`<!doctype html>
+<html lang="es">
+<head>
+  ${head(title)}
+  <meta name="theme-color" content="#111318" />
+</head>
+<body class="page-${page}" ${attrs}>
+  ${body}
+  <script src="${script}" defer></script>
+</body>
+</html>`;
+
+/**
+ * La Pantalla (Enlace para presentar): la presentación a pantalla completa y,
+ * encima, la preparación con el QR de control hasta que un celular lo escanea.
+ */
+export const screenPage = ({
+  title,
+  secret,
+  deckSrc,
+  decksOrigin,
+}: {
+  title: string;
+  secret: string;
+  deckSrc: string;
+  decksOrigin: string;
+}) =>
+  bareLayout({
+    title: `Pantalla · ${title} · Sliding`,
+    page: "screen",
+    attrs: html`data-secret="${secret}" data-decks-origin="${decksOrigin}"`,
+    script: "/pantalla.js",
+    body: html`<iframe class="screen-deck" src="${deckSrc}" title="${title}" allow="fullscreen" sandbox="${SANDBOX}"></iframe>
+  <section class="prep" data-state="connecting" aria-labelledby="prep-title">
+    <div class="prep-info">
+      <h1 id="prep-title">${title}</h1>
+      <ol class="prep-steps">
+        <li>Escanea el QR con tu celular.</li>
+        <li>Tu celular se vuelve el control: avanza, retrocede y termina desde ahí.</li>
+        <li>Pon la pantalla completa con la tecla F o con este botón.</li>
+      </ol>
+      <p class="prep-actions">
+        <button class="btn" type="button" data-fullscreen>Pantalla completa</button>
+        <span class="prep-hint">¿Cambias de celular? Presiona Q para un QR nuevo.</span>
+      </p>
+      <div class="prep-message" data-message hidden>
+        <p class="prep-message-text" data-message-text></p>
+        <button class="btn" type="button" data-restart hidden>Empezar otra sesión</button>
       </div>
-      <span class="stamp">Por confirmar</span>
-    </section>`,
+    </div>
+    <figure class="prep-qr">
+      <div class="qr" data-qr role="img" aria-label="QR de control">Preparando el QR…</div>
+      <figcaption>Este QR es el control de tus diapositivas. No lo compartas.</figcaption>
+    </figure>
+  </section>
+  <p class="screen-toast" data-toast role="status" aria-live="polite"></p>`,
+  });
+
+/** El Control: lo que ve el Presentador en su celular. Oscuro: se usa con la luz baja. */
+export const controlPage = ({ sessionId }: { sessionId: string }) =>
+  bareLayout({
+    title: "Control · Sliding",
+    page: "control",
+    attrs: html`data-session="${sessionId}"`,
+    script: "/control.js",
+    body: html`<header class="control-head">
+    <p class="control-title" data-title>Sliding</p>
+    <p class="control-count num" data-count aria-live="polite"></p>
+  </header>
+  <main class="control-main" data-main hidden>
+    <button class="control-next" type="button" data-go="next">Siguiente</button>
+    <button class="control-prev" type="button" data-go="prev">Anterior</button>
+  </main>
+  <section class="control-state" data-state-box aria-live="polite">
+    <h1 data-state-title>Conectando…</h1>
+    <p data-state-text></p>
+  </section>
+  <footer class="control-foot" data-foot hidden>
+    <button class="control-end" type="button" data-end>Terminar sesión</button>
+  </footer>`,
   });
 
 // ── Privacidad ────────────────────────────────────────────────────────────
@@ -385,7 +456,7 @@ export const viewerPage = ({ title, src }: { title: string; src: string }) => ht
     src="${src}"
     title="${title}"
     allow="fullscreen"
-    sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-downloads"
+    sandbox="${SANDBOX}"
   ></iframe>
   <script>
     // El teclado mueve la presentación solo si el iframe tiene el foco.

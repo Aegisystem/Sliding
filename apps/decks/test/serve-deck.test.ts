@@ -27,9 +27,19 @@ describe("serveDeck", () => {
     expect(html).not.toContain("Nota 1");
   });
 
-  it("sirve un Deck genérico tal cual", async () => {
+  it("sirve una Presentación genérica tal cual, más el puente al final", async () => {
     const response = await serveDeck(await saveDeck(genericDeck, "generic"), env);
-    expect(await response.text()).toBe(genericDeck);
+    const html = await response.text();
+    expect(html.startsWith(genericDeck)).toBe(true);
+    expect(html.slice(genericDeck.length)).toMatch(/^<script data-sliding-bridge>[\s\S]*<\/script>$/);
+  });
+
+  it("el puente solo habla con la app y sabe el tipo de presentación", async () => {
+    const slides = await (await serveDeck(await saveDeck(htmlSlidesDeck, "html-slides"), env)).text();
+    expect(slides).toContain('const APP = "https://app.test";');
+    expect(slides).toContain('const KIND = "html-slides";');
+    const generic = await (await serveDeck(await saveDeck(genericDeck, "generic"), env)).text();
+    expect(generic).toContain('const KIND = "generic";');
   });
 
   it("solo deja que la app lo embeba y pide no indexarlo", async () => {

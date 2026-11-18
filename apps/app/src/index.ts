@@ -7,8 +7,8 @@ import { readSession } from "./auth/session";
 import { findUser } from "./auth/users";
 import { LIMITS, type Limits } from "./decks/limits";
 import { panelRoutes } from "./decks/routes";
-import { isPresentSecret } from "./decks/store";
-import { homePage, notFoundPage, presentPage, privacyPage, viewerPage } from "./pages";
+import { liveRoutes } from "./live/routes";
+import { homePage, notFoundPage, privacyPage, viewerPage } from "./pages";
 import { sameOrigin } from "./same-origin";
 import type { AppEnv } from "./types";
 
@@ -40,6 +40,7 @@ export function createApp(overrides: Partial<Deps> = {}) {
 
   app.route("/auth", authRoutes(deps.providers));
   app.route("/panel", panelRoutes(deps.limits));
+  app.route("/", liveRoutes());
 
   app.get("/", (c) => c.html(homePage({ user: c.var.user, error: c.req.query("error"), limits: deps.limits })));
 
@@ -58,20 +59,10 @@ export function createApp(overrides: Partial<Deps> = {}) {
     return c.html(viewerPage({ title: deck.title, src: `${c.env.DECKS_ORIGIN}/v/${id}` }));
   });
 
-  // Enlace para presentar: abrirá la Pantalla con el QR de control (#5).
-  app.get("/p/:secret", async (c) => {
-    const secret = c.req.param("secret");
-    const deck = isPresentSecret(secret)
-      ? await c.env.DB.prepare("SELECT id, title FROM decks WHERE present_secret = ? AND disabled = 0")
-          .bind(secret)
-          .first<{ id: string; title: string }>()
-      : null;
-    if (!deck) return c.html(notFoundPage(c.var.user), 404);
-    return c.html(presentPage({ user: c.var.user, title: deck.title, deckUrl: `/d/${deck.id}` }));
-  });
-
   app.notFound((c) => c.html(notFoundPage(c.var.user), 404));
   return app;
 }
 
 export default createApp();
+
+export { LiveSession } from "./live/session";

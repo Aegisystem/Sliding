@@ -20,5 +20,8 @@
       "migrations_dir": "migrations"
     }
   ],
-  "vars": { "DECKS_ORIGIN": "https://decks.sliding.workers.dev" }
+  "vars": { "DECKS_ORIGIN": "https://decks.sliding.workers.dev" },
+  // Una Sesión en vivo por Durable Object (ADR 0003). El plan gratis solo admite los de SQLite.
+  "durable_objects": { "bindings": [{ "name": "LIVE", "class_name": "LiveSession" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["LiveSession"] }]
 }

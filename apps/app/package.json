@@ -11,6 +11,7 @@
   "dependencies": {
     "@sliding/core": "*",
     "arctic": "^3.7.0",
-    "hono": "4.13.19"
+    "hono": "4.13.19",
+    "uqr": "^0.1.3"
   }
 }

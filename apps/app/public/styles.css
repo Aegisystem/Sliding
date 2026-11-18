@@ -113,6 +113,11 @@ img {
   outline-offset: 3px;
 }
 
+/* Un atributo hidden siempre oculta, aunque la clase diga display: grid. */
+[hidden] {
+  display: none !important;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -1101,6 +1106,293 @@ body > main {
     flex-direction: column;
     align-items: flex-start;
     gap: 2rem;
+  }
+}
+
+/* ── Sesión en vivo: la Pantalla ───────────────────────────────────────
+   La presentación ocupa toda la ventana; encima, la preparación con el QR de
+   control, en tinta porque la sala suele estar a oscuras. */
+
+.page-screen {
+  height: 100svh;
+  overflow: hidden;
+  background: var(--ink);
+}
+
+.screen-deck {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.prep {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(2rem, 6vw, 6rem);
+  padding: clamp(2rem, 6vw, 6rem);
+  background: var(--ink);
+  color: var(--paper);
+  transition: opacity 600ms var(--ease), visibility 600ms var(--ease);
+}
+
+.prep[data-state="paired"] {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.prep :focus-visible {
+  outline-color: var(--amarillo);
+}
+
+.prep-info {
+  display: grid;
+  gap: 2rem;
+  max-width: 46rem;
+}
+
+.prep h1 {
+  font-size: clamp(3.5rem, 9vw, 6rem);
+  line-height: 0.85;
+  overflow-wrap: anywhere;
+}
+
+.prep-steps {
+  margin: 0;
+  padding-left: 1.5em;
+  font-size: 1.5rem;
+  line-height: 1.35;
+}
+
+.prep-steps li + li {
+  margin-top: 0.5rem;
+}
+
+.prep-steps li::marker {
+  color: var(--amarillo);
+  font-weight: 800;
+}
+
+.prep-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.5rem;
+  margin: 0;
+}
+
+.prep-hint {
+  color: rgb(255 255 255 / 0.78);
+}
+
+.prep-message {
+  display: grid;
+  gap: 1.5rem;
+  justify-items: start;
+}
+
+.prep-message-text {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+/* Sin QR que mostrar: solo el título y el aviso. */
+.prep[data-state="ended"],
+.prep[data-state="error"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.prep[data-state="ended"] :is(.prep-steps, .prep-actions, .prep-qr),
+.prep[data-state="error"] :is(.prep-steps, .prep-actions, .prep-qr) {
+  display: none;
+}
+
+.prep-qr {
+  width: min(26rem, 38vw);
+  margin: 0;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 1.5rem 2.5rem -1.25rem rgb(17 19 24 / 0.45), 0 0.25rem 0.5rem rgb(17 19 24 / 0.12);
+}
+
+.qr {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  padding: 1.25rem;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.qr svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.prep-qr figcaption {
+  padding: 0.9rem 1.5rem 1rem;
+  background: var(--naranja);
+  color: var(--ink);
+  font-family: var(--display);
+  font-stretch: var(--condensed);
+  font-weight: 800;
+  font-size: 1.5rem;
+  line-height: 1.1;
+  word-spacing: var(--condensed-words);
+}
+
+.screen-toast {
+  position: fixed;
+  z-index: 3;
+  left: 1.5rem;
+  bottom: 1.5rem;
+  margin: 0;
+  padding: 0.8rem 1.1rem;
+  border: var(--rule);
+  border-radius: var(--radius);
+  background: var(--amarillo);
+  color: var(--ink);
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(0.5rem);
+  transition: opacity 300ms var(--ease), transform 300ms var(--ease);
+  pointer-events: none;
+}
+
+.screen-toast.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ── Sesión en vivo: el Control ─────────────────────────────────────────
+   En el celular del Presentador, de pie y con poca luz: fondo de tinta,
+   «Siguiente» enorme en azul, todo al alcance del pulgar. */
+
+.page-control {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 1rem;
+  min-height: 100svh;
+  padding: 1rem var(--gutter) max(1rem, env(safe-area-inset-bottom));
+  background: var(--ink);
+  color: var(--paper);
+  color-scheme: dark;
+  touch-action: manipulation;
+}
+
+.page-control :focus-visible {
+  outline-color: var(--amarillo);
+}
+
+.control-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--paper);
+}
+
+.control-title {
+  font-family: var(--display);
+  font-stretch: var(--condensed);
+  font-weight: 800;
+  font-size: 1.5rem;
+  line-height: 1.1;
+  word-spacing: var(--condensed-words);
+  overflow-wrap: anywhere;
+}
+
+.control-count {
+  flex: none;
+  font-family: var(--display);
+  font-stretch: var(--condensed);
+  font-weight: 800;
+  font-size: 2.75rem;
+  line-height: 1;
+  color: var(--amarillo);
+}
+
+.control-main {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 1rem;
+}
+
+.control-next,
+.control-prev,
+.control-end {
+  font-family: var(--display);
+  font-stretch: var(--condensed);
+  font-weight: 800;
+  word-spacing: var(--condensed-words);
+  border-radius: var(--radius);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 120ms var(--ease), background-color 160ms var(--ease);
+}
+
+.control-next:active,
+.control-prev:active {
+  transform: scale(0.98);
+}
+
+.control-next {
+  min-height: 50svh;
+  border: 0;
+  background: var(--azul);
+  color: var(--paper);
+  font-size: clamp(3.5rem, 9vw, 6rem);
+}
+
+.control-prev {
+  min-height: 5.5rem;
+  border: 2px solid var(--paper);
+  background: transparent;
+  color: var(--paper);
+  font-size: 2.25rem;
+}
+
+.control-end {
+  width: 100%;
+  min-height: 3.25rem;
+  border: 2px solid var(--naranja);
+  background: transparent;
+  color: var(--naranja);
+  font-size: 1.5rem;
+}
+
+.control-state {
+  display: grid;
+  align-content: center;
+  gap: 1rem;
+}
+
+.control-state h1 {
+  font-size: 2.25rem;
+}
+
+.control-state p {
+  color: rgb(255 255 255 / 0.78);
+}
+
+@media (max-width: 900px) {
+  .prep {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    overflow: auto;
+  }
+
+  .prep-qr {
+    width: min(22rem, 100%);
   }
 }
 

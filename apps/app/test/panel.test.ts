@@ -180,15 +180,3 @@ describe("borrar", () => {
     expect(await decksOf(name)).toHaveLength(1);
   });
 });
-
-describe("Enlace para presentar", () => {
-  it("abre la página del deck con el secreto correcto y da 404 con uno inventado", async () => {
-    const b = await owner();
-    await upload(b, "/panel/decks", htmlSlidesDeck);
-    const [deck] = await decksOf(`Dueño ${people}`);
-    const response = await browser().request(`/p/${deck!.secret}`);
-    expect(response.status).toBe(200);
-    expect(await response.text()).toContain("Presentar «Deck de prueba»");
-    expect((await browser().request("/p/AAAAAAAAAAAAAAAAAAAAAA")).status).toBe(404);
-  });
-});

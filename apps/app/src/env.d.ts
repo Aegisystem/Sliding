@@ -10,8 +10,10 @@ declare namespace Cloudflare {
     GOOGLE_CLIENT_SECRET: string;
     /** Firma las cookies de sesión y de OAuth. */
     SESSION_SECRET: string;
+    LIVE: DurableObjectNamespace<import("./live/session").LiveSession>;
   }
   interface GlobalProps {
     mainModule: typeof import("./index");
+    durableNamespaces: "LiveSession";
   }
 }
