@@ -1,4 +1,5 @@
 import { html } from "hono/html";
+import type { User } from "./auth/users";
 
 // Las páginas de decks no se indexan: el Enlace del deck no está listado.
 const head = (title: string, { index = false } = {}) => html`<meta charset="utf-8" />
@@ -11,9 +12,20 @@ const textStyle = html`<style>
     h1 { line-height: 1.2; }
     h2 { margin-top: 2rem; }
     footer { margin-top: 3rem; color: #6e6e73; font-size: .9rem; }
+    .actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.5rem; }
+    .button { display: inline-block; padding: .7rem 1.1rem; border: 1px solid #1d1d1f; border-radius: 8px; background: #fff; color: #1d1d1f; font: inherit; text-decoration: none; cursor: pointer; }
+    .button:hover { background: #1d1d1f; color: #fff; }
+    .who { display: flex; align-items: center; gap: .75rem; }
+    .who img { width: 40px; height: 40px; border-radius: 50%; }
+    .error { padding: .75rem 1rem; border-radius: 8px; background: #fdecea; color: #8a1c13; }
   </style>`;
 
-export const homePage = () => html`<!doctype html>
+const ERRORS: Record<string, string> = {
+  login: "No se pudo iniciar sesión. Intenta de nuevo.",
+  disabled: "Tu cuenta está desactivada.",
+};
+
+export const homePage = ({ user, error }: { user: User | null; error?: string }) => html`<!doctype html>
 <html lang="es">
 <head>
   ${head("Sliding", { index: true })}
@@ -22,6 +34,19 @@ export const homePage = () => html`<!doctype html>
 <body>
   <h1>Sliding</h1>
   <p>Sube tu deck HTML y preséntalo con el celular.</p>
+  ${error && ERRORS[error] ? html`<p class="error" role="alert">${ERRORS[error]}</p>` : ""}
+  ${user
+    ? html`<div class="who">
+        ${user.avatarUrl ? html`<img src="${user.avatarUrl}" alt="" referrerpolicy="no-referrer" />` : ""}
+        <p>Hola, ${user.name}.</p>
+      </div>
+      <form class="actions" method="post" action="/auth/logout">
+        <button class="button" type="submit">Cerrar sesión</button>
+      </form>`
+    : html`<div class="actions">
+        <a class="button" href="/auth/github">Entrar con GitHub</a>
+        <a class="button" href="/auth/google">Entrar con Google</a>
+      </div>`}
   <footer><a href="/privacidad">Privacidad</a></footer>
 </body>
 </html>`;
