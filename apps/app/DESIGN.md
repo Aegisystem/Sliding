@@ -64,6 +64,11 @@ typography:
     fontWeight: 800
     letterSpacing: "0.04em"
     fontVariation: "\"wdth\" 62"
+  code:
+    fontFamily: "ui-monospace, SF Mono, Menlo, monospace"
+    fontSize: "0.9375rem"
+    fontWeight: 400
+    lineHeight: 1.5
   numeral:
     fontFamily: "Archivo, Arial Narrow, sans-serif"
     fontSize: "2.75rem"
@@ -223,6 +228,7 @@ Papel y tinta acromáticos, con cuatro colores de pista saturados que se usan a 
 - **Body** (400, 1.0625rem, 1.55): texto corrido; 1rem bajo 560px. Medidas de 30ch en pistas, 52–62ch en avisos e hileras, 68ch en lectura.
 - **Control** (700, `wdth` 80, 1.1): botones; la navegación de la cabecera usa 600.
 - **Label** (800, condensada, mayúsculas, +0.04em): sellos de goma; el rol de la credencial va a +0.08em.
+- **Code** (400, monoespaciada del sistema, 0.9375rem, 1.5): solo el texto completo de la skill en /skill, que es código para copiar a una IA.
 - **Numeral** (800, condensada, cifras tabulares y de caja): el número de diapositivas en el código de sesión; toda cifra de cuota, tamaño o fecha usa `tabular-nums lining-nums`.
 
 ### Named Rules
@@ -286,7 +292,7 @@ La credencial plastificada colgada de una cinta amarilla de 3rem con bordes de t
 ### Session row (Cards / Containers)
 - Una hilera del programa entre reglas, sin radio ni sombra. El código va en un campo de pista: azul con el número de diapositivas para presentaciones html-slides, amarillo con «HTML genérica» para el resto. Le siguen el título y los metadatos; los botones «Presentar con control» (tinta), «Ver diapositivas» y «Copiar enlace para compartir» (sin mostrar direcciones: son botones, no enlaces a la vista); y las acciones «Reemplazar», «Mover a» y «Borrar».
 - **Carpeta:** la misma hilera con el código en verde y el número de presentaciones que tiene; el título es un enlace a la carpeta y los metadatos dicen cuántas carpetas tiene dentro. Botones «Abrir carpeta» (tinta) y «Copiar enlace para compartir»; acciones «Mover a» y «Borrar». Las carpetas van en su propia lista, antes de las presentaciones; cuando hay de las dos, cada lista lleva su rótulo en la talla Title.
-- **Subir y Bajar:** dos chevrones en el color del texto del código, arriba y abajo del número, cada uno en un blanco de 2.75 × 2rem; el de la primera hilera y el de la última quedan al 30% y no hacen nada, pero conservan el foco. Aparecen solo con JS y con dos hileras o más. Con el foco en uno, las flechas del teclado también mueven. Con el mouse, además, la hilera se arrastra desde su código (cursor de mano); en el celular no se arrastra, para que el dedo siga desplazando la página. La hilera que se arrastra se vuelve amarilla, como la caja de subir al soltarle un archivo, y las hileras se deslizan a su lugar en 180ms con `--ease`. El orden se guarda solo.
+- **Subir y Bajar:** dos chevrones en el color del texto del código, arriba y abajo del número, cada uno en un blanco de 2.75 × 2rem; el de la primera hilera y el de la última quedan al 30% y no hacen nada, pero conservan el foco. Aparecen solo con JS y con dos hileras o más. Con el foco en uno, las flechas del teclado también mueven. Con el mouse, además, la hilera entera se arrastra desde cualquier parte que no sea un control (cursor de mano), y lo anuncian seis puntos en tinta suave a la derecha del título, que pasan a tinta sobre un fondo de tinta al 8% cuando el mouse está sobre la hilera. En el celular no se arrastra ni se ven los puntos, para que el dedo siga desplazando la página. La hilera que se arrastra se vuelve amarilla, como la caja de subir al soltarle un archivo, con sus metadatos en tinta, y las hileras se deslizan a su lugar en 180ms con `--ease`. El orden se guarda solo.
 - **En el Enlace de la carpeta:** la hilera pierde las acciones del Dueño y queda con un solo botón: «Abrir carpeta» o «Ver presentación» (tinta).
 
 ### Ruta de carpetas

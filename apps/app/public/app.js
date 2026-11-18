@@ -46,7 +46,7 @@ if (renameToggle && renameForm) {
 }
 
 // Ordenar: «Subir» y «Bajar» en cada hilera (también con las flechas del
-// teclado) o, con el mouse, arrastrar la hilera desde su código de color.
+// teclado) o, con el mouse, arrastrar la hilera.
 // El orden se guarda solo, en /panel/orden.
 const orderError = document.querySelector("[data-order-error]");
 const orderStatus = document.querySelector("[data-order-status]");
@@ -129,19 +129,27 @@ for (const list of document.querySelectorAll("[data-sortable]")) {
     step(button.closest("li"), event.key === "ArrowUp" ? "up" : "down");
   });
 
-  // Arrastrar es solo con el mouse: en el celular están los botones, y así
-  // deslizar el dedo sobre el código sigue desplazando la página.
+  // Con el mouse, la hilera entera se arrastra desde cualquier parte que no sea
+  // un control. En el celular no: ahí están Subir y Bajar, y el dedo sigue
+  // desplazando la página. Arrastrar empieza al moverse unos píxeles, así un
+  // clic sigue siendo un clic.
   list.addEventListener("pointerdown", (event) => {
-    const code = event.target.closest(".session-code");
-    if (!code || event.target.closest("button") || event.pointerType === "touch" || event.button !== 0) return;
+    const row = event.target.closest("li[data-id]");
+    if (!row || event.pointerType === "touch" || event.button !== 0) return;
+    if (event.target.closest("a, button, input, select, label, textarea, form")) return;
     event.preventDefault();
-    const row = code.closest("li");
     const start = rowsOf(list).indexOf(row);
-    code.setPointerCapture(event.pointerId);
-    row.classList.add("is-dragging");
-    document.documentElement.classList.add("is-sorting");
+    const startY = event.clientY;
+    let dragging = false;
+    row.setPointerCapture(event.pointerId);
 
     const move = (e) => {
+      if (!dragging) {
+        if (Math.abs(e.clientY - startY) < 5) return;
+        dragging = true;
+        row.classList.add("is-dragging");
+        document.documentElement.classList.add("is-sorting");
+      }
       // Cerca del borde de la ventana, la página se desplaza sola.
       if (e.clientY < 64) scrollBy(0, -16);
       else if (e.clientY > innerHeight - 64) scrollBy(0, 16);

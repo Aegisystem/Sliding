@@ -1011,14 +1011,49 @@ body > main {
   background: none;
 }
 
-/* Con el mouse, la hilera se arrastra desde su código. */
+/* Con el mouse, la hilera entera se arrastra: mano abierta sobre todo lo que
+   no es un control, y seis puntos a la derecha del título que lo anuncian. */
+.drag-hint {
+  display: none;
+}
+
 @media (pointer: fine) {
-  .is-sortable .session-code {
+  .is-sortable > li {
     cursor: grab;
   }
 
-  .is-sortable .session-code .order {
-    cursor: pointer;
+  .is-sortable form {
+    cursor: default;
+  }
+
+  .is-sortable .session-main {
+    position: relative;
+    padding-right: 3.5rem;
+  }
+
+  .is-sortable .drag-hint {
+    position: absolute;
+    top: 50%;
+    right: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 2.5rem;
+    border-radius: 6px;
+    color: var(--ink-soft);
+    transform: translateY(-50%);
+    transition: color 160ms var(--ease), background-color 160ms var(--ease);
+  }
+
+  .drag-hint svg {
+    fill: currentColor;
+  }
+
+  .is-sortable > li:hover .drag-hint,
+  .is-dragging .drag-hint {
+    color: var(--ink);
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
   }
 }
 
@@ -1027,6 +1062,11 @@ body > main {
   position: relative;
   z-index: 1;
   background: var(--amarillo);
+}
+
+/* Sobre amarillo, el texto secundario va en tinta: la tinta suave no alcanza el contraste. */
+.session.is-dragging .session-meta {
+  color: var(--ink);
 }
 
 .is-sorting,

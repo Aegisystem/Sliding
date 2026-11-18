@@ -284,6 +284,11 @@ const orderButton = (dir: "up" | "down", name: string) => html`<button class="or
   <svg viewBox="0 0 16 10" width="16" height="10" aria-hidden="true" focusable="false"><path d="${dir === "up" ? "M2 8.5l6-6 6 6" : "M2 1.5l6 6 6-6"}" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 </button>`;
 
+/** La señal de que la hilera se arrastra: seis puntos a la derecha. Solo con mouse; el teclado y el celular usan Subir y Bajar. */
+const dragHint = html`<span class="drag-hint" title="Arrastra para cambiar el orden" aria-hidden="true">
+  <svg viewBox="0 0 12 20" width="12" height="20" focusable="false"><circle cx="3" cy="4" r="1.75"/><circle cx="9" cy="4" r="1.75"/><circle cx="3" cy="10" r="1.75"/><circle cx="9" cy="10" r="1.75"/><circle cx="3" cy="16" r="1.75"/><circle cx="9" cy="16" r="1.75"/></svg>
+</span>`;
+
 /** Un título de hilera: h3 bajo los rótulos «Carpetas» y «Presentaciones», h2 si no hay rótulos. */
 const rowTitle = (level: 2 | 3, inner: Html | string) =>
   level === 3 ? html`<h3 class="session-title">${inner}</h3>` : html`<h2 class="session-title">${inner}</h2>`;
@@ -305,6 +310,7 @@ const deckRow = (deck: DeckRow, ctx: PanelContext) => html`<li class="session" d
     ${orderButton("down", deck.title)}
   </div>
   <div class="session-main">
+    ${dragHint}
     ${rowTitle(ctx.level, deck.title)}
     <p class="session-meta">
       ${deck.kind === "html-slides" ? "html-slides" : "HTML genérico"} ·
@@ -351,6 +357,7 @@ const folderRow = (folder: FolderRow, ctx: PanelContext) => {
     ${orderButton("down", folder.name)}
   </div>
   <div class="session-main">
+    ${dragHint}
     ${rowTitle(ctx.level, html`<a href="/panel/f/${folder.id}">${folder.name}</a>`)}
     <p class="session-meta">
       Carpeta${folder.folders
@@ -508,7 +515,7 @@ export const panelPage = ({
                 <p>Sube tu primera presentación con el botón de arriba. ¿Todavía no tienes una? Pásale a tu IA la <a href="/skill">skill html-slides</a> y pídele una, o usa cualquier HTML de un solo archivo. Para ordenarlas por curso, crea una carpeta.</p>
               </div>`}
       </div>
-      <p class="visually-hidden" id="orden-ayuda">Cambia el orden en que la ven los demás. Con el mouse también puedes arrastrar la hilera desde su código de color.</p>
+      <p class="visually-hidden" id="orden-ayuda">Cambia el orden en que la ven los demás. Con el mouse también puedes arrastrar la hilera.</p>
       <p class="visually-hidden" data-order-status role="status"></p>`,
   });
 };
