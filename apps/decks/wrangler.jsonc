@@ -1,11 +1,15 @@
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
-  // Proyecto de Pages: queda en sliding-decks.pages.dev (ADR 0001).
-  "name": "sliding-decks",
-  "pages_build_output_dir": "./public",
+  // Queda en decks.sliding.workers.dev: otro sitio que la app (ADR 0001).
+  "name": "decks",
+  "main": "src/index.ts",
   "compatibility_date": "2026-11-01",
-  // Mismos ids que apps/app: en local comparten los datos.
-  "kv_namespaces": [{ "binding": "DECKS", "id": "local-decks" }],
-  "d1_databases": [{ "binding": "DB", "database_name": "sliding", "database_id": "local-sliding" }],
+  "workers_dev": true,
+  "preview_urls": false,
+  // Los mismos datos que la app.
+  "kv_namespaces": [{ "binding": "DECKS", "id": "8ae143757cbd46079c8e3e6121264195" }],
+  "d1_databases": [
+    { "binding": "DB", "database_name": "sliding", "database_id": "40e12a49-9323-4081-9933-3465ede1b6f4" }
+  ],
   "vars": { "APP_ORIGIN": "https://sliding.aegisystem.xyz" }
 }

@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler pages dev --ip 127.0.0.1 --port 8788 --inspector-port 9230 --persist-to ../../.wrangler/state --binding APP_ORIGIN=http://localhost:8787",
+    "dev": "wrangler dev --ip 127.0.0.1 --port 8788 --inspector-port 9230 --persist-to ../../.wrangler/state --var APP_ORIGIN:http://localhost:8787",
     "test": "vitest run",
     "typecheck": "tsc -p ."
   },

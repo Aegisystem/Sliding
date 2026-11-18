@@ -10,7 +10,7 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "dev": "npm -w @sliding/app run db:migrate && concurrently -n app,decks -c blue,magenta \"npm -w @sliding/app run dev\" \"npm -w @sliding/decks run dev\"",
+    "dev": "npm -w @sliding/app run db:migrate && concurrently -n app,decks -c blue,magenta \"npm -w @sliding/app run dev\" \"curl -s --retry 60 --retry-connrefused --retry-delay 1 -o /dev/null http://localhost:8787/ && npm -w @sliding/decks run dev\"",
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "seed": "node scripts/seed.mjs"
