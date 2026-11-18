@@ -8,7 +8,7 @@ import { findUser } from "./auth/users";
 import { LIMITS, type Limits } from "./decks/limits";
 import { panelRoutes } from "./decks/routes";
 import { liveRoutes } from "./live/routes";
-import { homePage, notFoundPage, privacyPage, viewerPage } from "./pages";
+import { homePage, notFoundPage, privacyPage, skillPage, viewerPage } from "./pages";
 import { sameOrigin } from "./same-origin";
 import type { AppEnv } from "./types";
 
@@ -46,6 +46,9 @@ export function createApp(overrides: Partial<Deps> = {}) {
 
   // Google la pide para publicar el inicio de sesión (#12).
   app.get("/privacidad", (c) => c.html(privacyPage({ user: c.var.user })));
+
+  // La skill html-slides para pasársela a tu IA (#17). El texto es un archivo estático.
+  app.get("/skill", (c) => c.html(skillPage({ user: c.var.user })));
 
   // Enlace de la presentación: cualquiera con el enlace la ve, sin notas ni opción de presentar.
   app.get("/d/:id", async (c) => {

@@ -37,7 +37,7 @@ const runningHead = (user: User | null) => html`<header class="running-head">
 
 const footer = () => html`<footer class="colophon">
   <p>Sliding. Tus presentaciones HTML, desde el celular.</p>
-  <p><a href="/privacidad">Privacidad</a> · <a href="https://github.com/Aegisystem/Sliding">Código en GitHub</a></p>
+  <p><a href="/skill">Skill para tu IA</a> · <a href="/privacidad">Privacidad</a> · <a href="https://github.com/Aegisystem/Sliding">Código en GitHub</a></p>
 </footer>`;
 
 const layout = ({
@@ -167,6 +167,10 @@ export const homePage = ({ user, error, limits }: { user: User | null; error?: s
             <dd>Cualquier presentación de un solo archivo HTML. Con html-slides tienes control de cada diapositiva y tus notas; con el resto, anterior y siguiente.</dd>
           </div>
           <div>
+            <dt>Ayuda</dt>
+            <dd>¿Cómo hago una presentación? Pásale a tu IA la <a href="/skill">skill html-slides</a> y pídesela: queda lista para subir.</dd>
+          </div>
+          <div>
             <dt>Espacio</dt>
             <dd>Todas las presentaciones que quieras, mientras sumen hasta ${mb(limits.bytesPerOwner)} MB, con ${mb(limits.deckBytes)} MB como máximo cada una.</dd>
           </div>
@@ -286,7 +290,7 @@ export const panelPage = ({
         ? html`<ol class="program" aria-label="Tus presentaciones">${decks.map((deck) => session(deck, origin))}</ol>`
         : html`<div class="empty">
             <h2>Tu programa está vacío.</h2>
-            <p>Sube tu primera presentación con el botón de arriba. ¿Todavía no tienes una? Pídele a Claude una presentación con la skill html-slides, o usa cualquier HTML de un solo archivo.</p>
+            <p>Sube tu primera presentación con el botón de arriba. ¿Todavía no tienes una? Pásale a tu IA la <a href="/skill">skill html-slides</a> y pídele una, o usa cualquier HTML de un solo archivo.</p>
           </div>`}`,
   });
 };
@@ -411,6 +415,44 @@ export const controlPage = ({ sessionId, decksOrigin }: { sessionId: string; dec
     <ol class="jump-items" data-list-items></ol>
     <form method="dialog"><button class="control-close" type="submit">Cerrar</button></form>
   </dialog>`,
+  });
+
+// ── La skill para tu IA ───────────────────────────────────────────────────
+
+export const skillPage = ({ user }: { user: User | null }) =>
+  layout({
+    title: "Crea tus presentaciones con IA · Sliding",
+    user,
+    page: "read",
+    index: true,
+    body: html`<header class="read-band track-verde">
+        <div class="read-band-inner">
+          <h1>Crea tus presentaciones con IA</h1>
+          <p class="read-date">La skill html-slides, lista para pasársela a tu IA.</p>
+        </div>
+      </header>
+      <article class="read">
+        <p class="read-lead">Una skill es un conjunto de instrucciones que le enseña a tu IA a hacer algo bien. Esta le enseña a crear presentaciones HTML de un solo archivo, con ilustraciones animadas y notas para ti en cada diapositiva, listas para subir a Sliding.</p>
+
+        <h2>Cómo usarla</h2>
+        <ol>
+          <li>Copia el texto de la skill con el botón de abajo.</li>
+          <li>Pégaselo a tu IA (Claude, ChatGPT, Gemini…) y pídele: «Crea la skill html-slides con estos archivos y úsala cuando te pida una presentación».</li>
+          <li>Pídele una presentación, por ejemplo: «Haz una presentación sobre la fotosíntesis para primer año, con notas para mí en cada diapositiva».</li>
+          <li>Sube el archivo .html en <a href="/panel">tu panel</a> y toca «Presentar con control»: tus notas aparecen en el celular.</li>
+        </ol>
+
+        <div class="skill-actions">
+          <button class="btn btn-ink" type="button" data-copy-skill>Copiar el texto de la skill</button>
+          <a class="btn" href="/skill/html-slides.md" download="html-slides.md">Descargar (.md)</a>
+        </div>
+        <p class="skill-status" data-skill-status role="status"></p>
+
+        <details class="skill-text">
+          <summary>Ver el texto completo</summary>
+          <pre data-skill-text>Cargando…</pre>
+        </details>
+      </article>`,
   });
 
 // ── Privacidad ────────────────────────────────────────────────────────────

@@ -65,3 +65,30 @@ if (upload) {
     upload.requestSubmit();
   });
 }
+
+// La página de la skill: copiar o leer el texto completo.
+const skillButton = document.querySelector("[data-copy-skill]");
+if (skillButton) {
+  const pre = document.querySelector("[data-skill-text]");
+  const status = document.querySelector("[data-skill-status]");
+  const load = () => fetch("/skill/html-slides.md").then((r) => (r.ok ? r.text() : Promise.reject(r.status)));
+  let text = null;
+  load()
+    .then((t) => {
+      text = t;
+      pre.textContent = t;
+    })
+    .catch(() => {
+      pre.textContent = "No se pudo cargar el texto. Usa el botón Descargar.";
+    });
+  skillButton.addEventListener("click", async () => {
+    try {
+      text ??= await load();
+      await navigator.clipboard.writeText(text);
+      skillButton.textContent = "Texto copiado";
+      status.textContent = "Listo: pégaselo a tu IA con el pedido del paso 2.";
+    } catch {
+      status.textContent = "No se pudo copiar. Usa el botón Descargar.";
+    }
+  });
+}
