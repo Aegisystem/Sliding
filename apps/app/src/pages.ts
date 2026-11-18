@@ -381,21 +381,13 @@ export const controlPage = ({ sessionId, decksOrigin }: { sessionId: string; dec
     </p>
   </div>
   <main class="control-main" data-main hidden>
-    <div class="control-previews" data-previews hidden>
-      <figure class="preview">
-        <div class="preview-frame">
-          <iframe data-preview="current" title="Diapositiva actual" tabindex="-1" aria-hidden="true" sandbox="${SANDBOX}"></iframe>
-        </div>
-        <figcaption>Ahora</figcaption>
-      </figure>
-      <figure class="preview">
-        <div class="preview-frame">
-          <iframe data-preview="next" title="Diapositiva siguiente" tabindex="-1" aria-hidden="true" sandbox="${SANDBOX}"></iframe>
-          <p class="preview-end" data-preview-end hidden>Fin</p>
-        </div>
-        <figcaption>Sigue</figcaption>
-      </figure>
-    </div>
+    <figure class="control-preview" data-previews hidden>
+      <div class="preview-frame">
+        <iframe data-preview="next" title="Diapositiva siguiente" tabindex="-1" aria-hidden="true" sandbox="${SANDBOX}"></iframe>
+        <p class="preview-end" data-preview-end hidden>Fin</p>
+      </div>
+      <figcaption data-next-title>Sigue</figcaption>
+    </figure>
     <section class="control-notes" data-notes-box hidden aria-label="Notas del presentador" aria-live="polite">
       <p data-notes></p>
     </section>

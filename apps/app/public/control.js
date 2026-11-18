@@ -17,8 +17,8 @@ const ui = {
   timerReset: $("[data-timer-reset]"),
   main: $("[data-main]"),
   previews: $("[data-previews]"),
-  current: $('[data-preview="current"]'),
   next: $('[data-preview="next"]'),
+  nextTitle: $("[data-next-title]"),
   previewEnd: $("[data-preview-end]"),
   notesBox: $("[data-notes-box]"),
   notes: $("[data-notes]"),
@@ -80,7 +80,7 @@ function render() {
   showPreviews();
 }
 
-// ── Vistas previas: la misma presentación, en miniatura ───────────────────
+// ── Vista previa de la que sigue: la misma presentación, en miniatura ─────
 
 const PREVIEW_WIDTH = 1280;
 let previewsLoaded = false;
@@ -88,20 +88,18 @@ let previewsLoaded = false;
 function loadPreviews() {
   if (previewsLoaded || ui.previews.hidden || !state.deckId) return;
   previewsLoaded = true;
-  for (const frame of [ui.current, ui.next]) {
-    frame.addEventListener("load", showPreviews);
-    frame.src = `${decksOrigin}/v/${state.deckId}`;
-  }
+  ui.next.addEventListener("load", showPreviews);
+  ui.next.src = `${decksOrigin}/v/${state.deckId}`;
 }
 
 function showPreviews() {
   if (ui.previews.hidden) return;
   loadPreviews();
-  const go = (frame, to) => frame.contentWindow?.postMessage({ sliding: 1, type: "go", to }, decksOrigin);
-  go(ui.current, state.index);
   const last = Number.isInteger(state.total) && state.index + 1 >= state.total;
   ui.previewEnd.hidden = !last;
-  if (!last) go(ui.next, state.index + 1);
+  const nextTitle = state.slides?.[state.index + 1]?.title;
+  ui.nextTitle.textContent = last ? "Sigue: fin de la presentación" : `Sigue: ${nextTitle || `diapositiva ${state.index + 2}`}`;
+  if (!last) ui.next.contentWindow?.postMessage({ sliding: 1, type: "go", to: state.index + 1 }, decksOrigin);
 }
 
 // Las miniaturas se dibujan a 1280 de ancho y se escalan a su caja.

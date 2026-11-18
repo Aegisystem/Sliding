@@ -304,7 +304,7 @@ La credencial plastificada colgada de una cinta amarilla de 3rem con bordes de t
 
 ### Control (Sesión en vivo)
 - Oscuro, porque se usa de pie y con poca luz: fondo de tinta y texto en cartulina. Arriba, el título y el contador en amarillo; debajo, el reloj y el cronómetro (verde lleno cuando corre, solo borde cuando está pausado o sin empezar; se pausa al tocarlo).
-- Con una Presentación html-slides: las miniaturas «Ahora» y «Sigue» (la misma presentación dibujada a 1280 y escalada, con regla de cartulina y radio de 6px), las notas del presentador a 1.25rem con saltos de línea, «Siguiente» azul de al menos 7rem al alcance del pulgar, «Anterior» y «Diapositivas» con borde de cartulina, y «Terminar sesión» con borde naranja.
+- Con una Presentación html-slides: la miniatura de la diapositiva que sigue con su título al lado («Sigue: …»; la misma presentación dibujada a 1280 y escalada, con regla de cartulina y radio de 6px), las notas del presentador a 1.25rem con saltos de línea, «Siguiente» azul de al menos 7rem al alcance del pulgar, «Anterior» y «Diapositivas» con borde de cartulina, y «Terminar sesión» con borde naranja.
 - «Diapositivas» abre una hoja a pantalla completa con la lista numerada (número condensado y título de cada diapositiva); la actual va en amarillo.
 - Con una Presentación genérica: sin notas, miniaturas, lista ni contador; «Siguiente» ocupa casi toda la pantalla.
 
