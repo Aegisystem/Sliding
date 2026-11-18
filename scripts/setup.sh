@@ -184,7 +184,7 @@ finish() {
 # Replace the example below. Set TOTAL_STAGES to match the stages you write.
 # ──────────────────────────────────────────────────────────────────────────
 #
-# Configura Sliding: cuenta de Cloudflare, token para desplegar desde GitHub,
+# Configura Sliding en sliding.aegisystem.xyz: cuenta de Cloudflare, token para desplegar desde GitHub,
 # OAuth de GitHub y Google, y llaves de sesión. Córrelo desde cualquier lugar:
 #   bash scripts/setup.sh
 # Los valores locales quedan en apps/app/.dev.vars (fuera de git) y los de
@@ -192,6 +192,7 @@ finish() {
 
 cd "$(dirname "$0")/.."
 ENV_FILE="apps/app/.dev.vars"
+APP_URL="https://sliding.aegisystem.xyz"
 LOCAL_URL="http://localhost:8787"
 
 TOTAL_STAGES=8
@@ -199,19 +200,11 @@ TOTAL_STAGES=8
 banner "Sliding: cuentas, OAuth y despliegue"
 
 # ── 1 ─────────────────────────────────────────────────────────────────────
-stage "Cloudflare: cuenta y subdominio"
-say "La app vivirá en app.<subdominio>.workers.dev. Queremos el subdominio 'sliding'."
-open_url "https://dash.cloudflare.com/sign-up/workers-and-pages"
-step "Crea la cuenta (o entra con la que ya tienes) y confirma tu correo."
-step "Ve a Workers & Pages. Si te pide elegir un subdominio, escribe: sliding"
-step "Si ya tenías uno, busca 'Your subdomain' y usa 'Change' para ponerlo en sliding."
-note "Si 'sliding' está ocupado, elige otro y escríbelo abajo: las URLs se ajustan solas."
-CF_SUBDOMAIN="sliding"
-ask CF_SUBDOMAIN "¿Qué subdominio quedó? (Enter = sliding):"
-CF_SUBDOMAIN="${CF_SUBDOMAIN:-sliding}"
-APP_URL="https://app.${CF_SUBDOMAIN}.workers.dev"
-set_var CLOUDFLARE_WORKERS_SUBDOMAIN "$CF_SUBDOMAIN"
-say "La app quedará en $APP_URL"
+stage "Cloudflare: cuenta"
+say "La app vivirá en $APP_URL, así que usa la cuenta donde está aegisystem.xyz."
+open_url "https://dash.cloudflare.com/login"
+step "Entra a Cloudflare con la cuenta que tiene el dominio aegisystem.xyz."
+step "Comprueba que aegisystem.xyz aparezca en la lista de dominios con estado Active."
 pause "Enter para seguir"
 
 # ── 2 ─────────────────────────────────────────────────────────────────────
@@ -228,9 +221,12 @@ stage "Cloudflare: token para desplegar desde GitHub"
 open_url "https://dash.cloudflare.com/profile/api-tokens"
 step "Create Token → al fondo, 'Create Custom Token' → Get started."
 step "Nombre: Sliding GitHub Actions"
-step "Permisos (una fila cada uno, todos en 'Account' y 'Edit'):"
-note "    Workers Scripts · Cloudflare Pages · D1 · Workers KV Storage"
+step "Permisos, una fila cada uno, todos en 'Edit':"
+note "    Account · Workers Scripts      Account · Cloudflare Pages"
+note "    Account · D1                   Account · Workers KV Storage"
+note "    Zone · Workers Routes   (para poner la app en sliding.aegisystem.xyz)"
 step "Account Resources: Include → tu cuenta."
+step "Zone Resources: Include → Specific zone → aegisystem.xyz."
 step "Continue to summary → Create Token → copia el token (se muestra una sola vez)."
 ask_secret CLOUDFLARE_API_TOKEN "Pega el token:"
 set_secret CLOUDFLARE_API_TOKEN "$CLOUDFLARE_API_TOKEN"

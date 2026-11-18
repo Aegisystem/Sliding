@@ -7,5 +7,5 @@
   // Mismos ids que apps/app: en local comparten los datos.
   "kv_namespaces": [{ "binding": "DECKS", "id": "local-decks" }],
   "d1_databases": [{ "binding": "DB", "database_name": "sliding", "database_id": "local-sliding" }],
-  "vars": { "APP_ORIGIN": "https://app.sliding.workers.dev" }
+  "vars": { "APP_ORIGIN": "https://sliding.aegisystem.xyz" }
 }

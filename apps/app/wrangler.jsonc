@@ -1,9 +1,12 @@
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
-  // Queda en app.sliding.workers.dev (ADR 0001).
-  "name": "app",
+  // Queda en sliding.aegisystem.xyz (ADR 0001).
+  "name": "sliding",
   "main": "src/index.ts",
   "compatibility_date": "2026-11-01",
+  "routes": [{ "pattern": "sliding.aegisystem.xyz", "custom_domain": true }],
+  // Un solo origen para la app: las URLs de vuelta de OAuth apuntan ahí.
+  "workers_dev": false,
   // Los ids reales se ponen al desplegar (#12). En local basta con que
   // coincidan con los de apps/decks para compartir los datos.
   "kv_namespaces": [{ "binding": "DECKS", "id": "local-decks" }],
