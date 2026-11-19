@@ -49,6 +49,14 @@ _Evitar_: enlace del curso, página del curso
 Texto que acompaña a una diapositiva y es para quien presenta, no para el público.
 _Evitar_: notas del orador, apuntes
 
+**Administrador**:
+La persona que modera Sliding: desactiva y reactiva presentaciones y Dueños. Sliding la reconoce por el id de su cuenta.
+_Evitar_: admin, moderador, superusuario
+
+**Desactivar**:
+Lo que hace el Administrador con una presentación o un Dueño que abusa del sitio. Lo desactivado da 404 para todos, pero no se borra, y reactivarlo lo devuelve tal cual. Un Dueño desactivado no puede entrar, y sus presentaciones y carpetas tampoco se ven.
+_Evitar_: bloquear, suspender, banear
+
 **Agente**:
 Un programa, como Claude u otro asistente, que sube presentaciones en nombre de un Dueño.
 _Evitar_: bot, integración, cliente

@@ -4,6 +4,7 @@ import type { User } from "./auth/users";
 import type { Limits } from "./decks/limits";
 import type { DeckRow, PublicDeck, Usage } from "./decks/store";
 import { descendantsOf, type Folder } from "./folders/store";
+import type { Found, ModDeck, ModOwner } from "./moderation/store";
 
 type Html = HtmlEscapedString | Promise<HtmlEscapedString>;
 
@@ -337,7 +338,7 @@ const notesForm = (deck: DeckRow, ctx: PanelContext) => html`<form class="add-no
   <span class="visually-hidden" id="pptx-${deck.id}">Elige el .pptx de esta presentación. Solo se leen sus notas: el archivo no se sube.</span>
 </form>`;
 
-const deckRow = (deck: DeckRow, ctx: PanelContext) => html`<li class="session" data-id="${deck.id}">
+const deckRow = (deck: DeckRow, ctx: PanelContext) => html`<li class="session${deck.disabled ? " is-disabled" : ""}" data-id="${deck.id}">
   <div class="session-code ${TRACK[deck.kind]}">
     ${orderButton("up", deck.title)}
     ${deckCount(deck)}
@@ -356,21 +357,26 @@ const deckRow = (deck: DeckRow, ctx: PanelContext) => html`<li class="session" d
       : ""}
   </div>
   <div class="session-go">
-    <a class="btn btn-ink" href="/p/${deck.presentSecret}" target="_blank" rel="noopener">Presentar con control</a>
-    <a class="btn" href="/d/${deck.id}" target="_blank" rel="noopener">Ver diapositivas</a>
-    <button class="btn btn-small copy" type="button" data-copy="${ctx.origin}/d/${deck.id}">Copiar enlace para compartir</button>
+    ${deck.disabled
+      ? // La desactivó el administrador (#11): sus enlaces dan 404, así que no se ofrecen.
+        html`<p class="session-off"><strong>Desactivada.</strong> Nadie puede verla ni presentarla. La desactivó la moderación de Sliding.</p>`
+      : html`<a class="btn btn-ink" href="/p/${deck.presentSecret}" target="_blank" rel="noopener">Presentar con control</a>
+          <a class="btn" href="/d/${deck.id}" target="_blank" rel="noopener">Ver diapositivas</a>
+          <button class="btn btn-small copy" type="button" data-copy="${ctx.origin}/d/${deck.id}">Copiar enlace para compartir</button>`}
   </div>
   <div class="session-actions">
-    <form class="replace" method="post" action="/panel/decks/${deck.id}" enctype="multipart/form-data" data-deck-form>
-      ${backField("volver", ctx.folderId)}
-      <input type="hidden" name="notas" />
-      <label class="btn btn-small">
-        Reemplazar
-        <input class="visually-hidden" type="file" name="file" accept="${deckAccept}" multiple required />
-      </label>
-      <noscript><button class="btn btn-small" type="submit">Subir reemplazo</button></noscript>
-    </form>
-    ${deck.kind === "pdf" ? notesForm(deck, ctx) : ""}
+    ${deck.disabled
+      ? ""
+      : html`<form class="replace" method="post" action="/panel/decks/${deck.id}" enctype="multipart/form-data" data-deck-form>
+          ${backField("volver", ctx.folderId)}
+          <input type="hidden" name="notas" />
+          <label class="btn btn-small">
+            Reemplazar
+            <input class="visually-hidden" type="file" name="file" accept="${deckAccept}" multiple required />
+          </label>
+          <noscript><button class="btn btn-small" type="submit">Subir reemplazo</button></noscript>
+        </form>
+        ${deck.kind === "pdf" ? notesForm(deck, ctx) : ""}`}
     ${moveForm({
       id: deck.id,
       action: `/panel/decks/${deck.id}/mover`,
@@ -770,6 +776,167 @@ export const controlPage = ({ sessionId, decksOrigin }: { sessionId: string; dec
   </dialog>`,
   });
 
+// ── Moderación (#11) ──────────────────────────────────────────────────────
+
+const MOD_OK: Record<string, string> = {
+  "presentacion-desactivar": "Presentación desactivada. Su enlace y su Enlace para presentar ya dan 404.",
+  "presentacion-reactivar": "Presentación reactivada. Sus enlaces vuelven a funcionar.",
+  "dueno-desactivar": "Cuenta desactivada. Ya no puede entrar, y sus presentaciones y carpetas dan 404.",
+  "dueno-reactivar": "Cuenta reactivada. Puede volver a entrar, y lo suyo vuelve a verse.",
+};
+
+const MOD_ERROR: Record<string, string> = {
+  "no-existe": "Eso ya no existe. Quizás su Dueño lo borró.",
+  propia: "No puedes desactivar tu propia cuenta: Sliding se quedaría sin quien lo modere.",
+};
+
+const PROVIDER_LABEL: Record<string, string> = { github: "GitHub", google: "Google" };
+
+/** Desactivar (con confirmación) o reactivar. Vuelve a la página con lo que se había buscado. */
+const modForm = ({ action, label, search, confirmText }: { action: string; label: string; search: string; confirmText?: string }) =>
+  html`<form method="post" action="${action}" ${confirmText ? html`data-confirm="${confirmText}"` : ""}>
+    ${search ? html`<input type="hidden" name="enlace" value="${search}" />` : ""}
+    <button class="btn btn-small${confirmText ? " btn-danger" : ""}" type="submit">${label}</button>
+  </form>`;
+
+const modDeckRow = (deck: ModDeck, search: string) => {
+  const visible = !deck.disabled && !deck.ownerDisabled;
+  return html`<li class="session${visible ? "" : " is-disabled"}">
+  <div class="session-code ${TRACK[deck.kind]}">${deckCount(deck)}</div>
+  <div class="session-main">
+    ${rowTitle(3, visible ? html`<a href="/d/${deck.id}" target="_blank" rel="noopener">${deck.title}</a>` : deck.title)}
+    <p class="session-meta">
+      ${KIND_LABEL[deck.kind]} · de ${deck.ownerName ?? "nadie (de prueba)"} · subida el ${day.format(deck.createdAt)} ·
+      <span class="num">${formatBytes(deck.size)}</span>
+    </p>
+    ${deck.disabled
+      ? html`<p class="session-warn">Desactivada: da 404 para todos.</p>`
+      : deck.ownerDisabled
+        ? html`<p class="session-warn">Su Dueño está desactivado: da 404 para todos.</p>`
+        : ""}
+  </div>
+  <div class="session-actions">
+    ${deck.disabled
+      ? modForm({ action: `/moderacion/presentaciones/${deck.id}/reactivar`, label: "Reactivar", search })
+      : modForm({
+          action: `/moderacion/presentaciones/${deck.id}/desactivar`,
+          label: "Desactivar",
+          search,
+          confirmText: `¿Desactivar «${deck.title}»? Su enlace y su Enlace para presentar darán 404 hasta que la reactives.`,
+        })}
+  </div>
+</li>`;
+};
+
+const modOwnerRow = (owner: ModOwner, me: string, search: string) => html`<li class="session${owner.disabled ? " is-disabled" : ""}">
+  <div class="session-code">
+    <span class="session-count num">${owner.decks}</span><span class="session-unit">${plural(owner.decks, "presentación", "presentaciones")}</span>
+  </div>
+  <div class="session-main">
+    ${rowTitle(3, owner.name)}
+    <p class="session-meta">
+      ${PROVIDER_LABEL[owner.provider] ?? owner.provider}${owner.email ? html` · ${owner.email}` : ""} ·
+      <span class="num">${formatBytes(owner.bytes)}</span> · entró el ${day.format(owner.lastLoginAt)}
+    </p>
+    ${owner.disabled ? html`<p class="session-warn">Cuenta desactivada: no puede entrar, y sus presentaciones y carpetas dan 404.</p>` : ""}
+  </div>
+  <div class="session-actions">
+    ${owner.id === me
+      ? html`<p class="session-meta">Tu cuenta.</p>`
+      : owner.disabled
+        ? modForm({ action: `/moderacion/duenos/${owner.id}/reactivar`, label: "Reactivar cuenta", search })
+        : modForm({
+            action: `/moderacion/duenos/${owner.id}/desactivar`,
+            label: "Desactivar cuenta",
+            search,
+            confirmText: `¿Desactivar la cuenta de ${owner.name}? No podrá entrar, y todas sus presentaciones y carpetas darán 404 hasta que la reactives.`,
+          })}
+  </div>
+</li>`;
+
+/** Lo que encontró «Pegar un enlace»: la presentación o la carpeta, con su Dueño. */
+const modFound = (found: Found, me: string, search: string) => {
+  if (found.type === "control") {
+    return html`<p class="flash flash-error" role="alert">Ese es un enlace del Control: no lleva a ninguna presentación. Pide el enlace de la presentación o el de su carpeta.</p>`;
+  }
+  if (found.type === "none") {
+    return html`<p class="flash flash-error" role="alert">No encontramos ninguna presentación ni carpeta con ese enlace.</p>`;
+  }
+  const owner = found.owner ? html`<ol class="program" aria-label="Su Dueño">${modOwnerRow(found.owner, me, search)}</ol>` : "";
+  return html`<section class="mod-section" aria-labelledby="encontrado">
+    <h2 class="program-label" id="encontrado">${found.type === "deck" ? "La presentación" : html`La carpeta «${found.folder.name}»`}</h2>
+    ${found.type === "deck"
+      ? html`<ol class="program" aria-label="La presentación">${modDeckRow(found.deck, search)}</ol>`
+      : html`<p class="mod-note">Una carpeta se apaga con su Dueño: desactivar la cuenta la deja en 404 junto con todo lo demás.</p>`}
+    ${owner}
+  </section>`;
+};
+
+export const moderationPage = ({
+  user,
+  search,
+  found,
+  decks,
+  owners,
+  ok,
+  error,
+}: {
+  user: User;
+  search: string;
+  found: Found | null;
+  decks: ModDeck[];
+  owners: ModOwner[];
+  ok?: string;
+  error?: string;
+}) => {
+  const okText = ok ? MOD_OK[ok] : undefined;
+  const errorText = error ? MOD_ERROR[error] : undefined;
+  return layout({
+    title: "Moderación · Sliding",
+    user,
+    page: "panel",
+    body: html`<div class="panel-intro mod-intro">
+        <h1>Moderación</h1>
+        <p class="mod-lead">Lo que desactivas da 404 para todos, y su Dueño lo ve marcado en su panel. Reactivarlo lo devuelve tal cual: nada se borra.</p>
+        <form class="new-folder mod-search" method="get" action="/moderacion" role="search">
+          <label class="visually-hidden" for="enlace">Enlace de Sliding</label>
+          <input class="field" id="enlace" name="enlace" value="${search}" required autocomplete="off"
+            placeholder="Pega el enlace de una presentación o carpeta" />
+          <button class="btn btn-ink" type="submit">Buscar</button>
+        </form>
+      </div>
+      ${okText ? html`<p class="flash flash-ok" role="status">${okText}</p>` : ""}
+      ${errorText ? html`<p class="flash flash-error" role="alert">${errorText}</p>` : ""}
+      ${found ? modFound(found, user.id, search) : ""}
+      <section class="mod-section" aria-labelledby="recientes">
+        <h2 class="program-label" id="recientes">Subidas recientes</h2>
+        ${decks.length
+          ? html`<ol class="program">${decks.map((deck) => modDeckRow(deck, search))}</ol>`
+          : html`<p class="mod-note">Todavía nadie ha subido presentaciones.</p>`}
+      </section>
+      <section class="mod-section" aria-labelledby="duenos">
+        <h2 class="program-label" id="duenos">Dueños</h2>
+        <ol class="program">${owners.map((owner) => modOwnerRow(owner, user.id, search))}</ol>
+      </section>`,
+  });
+};
+
+/** Mientras no haya administrador: tu id, para copiarlo en ADMIN_USER_IDS. */
+export const moderationSetupPage = (user: User) =>
+  layout({
+    title: "Moderación · Sliding",
+    user,
+    page: "read",
+    body: html`<header class="read-band track-amarillo">
+        <div class="read-band-inner"><h1>Moderación</h1></div>
+      </header>
+      <article class="read">
+        <p class="read-lead">Sliding todavía no tiene administrador.</p>
+        <p>El id de tu cuenta es <code class="mod-id">${user.id}</code></p>
+        <p>Para que esta cuenta modere Sliding, agrega ese id a <code>ADMIN_USER_IDS</code> en <code>apps/app/wrangler.jsonc</code> y despliega. Desde entonces, esta página existe solo para quien esté en esa lista.</p>
+      </article>`,
+  });
+
 // ── La skill para tu IA ───────────────────────────────────────────────────
 
 export const skillPage = ({ user }: { user: User | null }) =>
@@ -819,7 +986,7 @@ export const privacyPage = ({ user }: { user: User | null }) =>
     body: html`<header class="read-band track-azul">
         <div class="read-band-inner">
           <h1>Privacidad</h1>
-          <p class="read-date">Última actualización: 18 de noviembre de 2026.</p>
+          <p class="read-date">Última actualización: 19 de noviembre de 2026.</p>
         </div>
       </header>
       <article class="read">
@@ -840,6 +1007,9 @@ export const privacyPage = ({ user }: { user: User | null }) =>
 
       <h2>Con quién compartimos tus datos</h2>
       <p>Con nadie. Los datos viven en Cloudflare, que aloja el sitio. GitHub y Google solo intervienen cuando inicias sesión con ellos.</p>
+
+      <h2>Moderación</h2>
+      <p>Si una presentación se usa para engañar o dañar a otras personas, por ejemplo una página que imita a otro sitio para robar contraseñas, podemos desactivarla o desactivar la cuenta que la subió. Lo desactivado deja de verse para todos, pero no se borra.</p>
 
       <h2>Cómo borrar tus datos</h2>
       <p>Puedes borrar tus presentaciones desde tu panel cuando quieras. Para borrar tu cuenta y todo lo que contiene, abre una issue en <a href="https://github.com/Aegisystem/Sliding/issues">github.com/Aegisystem/Sliding</a> y la borramos en menos de 30 días.</p>

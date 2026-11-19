@@ -10,6 +10,8 @@ declare namespace Cloudflare {
     GOOGLE_CLIENT_SECRET: string;
     /** Firma las cookies de sesión y de OAuth. */
     SESSION_SECRET: string;
+    /** Ids de cuenta de los administradores, separados por comas (#11). */
+    ADMIN_USER_IDS?: string;
     LIVE: DurableObjectNamespace<import("./live/session").LiveSession>;
   }
   interface GlobalProps {

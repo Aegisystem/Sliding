@@ -18,10 +18,10 @@ document.addEventListener("click", async (event) => {
   }
 });
 
-// Confirmar antes de borrar: el enlace deja de funcionar.
+// Confirmar antes de borrar o desactivar: el enlace deja de funcionar.
 document.addEventListener("submit", (event) => {
   const form = event.target;
-  if (form.matches(".delete") && !confirm(form.dataset.confirm)) event.preventDefault();
+  if (form.dataset.confirm && !confirm(form.dataset.confirm)) event.preventDefault();
 });
 
 // ── PowerPoint: se sube el PDF, y del .pptx solo sus notas (ADR 0004) ─────

@@ -637,7 +637,8 @@ body > main {
   color: var(--ink);
 }
 
-.panel-head h1 {
+.panel-head h1,
+.mod-intro h1 {
   font-size: clamp(3.5rem, 8vw, 6rem);
   line-height: 0.85;
 }
@@ -701,6 +702,11 @@ body > main {
   border-top: var(--rule);
 }
 
+/* Dos listas seguidas (la presentación y su Dueño) comparten la regla. */
+.program + .program {
+  border-top: 0;
+}
+
 .session {
   display: grid;
   grid-template-columns: 7rem minmax(0, 1fr) auto auto;
@@ -759,6 +765,54 @@ body > main {
 .session-meta {
   color: var(--ink-soft);
   font-size: 0.9375rem;
+}
+
+/* Una presentación desactivada por la moderación (#11): en vez de sus botones, el aviso. */
+.session-off {
+  max-width: 16rem;
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  background: var(--naranja);
+  color: var(--ink);
+  font-size: 0.9375rem;
+  line-height: 1.35;
+}
+
+/* ── Moderación (#11) ─────────────────────────────────────────────────── */
+
+.mod-intro {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.mod-lead,
+.mod-note {
+  max-width: 60ch;
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.mod-note {
+  padding: 1rem 0;
+}
+
+.mod-search {
+  max-width: 46rem;
+}
+
+.mod-section {
+  margin-top: 2.5rem;
+}
+
+.mod-id {
+  display: inline-block;
+  padding: 0.2rem 0.45rem;
+  border: var(--rule);
+  border-radius: 6px;
+  font-size: 1.0625rem;
+  user-select: all;
+  overflow-wrap: anywhere;
 }
 
 /* El PDF y las notas de su .pptx no tienen las mismas diapositivas: una franja naranja, como los avisos de error. */

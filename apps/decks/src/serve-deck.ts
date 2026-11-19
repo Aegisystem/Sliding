@@ -1,4 +1,4 @@
-import { type DeckKind, isDeckId, stripNotes } from "@sliding/core";
+import { type DeckKind, VISIBLE_DECK, isDeckId, stripNotes } from "@sliding/core";
 import { withBridge } from "./bridge";
 import { pdfFile, viewerHtml } from "./pdf-viewer";
 
@@ -11,7 +11,7 @@ interface DeckFound {
 
 const findDeck = (id: string, env: Cloudflare.Env) =>
   isDeckId(id)
-    ? env.DB.prepare("SELECT kind, title, size, updated_at AS updatedAt FROM decks WHERE id = ? AND disabled = 0")
+    ? env.DB.prepare(`SELECT kind, title, size, updated_at AS updatedAt FROM decks WHERE id = ? AND ${VISIBLE_DECK}`)
         .bind(id)
         .first<DeckFound>()
     : Promise.resolve(null);

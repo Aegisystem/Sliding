@@ -1,4 +1,4 @@
-import type { DeckKind } from "@sliding/core";
+import { type DeckKind, VISIBLE_DECK } from "@sliding/core";
 import { Hono } from "hono";
 import { isPresentSecret } from "../decks/store";
 import { controlPage, notFoundPage, screenPage } from "../pages";
@@ -10,7 +10,7 @@ type DeckForSession = { id: string; title: string; kind: DeckKind; slide_count: 
 const findBySecret = (db: D1Database, secret: string) =>
   isPresentSecret(secret)
     ? db
-        .prepare("SELECT id, title, kind, slide_count FROM decks WHERE present_secret = ? AND disabled = 0")
+        .prepare(`SELECT id, title, kind, slide_count FROM decks WHERE present_secret = ? AND ${VISIBLE_DECK}`)
         .bind(secret)
         .first<DeckForSession>()
     : Promise.resolve(null);

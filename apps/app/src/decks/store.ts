@@ -15,6 +15,8 @@ export interface DeckRow {
   notesCount: number | null;
   presentSecret: string;
   updatedAt: number;
+  /** 1 si el administrador la desactivó (#11): nadie puede verla ni presentarla. */
+  disabled: number;
 }
 
 /** Lo que el Enlace de la carpeta muestra de cada presentación: nada secreto. */
@@ -58,7 +60,7 @@ export async function listDecks(db: D1Database, ownerId: string, folderId: strin
   const { results } = await db
     .prepare(
       `SELECT id, title, kind, size, slide_count AS slideCount, notes_count AS notesCount,
-              present_secret AS presentSecret, updated_at AS updatedAt
+              present_secret AS presentSecret, updated_at AS updatedAt, disabled
        FROM decks WHERE owner_id = ? AND folder_id IS ?
        ORDER BY position IS NULL, position, created_at DESC`,
     )

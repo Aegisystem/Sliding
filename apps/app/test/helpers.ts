@@ -20,7 +20,14 @@ export function browser({
   origin = "https://app.test",
   profile = () => ada,
   limits,
-}: { origin?: string; profile?: () => ProviderProfile; limits?: Limits } = {}) {
+  vars,
+}: {
+  origin?: string;
+  profile?: () => ProviderProfile;
+  limits?: Limits;
+  /** Variables de entorno de más, por ejemplo ADMIN_USER_IDS. Se leen en cada pedido, así que pueden cambiar después. */
+  vars?: Record<string, string>;
+} = {}) {
   const app = createApp({
     providers: () => ({ github: fakeProvider(profile), google: fakeProvider(profile) }),
     ...(limits ? { limits } : {}),
@@ -30,7 +37,7 @@ export function browser({
   async function request(path: string, init: RequestInit = {}) {
     const headers = new Headers(init.headers);
     if (jar.size) headers.set("cookie", [...jar].map(([k, v]) => `${k}=${v}`).join("; "));
-    const response = await app.request(`${origin}${path}`, { ...init, headers }, env);
+    const response = await app.request(`${origin}${path}`, { ...init, headers }, vars ? { ...env, ...vars } : env);
     for (const line of response.headers.getSetCookie()) {
       setCookies.push(line);
       const pair = line.split(";")[0]!;

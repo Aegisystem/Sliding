@@ -59,6 +59,20 @@ describe("serveDeck", () => {
     expect((await serveDeck(id, env)).status).toBe(404);
   });
 
+  it("da 404 si su Dueño está desactivado, y vuelve al reactivarlo (#11)", async () => {
+    const id = await saveDeck(genericDeck, "generic");
+    const owner = crypto.randomUUID();
+    await env.DB.prepare(
+      "INSERT INTO users (id, provider, provider_id, name, disabled, created_at, last_login_at) VALUES (?, 'github', ?, 'Dueño', 1, 0, 0)",
+    )
+      .bind(owner, owner)
+      .run();
+    await env.DB.prepare("UPDATE decks SET owner_id = ? WHERE id = ?").bind(owner, id).run();
+    expect((await serveDeck(id, env)).status).toBe(404);
+    await env.DB.prepare("UPDATE users SET disabled = 0 WHERE id = ?").bind(owner).run();
+    expect((await serveDeck(id, env)).status).toBe(200);
+  });
+
   it("da 404 si falta el archivo en KV", async () => {
     const id = await saveDeck(genericDeck, "generic");
     await env.DECKS.delete(`deck:${id}`);

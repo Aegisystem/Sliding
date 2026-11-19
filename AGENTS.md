@@ -14,5 +14,6 @@ Sitio para subir presentaciones HTML y presentarlas con el celular como Control.
 - En el código, la Presentación se llama `deck` y la Diapositiva `slide` (tabla `decks`, `deckId`, `slideCount`): son nombres de antes del cambio de vocabulario. En todo texto que lean personas (la interfaz, las issues, los commits) se usan los términos de CONTEXT.md, nunca «deck» ni «slide».
 - El archivo de una presentación (HTML o PDF) se sirve solo desde el origen de las presentaciones (el Worker `decks`) y nunca desde el de la app ([ADR 0001](docs/adr/0001-decks-en-dominio-separado.md)).
 - Las Notas del presentador nunca van en el HTML servido. Llegan al Control por la Sesión en vivo.
+- Toda consulta que sirve o abre una presentación filtra con `VISIBLE_DECK` de `@sliding/core`: así lo que desactivó el Administrador (o su Dueño desactivado) da 404 en todas partes (#11).
 - El `.pptx` nunca se sube: el navegador del Dueño lee sus notas y manda solo ese texto ([ADR 0004](docs/adr/0004-powerpoint-como-pdf-mas-notas.md)).
 - Todo cabe en el plan gratis de Cloudflare, sin tarjeta ([ADR 0002](docs/adr/0002-archivos-en-kv.md)).

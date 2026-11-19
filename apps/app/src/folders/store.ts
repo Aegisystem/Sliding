@@ -83,7 +83,11 @@ export async function ownFolder(db: D1Database, ownerId: string, id: unknown): P
 export async function findFolder(db: D1Database, id: string): Promise<(Folder & { ownerId: string }) | null> {
   if (!isFolderId(id)) return null;
   return db
-    .prepare("SELECT id, name, parent_id AS parentId, position, owner_id AS ownerId FROM folders WHERE id = ?")
+    // La carpeta de un Dueño desactivado no se ve (#11).
+    .prepare(
+      `SELECT id, name, parent_id AS parentId, position, owner_id AS ownerId FROM folders
+       WHERE id = ? AND NOT EXISTS (SELECT 1 FROM users WHERE users.id = folders.owner_id AND users.disabled = 1)`,
+    )
     .bind(id)
     .first<Folder & { ownerId: string }>();
 }

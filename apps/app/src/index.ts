@@ -1,4 +1,4 @@
-import { isDeckId } from "@sliding/core";
+import { VISIBLE_DECK, isDeckId } from "@sliding/core";
 import { type Context, Hono } from "hono";
 import { createMiddleware } from "hono/factory";
 import { type Providers, realProviders } from "./auth/providers";
@@ -10,6 +10,7 @@ import { panelRoutes } from "./decks/routes";
 import { deckCounts, listPublicDecks } from "./decks/store";
 import { childrenOf, findFolder, listFolders, pathTo } from "./folders/store";
 import { liveRoutes } from "./live/routes";
+import { moderationRoutes } from "./moderation/routes";
 import { folderPage, homePage, notFoundPage, privacyPage, skillPage, viewerPage } from "./pages";
 import { sameOrigin } from "./same-origin";
 import type { AppEnv } from "./types";
@@ -43,6 +44,7 @@ export function createApp(overrides: Partial<Deps> = {}) {
   app.route("/auth", authRoutes(deps.providers));
   app.route("/panel", panelRoutes(deps.limits));
   app.route("/", liveRoutes());
+  app.route("/moderacion", moderationRoutes());
 
   app.get("/", (c) => c.html(homePage({ user: c.var.user, error: c.req.query("error"), limits: deps.limits })));
 
@@ -56,7 +58,7 @@ export function createApp(overrides: Partial<Deps> = {}) {
   app.get("/d/:id", async (c) => {
     const id = c.req.param("id");
     const deck = isDeckId(id)
-      ? await c.env.DB.prepare("SELECT title FROM decks WHERE id = ? AND disabled = 0")
+      ? await c.env.DB.prepare(`SELECT title FROM decks WHERE id = ? AND ${VISIBLE_DECK}`)
           .bind(id)
           .first<{ title: string }>()
       : null;
