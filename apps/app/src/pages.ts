@@ -969,7 +969,7 @@ export const moderationPage = ({
     body: html`<div class="panel-intro mod-intro">
         <h1>Moderación</h1>
         <p class="mod-lead">Lo que desactivas da 404 para todos, y su Dueño lo ve marcado en su panel. Reactivarlo lo devuelve tal cual: nada se borra.</p>
-        <form class="new-folder mod-search" method="get" action="/moderacion" role="search">
+        <form class="mod-search" method="get" action="/moderacion" role="search">
           <label class="visually-hidden" for="enlace">Enlace de Sliding</label>
           <input class="field" id="enlace" name="enlace" value="${search}" required autocomplete="off"
             placeholder="Pega el enlace de una presentación o carpeta" />
