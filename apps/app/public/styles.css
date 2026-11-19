@@ -591,7 +591,54 @@ body > main {
 /* ── Panel: el programa de tus decks ──────────────────────────────────── */
 
 .page-panel main {
-  padding: clamp(1.5rem, 4vw, 3rem) var(--gutter) clamp(3rem, 6vw, 5rem);
+  --top: clamp(1.5rem, 4vw, 3rem);
+  --bottom: clamp(3rem, 6vw, 5rem);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "head" "alerts" "side" "lists";
+  align-content: start;
+  padding: var(--top) var(--gutter) var(--bottom);
+}
+
+.panel-head {
+  grid-area: head;
+}
+
+.panel-alerts {
+  grid-area: alerts;
+}
+
+.panel-side {
+  grid-area: side;
+}
+
+.panel-lists {
+  grid-area: lists;
+}
+
+/* En el computador, el árbol de carpetas ocupa una columna a la izquierda,
+   de la cabecera al colofón, con su regla a la derecha. */
+@media (min-width: 901px) {
+  .page-panel main:has(> .panel-side) {
+    grid-template-columns: clamp(13rem, 17vw, 16.5rem) minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas: "side head" "side alerts" "side lists";
+    column-gap: clamp(1.5rem, 3vw, 2.5rem);
+  }
+
+  .panel-side {
+    margin: calc(-1 * var(--top)) 0 calc(-1 * var(--bottom)) calc(-1 * var(--gutter));
+    padding: var(--top) 1rem var(--bottom) var(--gutter);
+    border-right: var(--rule);
+  }
+
+  .tree {
+    position: sticky;
+    top: 1rem;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
 }
 
 .panel-head {
@@ -875,33 +922,57 @@ body > main {
   max-width: 60ch;
 }
 
-/* Subir y crear carpeta, lado a lado. */
+/* Subir y crear carpeta: los dos botones juntos en la caja de subir; el
+   nombre de la carpeta nueva se pide debajo, en su propia caja. */
 .panel-tools {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: stretch;
+  display: grid;
+  justify-items: start;
   gap: 0.75rem;
 }
 
-/* El nombre y su botón en una línea; la caja se estira hasta la credencial. */
 .new-folder {
-  display: flex;
-  flex: 1 1 22rem;
-  align-items: center;
-  gap: 0.75rem;
-  max-width: 34rem;
+  display: grid;
+  gap: 0.5rem;
+  width: min(100%, 38rem);
   padding: 1rem;
   border: var(--rule);
   border-radius: var(--radius);
 }
 
+.new-folder label {
+  font-stretch: var(--semi);
+  font-weight: 700;
+}
+
+.new-folder-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+}
+
 .new-folder .field {
-  flex: 1 1 auto;
-  width: 100%;
+  flex: 1 1 14rem;
 }
 
 .new-folder .btn {
   flex: none;
+}
+
+/* Se abre con un pequeño deslizamiento desde el botón. */
+.new-folder.is-opening {
+  animation: open-down 220ms var(--ease);
+}
+
+@keyframes open-down {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+}
+
+.btn[aria-expanded="true"] {
+  background: var(--ink);
+  color: var(--paper);
 }
 
 /* Un campo de texto: el mismo borde y radio que los botones. */
@@ -1216,7 +1287,7 @@ body > main {
 }
 
 /* La ruta de carpetas también recibe: se subraya en guiones mientras se arrastra. */
-.is-sorting .crumbs [data-drop] {
+.is-sorting .crumbs .can-drop {
   text-decoration: underline dashed;
   text-decoration-thickness: 2px;
 }
@@ -1355,8 +1426,242 @@ body > main {
   text-decoration-thickness: 3px;
 }
 
-.session-actions {
-  width: 13rem;
+/* ── Menú «Más» de cada hilera ────────────────────────────────────────── */
+
+.more {
+  position: relative;
+}
+
+.more > summary {
+  gap: 0.4rem;
+  list-style: none;
+  white-space: nowrap;
+}
+
+.more > summary::-webkit-details-marker {
+  display: none;
+}
+
+.more > summary svg {
+  width: 0.55rem;
+  height: auto;
+  transform: rotate(90deg);
+  transition: transform 160ms var(--ease);
+}
+
+.more[open] > summary {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.more[open] > summary svg {
+  transform: rotate(-90deg);
+}
+
+/* Una hoja de papel con su regla, sobre las hileras de abajo. */
+.more-menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 20;
+  display: grid;
+  gap: 0.5rem;
+  width: 15rem;
+  padding: 0.75rem;
+  border: var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+.more[open] .more-menu {
+  animation: open-down 180ms var(--ease);
+}
+
+.more-menu form {
+  margin: 0;
+}
+
+.more-menu .btn {
+  width: 100%;
+}
+
+.more-label {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: var(--ink-soft);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* Borrar va al final, tras una regla: lo que no se deshace queda aparte. */
+.more-menu .delete {
+  padding-top: 0.5rem;
+  border-top: var(--rule);
+}
+
+/* ── Árbol de carpetas ─────────────────────────────────────────────────── */
+
+.tree-title {
+  margin-bottom: 0.75rem;
+  font-size: 1.5rem;
+  line-height: 1.1;
+}
+
+.tree-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Cada nivel entra un poco, con una guía fina que lo une a su carpeta. */
+.tree-list .tree-list {
+  margin-left: 0.8rem;
+  padding-left: 0.35rem;
+  border-left: 2px solid color-mix(in srgb, var(--ink) 14%, transparent);
+}
+
+.tree-root > li > .tree-list {
+  margin-left: 0;
+  padding-left: 0;
+  border-left: 0;
+}
+
+.tree-row {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding-block: 0.1rem;
+}
+
+.tree-toggle {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+/* Sin JS la flecha no hace nada: no se ve, pero guarda su lugar. */
+.tree-toggle[hidden] {
+  display: grid !important;
+  visibility: hidden;
+}
+
+.tree-toggle:hover {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.tree-toggle svg {
+  width: 0.55rem;
+  height: auto;
+  transition: transform 160ms var(--ease);
+}
+
+.tree-toggle[aria-expanded="true"] svg {
+  transform: rotate(90deg);
+}
+
+.tree-link {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  font-stretch: var(--semi);
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  transition: background-color 160ms var(--ease), color 160ms var(--ease);
+}
+
+.tree-link:hover {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+/* La carpeta abierta: un campo de tinta, como la cabecera. */
+.tree-link[aria-current="page"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* Mientras se arrastra, cada carpeta que puede recibir se subraya en guiones, como la ruta. */
+.is-sorting .tree-link.can-drop {
+  text-decoration: underline dashed color-mix(in srgb, var(--ink) 45%, transparent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+}
+
+.tree-link.is-drop-target,
+.is-sorting .tree-link.is-drop-target {
+  background: var(--verde);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+/* La carpeta que acaba de llegar se marca un momento en amarillo. */
+.tree-row.is-new .tree-link {
+  animation: arrived 1.2s var(--ease);
+}
+
+@keyframes arrived {
+  from {
+    background: var(--amarillo);
+    color: var(--ink);
+  }
+}
+
+/* En el celular el árbol se abre con su botón, sobre las listas. */
+.tree-open svg {
+  width: 0.55rem;
+  height: auto;
+  transform: rotate(90deg);
+  transition: transform 160ms var(--ease);
+}
+
+.tree-open[aria-expanded="true"] svg {
+  transform: rotate(-90deg);
+}
+
+@media (max-width: 900px) {
+  .panel-side {
+    margin-bottom: 1.5rem;
+  }
+
+  .tree {
+    display: none;
+    margin-top: 0.75rem;
+    padding: 1rem;
+    border: var(--rule);
+    border-radius: var(--radius);
+  }
+
+  .panel-side.is-open .tree {
+    display: block;
+    animation: open-down 220ms var(--ease);
+  }
+
+  .tree-title {
+    display: none;
+  }
+}
+
+/* Sin JS no hay botón: el árbol se ve siempre. */
+@media (max-width: 900px) and (scripting: none) {
+  .tree {
+    display: block;
+  }
+}
+
+@media (min-width: 901px) {
+  .tree-open {
+    display: none !important;
+  }
 }
 
 /* ── Enlace de la carpeta ─────────────────────────────────────────────── */
@@ -1729,19 +2034,19 @@ body > main {
     border-left: 0;
   }
 
-  .session-actions {
+  /* «Más» a todo el ancho; su menú se abre en el lugar, empujando lo de abajo. */
+  .more {
+    width: 100%;
+  }
+
+  .more > summary {
+    width: 100%;
+  }
+
+  .more-menu {
+    position: static;
     width: auto;
-    flex-wrap: wrap;
-  }
-
-  .session-actions form {
-    flex: 1 1 7rem;
-  }
-
-  /* «Mover a» va primero y a todo el ancho; debajo, Reemplazar y Borrar. */
-  .session-actions .move {
-    order: -1;
-    flex-basis: 100%;
+    margin-top: 0.5rem;
   }
 
   .session-public {
@@ -1754,13 +2059,8 @@ body > main {
     border-top: var(--rule);
   }
 
-  .new-folder,
   .upload {
-    flex: 1 1 100%;
-  }
-
-  .new-folder {
-    max-width: none;
+    justify-self: stretch;
   }
 
   .band .stamp {

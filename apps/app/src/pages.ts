@@ -3,7 +3,7 @@ import type { HtmlEscapedString } from "hono/utils/html";
 import type { User } from "./auth/users";
 import type { Limits } from "./decks/limits";
 import type { DeckRow, PublicDeck, Usage } from "./decks/store";
-import { descendantsOf, type Folder } from "./folders/store";
+import { descendantsOf, pathTo, type Folder } from "./folders/store";
 import type { Found, ModDeck, ModOwner } from "./moderation/store";
 
 type Html = HtmlEscapedString | Promise<HtmlEscapedString>;
@@ -246,11 +246,60 @@ function folderTree(folders: Folder[]): { folder: Folder; label: string }[] {
 
 const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
 
+const chevron = html`<svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true" focusable="false"><path d="M2.5 2.5l5 5.5-5 5.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+/**
+ * El árbol de carpetas, a la izquierda del panel: «Tus presentaciones» y
+ * todas las carpetas del Dueño. Se ve abierta la ruta hasta la carpeta
+ * abierta; las demás se abren con su flecha (solo con JS). Cada carpeta
+ * recibe lo que se arrastra (drag.js).
+ */
+const folderTreeNav = (folders: Folder[], currentId: string | null) => {
+  const open = new Set(pathTo(folders, currentId).map((f) => f.id));
+  const seen = new Set<string>();
+  const kids = (parentId: string | null) => folders.filter((f) => f.parentId === parentId && !seen.has(f.id));
+  const branch = (children: Folder[], expanded: boolean): Html => html`<ul class="tree-list" ${expanded ? "" : "hidden"}>
+    ${children.map((f) => {
+      seen.add(f.id);
+      const inner = kids(f.id);
+      const isOpen = open.has(f.id);
+      return html`<li data-folder="${f.id}">
+        <div class="tree-row">
+          ${inner.length
+            ? html`<button class="tree-toggle" type="button" aria-expanded="${String(isOpen)}" aria-label="Carpetas de «${f.name}»" data-needs-js hidden>${chevron}</button>`
+            : html`<span class="tree-toggle" aria-hidden="true"></span>`}
+          <a class="tree-link" href="/panel/f/${f.id}" data-drop="${f.id}" ${f.id === currentId ? html`aria-current="page"` : ""}>${f.name}</a>
+        </div>
+        ${inner.length ? branch(inner, isOpen) : ""}
+      </li>`;
+    })}
+  </ul>`;
+  return html`<aside class="panel-side">
+    <button class="btn btn-small tree-open" type="button" aria-expanded="false" aria-controls="arbol" data-tree-open hidden>
+      Carpetas ${chevron}
+    </button>
+    <nav class="tree" id="arbol" aria-labelledby="arbol-titulo">
+      <h2 class="tree-title" id="arbol-titulo">Carpetas</h2>
+      <ul class="tree-list tree-root">
+        <li data-folder="raiz">
+          <div class="tree-row">
+            <a class="tree-link" href="/panel" data-drop="raiz" ${currentId ? "" : html`aria-current="page"`}>Tus presentaciones</a>
+          </div>
+          ${branch(kids(null), true)}
+        </li>
+      </ul>
+    </nav>
+  </aside>`;
+};
+
 /** El formulario vuelve a la carpeta que se está viendo. */
 const backField = (name: string, folderId: string | null) =>
   folderId ? html`<input type="hidden" name="${name}" value="${folderId}" />` : "";
 
-/** «Mover a»: elegir la carpeta ya mueve (sin JS, con su botón). */
+/**
+ * «Mover a», dentro del menú «Más»: elegir la carpeta ya mueve (sin JS, con su
+ * botón). Es el camino para quien no arrastra: el teclado o un lector de pantalla.
+ */
 const moveForm = ({
   id,
   action,
@@ -267,9 +316,9 @@ const moveForm = ({
   options.some((o) => !o.here)
     ? html`<form class="move" method="post" action="${action}">
         ${backField("volver", folderId)}
-        <label class="visually-hidden" for="mover-${id}">Mover «${title}» a otra carpeta</label>
+        <label class="more-label" for="mover-${id}">Mover<span class="visually-hidden"> «${title}»</span> a</label>
         <select class="select" id="mover-${id}" name="destino" required>
-          <option value="" selected disabled>Mover a…</option>
+          <option value="" selected disabled>Elige una carpeta…</option>
           ${options.map(
             (o) => html`<option value="${o.value}" ${o.here ? "disabled" : ""}>${o.label}${o.here ? " (aquí)" : ""}</option>`,
           )}
@@ -290,6 +339,16 @@ const orderButton = (dir: "up" | "down", name: string) => html`<button class="or
 const dragHint = html`<span class="drag-hint" title="Arrastra para ordenar o meter en una carpeta" aria-hidden="true">
   <svg viewBox="0 0 12 20" width="12" height="20" focusable="false"><circle cx="3" cy="4" r="1.75"/><circle cx="9" cy="4" r="1.75"/><circle cx="3" cy="10" r="1.75"/><circle cx="9" cy="10" r="1.75"/><circle cx="3" cy="16" r="1.75"/><circle cx="9" cy="16" r="1.75"/></svg>
 </span>`;
+
+/**
+ * «Más»: lo que se hace de vez en cuando con una hilera (reemplazar, notas,
+ * mover, borrar) va en un menú, para que la hilera muestre solo lo de siempre.
+ * Es un <details>: se abre sin JS; app.js lo cierra al hacer clic fuera o con Esc.
+ */
+const moreMenu = (title: string, items: Html) => html`<details class="more">
+  <summary class="btn btn-small">Más<span class="visually-hidden"> sobre «${title}»</span>${chevron}</summary>
+  <div class="more-menu">${items}</div>
+</details>`;
 
 /** Un título de hilera: h3 bajo los rótulos «Carpetas» y «Presentaciones», h2 si no hay rótulos. */
 const rowTitle = (level: 2 | 3, inner: Html | string) =>
@@ -365,7 +424,9 @@ const deckRow = (deck: DeckRow, ctx: PanelContext) => html`<li class="session${d
           <button class="btn btn-small copy" type="button" data-copy="${ctx.origin}/d/${deck.id}">Copiar enlace para compartir</button>`}
   </div>
   <div class="session-actions">
-    ${deck.disabled
+    ${moreMenu(
+      deck.title,
+      html`${deck.disabled
       ? ""
       : html`<form class="replace" method="post" action="/panel/decks/${deck.id}" enctype="multipart/form-data" data-deck-form>
           ${backField("volver", ctx.folderId)}
@@ -390,7 +451,8 @@ const deckRow = (deck: DeckRow, ctx: PanelContext) => html`<li class="session${d
     <form class="delete" method="post" action="/panel/decks/${deck.id}/delete" data-confirm="¿Borrar «${deck.title}»? Su enlace dejará de funcionar y no se puede deshacer.">
       ${backField("volver", ctx.folderId)}
       <button class="btn btn-small btn-danger" type="submit">Borrar</button>
-    </form>
+    </form>`,
+    )}
   </div>
 </li>`;
 
@@ -416,7 +478,9 @@ const folderRow = (folder: FolderRow, ctx: PanelContext) => {
     <button class="btn btn-small copy" type="button" data-copy="${ctx.origin}/f/${folder.id}">Copiar enlace para compartir</button>
   </div>
   <div class="session-actions">
-    ${moveForm({
+    ${moreMenu(
+      folder.name,
+      html`${moveForm({
       id: folder.id,
       action: `/panel/carpetas/${folder.id}/mover`,
       title: folder.name,
@@ -430,7 +494,8 @@ const folderRow = (folder: FolderRow, ctx: PanelContext) => {
     })}
     <form class="delete" method="post" action="/panel/carpetas/${folder.id}/borrar" data-confirm="¿Borrar la carpeta «${folder.name}»? Lo que tiene dentro quedará aquí y su enlace dejará de funcionar.">
       <button class="btn btn-small btn-danger" type="submit">Borrar</button>
-    </form>
+    </form>`,
+    )}
   </div>
 </li>`;
 };
@@ -512,16 +577,20 @@ export const panelPage = ({
                 Subir una presentación
                 <input class="visually-hidden" type="file" name="file" accept="${deckAccept}" multiple required aria-describedby="subir-ayuda" />
               </label>
+              <button class="btn" type="button" data-new-folder aria-expanded="false" aria-controls="carpeta-nueva" hidden>Nueva carpeta</button>
               <span class="upload-file" aria-live="polite">HTML o PDF, hasta ${mb(limits.deckBytes)} MB. También puedes soltarla en esta página.</span>
               <p class="upload-help" id="subir-ayuda">¿Es de PowerPoint? Expórtala como PDF y elige el PDF y el .pptx a la vez: así ves tus notas en el celular. El .pptx no se sube.</p>
               <noscript><button class="btn" type="submit">Subir</button></noscript>
             </form>
-            <form class="new-folder" method="post" action="/panel/carpetas">
+            <form class="new-folder" id="carpeta-nueva" method="post" action="/panel/carpetas" ${error === "nombre" ? html`data-open` : ""}>
               ${backField("carpeta", folderId)}
-              <label class="visually-hidden" for="nueva-carpeta">Nombre de la carpeta nueva</label>
-              <input class="field" id="nueva-carpeta" name="nombre" maxlength="80" required autocomplete="off"
-                placeholder="${folder ? "Por ejemplo: Unidad 1" : "Por ejemplo: Física"}" />
-              <button class="btn" type="submit">Crear carpeta</button>
+              <label for="nueva-carpeta">${folder ? html`Carpeta nueva dentro de «${folder.name}»` : "Carpeta nueva"}</label>
+              <div class="new-folder-row">
+                <input class="field" id="nueva-carpeta" name="nombre" maxlength="80" required autocomplete="off"
+                  placeholder="${folder ? "Por ejemplo: Unidad 1" : "Por ejemplo: Física"}" />
+                <button class="btn btn-ink" type="submit">Crear carpeta</button>
+                <button class="btn" type="button" data-new-folder-cancel hidden>Cancelar</button>
+              </div>
             </form>
           </div>
         </div>
@@ -535,11 +604,14 @@ export const panelPage = ({
           { variant: "panel" },
         )}
       </div>
-      <p class="flash flash-error" data-order-error role="alert" hidden>No se pudo guardar el orden. Recarga la página e intenta de nuevo.</p>
-      <p class="flash flash-error" data-move-error role="alert" hidden></p>
-      <p class="flash flash-error" data-file-error role="alert" hidden></p>
-      ${okText ? html`<p class="flash flash-ok" role="status">${okText}</p>` : ""}
-      ${errorText ? html`<p class="flash flash-error" role="alert">${errorText}</p>` : ""}
+      <div class="panel-alerts">
+        <p class="flash flash-error" data-order-error role="alert" hidden>No se pudo guardar el orden. Recarga la página e intenta de nuevo.</p>
+        <p class="flash flash-error" data-move-error role="alert" hidden></p>
+        <p class="flash flash-error" data-file-error role="alert" hidden></p>
+        ${okText ? html`<p class="flash flash-ok" role="status">${okText}</p>` : ""}
+        ${errorText ? html`<p class="flash flash-error" role="alert">${errorText}</p>` : ""}
+      </div>
+      ${folders.length ? folderTreeNav(folders, folderId) : ""}
       <div class="panel-lists">
         ${children.length
           ? html`${labelled ? html`<h2 class="program-label">Carpetas</h2>` : ""}
@@ -556,11 +628,11 @@ export const panelPage = ({
         ${folder
             ? html`<div class="empty" data-empty ${children.length || decks.length ? "hidden" : ""}>
                 <h2>Esta carpeta está vacía.</h2>
-                <p>Sube aquí una presentación, crea una carpeta dentro (una unidad, una semana) o trae presentaciones que ya subiste con «Mover a».</p>
+                <p>Sube aquí una presentación, crea una carpeta dentro (una unidad, una semana) o trae presentaciones que ya subiste: arrástralas hasta esta carpeta o usa «Mover a» en su menú «Más».</p>
               </div>`
             : html`<div class="empty" data-empty ${children.length || decks.length ? "hidden" : ""}>
                 <h2>Tu programa está vacío.</h2>
-                <p>Sube tu primera presentación con el botón de arriba. ¿Todavía no tienes una? Pásale a tu IA la <a href="/skill">skill html-slides</a> y pídele una, o usa cualquier HTML de un solo archivo. Para ordenarlas por curso, crea una carpeta.</p>
+                <p>Sube tu primera presentación con el botón de arriba. ¿Todavía no tienes una? Pásale a tu IA la <a href="/skill">skill html-slides</a> y pídele una, o usa cualquier HTML de un solo archivo. Para ordenarlas por curso, crea una carpeta con «Nueva carpeta».</p>
               </div>`}
       </div>
       <p class="visually-hidden" id="orden-ayuda">Cambia el orden en que la ven los demás. También puedes arrastrar la hilera, con el mouse o manteniendo el dedo sobre ella, y soltarla en una carpeta.</p>

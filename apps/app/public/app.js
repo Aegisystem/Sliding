@@ -117,6 +117,80 @@ if (renameToggle && renameForm) {
   });
 }
 
+// «Nueva carpeta»: el botón abre el campo del nombre; Cancelar o Esc lo cierran.
+// Si el nombre volvió con error, el campo ya viene abierto.
+const newFolderButton = document.querySelector("[data-new-folder]");
+const newFolderForm = document.querySelector(".new-folder");
+if (newFolderButton && newFolderForm) {
+  const field = newFolderForm.querySelector("input[name=nombre]");
+  const cancel = newFolderForm.querySelector("[data-new-folder-cancel]");
+  const show = (open, { focus = true } = {}) => {
+    newFolderForm.hidden = !open;
+    newFolderButton.setAttribute("aria-expanded", String(open));
+    if (open) {
+      newFolderForm.classList.remove("is-opening");
+      void newFolderForm.offsetWidth;
+      newFolderForm.classList.add("is-opening");
+      if (focus) field.focus();
+    } else if (focus) {
+      newFolderButton.focus();
+    }
+  };
+  newFolderButton.hidden = false;
+  cancel.hidden = false;
+  show(newFolderForm.hasAttribute("data-open"), { focus: false });
+  newFolderButton.addEventListener("click", () => show(newFolderForm.hidden));
+  cancel.addEventListener("click", () => show(false));
+  newFolderForm.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") show(false);
+  });
+}
+
+// «Más»: un menú abierto a la vez; se cierra al hacer clic fuera o con Esc.
+const menus = () => document.querySelectorAll("details.more[open]");
+document.addEventListener(
+  "toggle",
+  (event) => {
+    if (!event.target.matches?.("details.more") || !event.target.open) return;
+    for (const menu of menus()) if (menu !== event.target) menu.open = false;
+  },
+  true,
+);
+document.addEventListener("click", (event) => {
+  for (const menu of menus()) if (!menu.contains(event.target)) menu.open = false;
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") return;
+  for (const menu of menus()) {
+    menu.open = false;
+    if (menu.contains(document.activeElement)) menu.querySelector("summary").focus();
+  }
+});
+
+// El árbol de carpetas: cada flecha abre o cierra lo que hay dentro. En el
+// celular, el árbol entero se abre con el botón «Carpetas».
+document.addEventListener("click", (event) => {
+  const toggle = event.target.closest(".tree-toggle");
+  if (toggle) openBranch(toggle.closest("li"), toggle.getAttribute("aria-expanded") !== "true");
+});
+function openBranch(item, open) {
+  const toggle = item.querySelector(":scope > .tree-row > .tree-toggle");
+  const branch = item.querySelector(":scope > .tree-list");
+  if (!toggle || !branch) return;
+  toggle.setAttribute("aria-expanded", String(open));
+  branch.hidden = !open;
+}
+const treeOpen = document.querySelector("[data-tree-open]");
+if (treeOpen) {
+  const side = treeOpen.closest(".panel-side");
+  treeOpen.hidden = false;
+  treeOpen.addEventListener("click", () => {
+    const open = !side.classList.contains("is-open");
+    side.classList.toggle("is-open", open);
+    treeOpen.setAttribute("aria-expanded", String(open));
+  });
+}
+
 // Ordenar y mover las hileras del panel: Subir, Bajar y arrastrar (drag.js).
 if (document.querySelector("[data-sortable]")) import("/drag.js");
 

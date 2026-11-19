@@ -1,4 +1,4 @@
-// Ordenar y mover en el panel (#18, #20). Lo carga app.js cuando hay listas.
+// Ordenar y mover en el panel (#18, #20, #21). Lo carga app.js cuando hay listas.
 //
 // Sin JS, el panel ordena por llegada y mueve con «Mover a». Con JS:
 // - Subir y Bajar en cada hilera, también con las flechas del teclado.
@@ -7,13 +7,17 @@
 //   Deslizar sin esperar sigue desplazando la página.
 //   Al levantarla, su código y su título se despegan como una ficha que sigue
 //   al puntero, y cada hilera se pliega a su título para que todo quede cerca.
-//   Soltarla entre hileras cambia el orden; sobre una carpeta o sobre la ruta
-//   de carpetas de arriba, la mueve ahí y ofrece «Deshacer». Esc cancela.
+//   Soltarla entre hileras cambia el orden; sobre una carpeta de la lista, de
+//   la ruta de arriba o del árbol de la izquierda, la mueve ahí y ofrece
+//   «Deshacer». Una carpeta cerrada del árbol se abre si la ficha se detiene
+//   sobre ella. Esc cancela.
 // El orden se guarda solo, en /panel/orden.
 
 const board = document.querySelector(".panel-lists");
 const lists = [...document.querySelectorAll("[data-sortable]")];
-const crumbs = [...document.querySelectorAll(".crumbs [data-drop]")];
+// Las carpetas de la ruta de arriba y del árbol: reciben lo que se arrastra.
+const DROPS = ".crumbs [data-drop], .tree [data-drop]";
+const dropTargets = [...document.querySelectorAll(DROPS)];
 const orderError = document.querySelector("[data-order-error]");
 const moveError = document.querySelector("[data-move-error]");
 const orderStatus = document.querySelector("[data-order-status]");
@@ -33,6 +37,18 @@ const allRows = () => lists.flatMap((list) => (list.isConnected ? rowsOf(list) :
 const folderRows = () => allRows().filter((row) => row.parentElement.dataset.sortable === "folders");
 const nameOf = (row) => row.querySelector(".session-title")?.textContent.trim() ?? "";
 const targetName = (target) => (target.matches("li") ? nameOf(target) : target.textContent.trim());
+const destOf = (target) => target.dataset.drop ?? target.dataset.id;
+const treeNode = (id) => document.querySelector(`.tree li[data-folder="${CSS.escape(id)}"]`);
+
+// Adónde puede ir: no a la carpeta donde ya está y, si es una carpeta, ni a
+// ella misma ni a una de las de dentro.
+function allowed(d, el) {
+  const dest = destOf(el);
+  if (dest === (d.parent ?? "raiz")) return false;
+  if (d.kind !== "folders") return true;
+  if (dest === d.row.dataset.id) return false;
+  return !treeNode(d.row.dataset.id)?.contains(el);
+}
 
 // ── Guardar y anunciar el orden ─────────────────────────────────────────
 
@@ -90,13 +106,17 @@ function step(row, dir) {
 }
 
 // Subir y Bajar, con dos hileras o más. Se arrastra si hay adónde: otro lugar
-// en la lista, una carpeta o la ruta de carpetas.
+// en la lista, una carpeta de la lista, de la ruta o del árbol.
 function setUp(list) {
   const rows = rowsOf(list);
   const ordering = rows.length > 1;
   for (const button of list.querySelectorAll("[data-move]")) button.hidden = !ordering;
   if (ordering) markEnds(list);
-  const somewhere = ordering || crumbs.length > 0 || (list.dataset.sortable === "decks" && folderRows().length > 0);
+  const probe = rows.length && { kind: list.dataset.sortable, parent: list.dataset.parent || null, row: rows[0] };
+  const somewhere =
+    ordering ||
+    (list.dataset.sortable === "decks" && folderRows().length > 0) ||
+    Boolean(probe && dropTargets.some((el) => allowed(probe, el)));
   list.classList.toggle("is-sortable", somewhere);
 }
 
@@ -235,12 +255,18 @@ function lift(gesture) {
     vx: 0,
     tilt: 0,
     scale: 1,
+    ax: from.x,
+    ay: from.y,
+    fh,
     target: null,
     ready: false,
     raf: 0,
   };
   const d = drag;
   gesture.lifted = true;
+  for (const menu of document.querySelectorAll("details.more[open]")) menu.open = false;
+  // Solo se marcan las carpetas que pueden recibirla.
+  for (const el of dropTargets) el.classList.toggle("can-drop", allowed(d, el));
   document.body.style.minHeight = `${document.documentElement.scrollHeight}px`;
   document.documentElement.classList.add("is-sorting");
   row.classList.add("is-held");
@@ -268,16 +294,22 @@ function tick(now) {
   d.vx += (d.x - d.lastX - d.vx) * 0.3;
   d.lastX = d.x;
   d.tilt += ((calm.matches ? 0 : clamp(d.vx * 0.5, -6, 6)) - d.tilt) * 0.2;
-  const goal = calm.matches ? 1 : d.target ? 0.6 : 1 + 0.03 * k;
+  // Sobre el árbol se encoge más y sube arriba a la derecha del puntero: los
+  // nombres son chicos y la ficha no debe tapar el que se apunta.
+  const inTree = Boolean(d.target?.matches(".tree-link"));
+  const goal = calm.matches ? 1 : inTree ? 0.45 : d.target ? 0.6 : 1 + 0.03 * k;
   d.scale += (goal - d.scale) * (calm.matches ? 1 : 0.25);
+  const follow = calm.matches || !d.ready ? 1 : 0.25;
+  d.ax += ((inTree ? -12 : gx) - d.ax) * follow;
+  d.ay += ((inTree ? d.fh + 44 : gy) - d.ay) * follow;
   // Nunca se sale por la izquierda: si el puntero se acerca al borde, la ficha se corre.
-  const left = Math.max(d.x - gx, Math.min(8, d.x - 24));
-  d.ficha.style.transformOrigin = `${d.x - left}px ${gy}px`;
-  d.ficha.style.transform = `translate(${left}px, ${d.y - gy}px) rotate(${d.tilt.toFixed(2)}deg) scale(${d.scale.toFixed(3)})`;
+  const left = Math.max(d.x - d.ax, Math.min(8, d.x - 24));
+  d.ficha.style.transformOrigin = `${d.x - left}px ${d.ay}px`;
+  d.ficha.style.transform = `translate(${left}px, ${d.y - d.ay}px) rotate(${d.tilt.toFixed(2)}deg) scale(${d.scale.toFixed(3)})`;
   if (!d.tag.hidden) {
     // Con el mouse, abajo a la derecha del puntero; con el dedo, arriba de la ficha.
     const tx = clamp(d.x + (d.how === "touch" ? -d.tag.offsetWidth / 2 : 16), 8, innerWidth - d.tag.offsetWidth - 8);
-    const ty = Math.max(8, d.how === "touch" ? d.y - gy - d.tag.offsetHeight - 12 : d.y + 22);
+    const ty = Math.max(8, d.how === "touch" ? d.y - d.ay - d.tag.offsetHeight - 12 : d.y + 22);
     d.tag.style.transform = `translate(${tx}px, ${ty}px)`;
   }
   d.raf = requestAnimationFrame(tick);
@@ -292,12 +324,13 @@ function autoscroll(d) {
   if (speed) scrollBy(0, speed);
 }
 
-// Qué hay bajo el puntero: una carpeta de la ruta, una carpeta de la lista o
-// un lugar entre hileras. Una carpeta de la misma lista recibe solo en su
-// mitad del medio; arriba o abajo de eso, la hilera se pone antes o después.
+// Qué hay bajo el puntero: una carpeta de la ruta o del árbol, una carpeta de
+// la lista o un lugar entre hileras. Una carpeta de la misma lista recibe solo
+// en su mitad del medio; arriba o abajo de eso, la hilera se pone antes o después.
 function aim(d) {
   const under = document.elementFromPoint(d.x, d.y);
-  let target = under?.closest(".crumbs [data-drop]") ?? null;
+  let target = under?.closest(DROPS) ?? null;
+  if (target && !allowed(d, target)) target = null;
   if (!target) {
     const row = under?.closest('[data-sortable="folders"] > li[data-id]');
     if (row && row !== d.row) {
@@ -310,11 +343,20 @@ function aim(d) {
     }
   }
   point(d, target);
-  if (!target) reorder(d);
+  // Sobre el árbol o la ruta, el hueco se queda donde está.
+  if (!target && !under?.closest(".panel-side, .crumbs")) reorder(d);
 }
+
+// Una carpeta cerrada del árbol se abre si la ficha se detiene sobre ella.
+const SPRING_MS = 650;
 
 function point(d, target) {
   if (d.target === target) return;
+  clearTimeout(d.spring);
+  if (target?.matches(".tree-link")) {
+    const toggle = target.closest("li").querySelector(':scope > .tree-row > .tree-toggle[aria-expanded="false"]');
+    if (toggle) d.spring = setTimeout(() => drag === d && d.target === target && toggle.click(), SPRING_MS);
+  }
   d.target?.classList.remove("is-drop-target");
   d.target = target;
   target?.classList.add("is-drop-target");
@@ -359,9 +401,11 @@ function release(cancel = false) {
   if (!d) return;
   drag = null;
   cancelAnimationFrame(d.raf);
+  clearTimeout(d.spring);
   d.gesture.over = true;
   removeEventListener("keydown", onKey, true);
   document.documentElement.classList.remove("is-sorting");
+  for (const el of dropTargets) el.classList.remove("can-drop");
   d.row.classList.remove("is-leaving");
   d.tag.remove();
   if (cancel || !d.target) d.target?.classList.remove("is-drop-target");
@@ -411,13 +455,18 @@ async function intoFolder(d) {
     body.append("destino", destino);
     return fetch(url, { method: "POST", body, headers: { accept: "application/json" } });
   };
-  const request = send(target.dataset.drop ?? target.dataset.id).then(
+  const dest = destOf(target);
+  // La hilera de la carpeta que recibe, si está en la lista (también cuando se soltó en el árbol).
+  const folderRow = target.matches("li") ? target : (folderRows().find((r) => r.dataset.id === dest) ?? null);
+  const request = send(dest).then(
     (response) => response.ok,
     () => false,
   );
 
   ficha.classList.remove("is-up");
   const goal = (target.querySelector(".session-code") ?? target).getBoundingClientRect();
+  // En el árbol, la ficha entra por el comienzo del nombre.
+  if (target.matches(".tree-link")) goal.width = Math.min(goal.width, 48);
   const [ox, oy] = ficha.style.transformOrigin.split(" ").map(parseFloat);
   const gx = goal.left + goal.width / 2 - ox;
   const gy = goal.top + goal.height / 2 - oy;
@@ -462,7 +511,8 @@ async function intoFolder(d) {
 
   const anchor = target.matches("li") ? target : (allRows().find((r) => r !== row) ?? null);
   row.remove();
-  bump(target, kind);
+  if (folderRow) bump(folderRow, kind);
+  if (kind === "folders") moveInTree(row.dataset.id, dest);
   tidy(list);
   fold(false, anchor);
   offerUndo(`«${name}» quedó en «${where}».`, async () => {
@@ -478,7 +528,6 @@ async function intoFolder(d) {
 
 // La carpeta que recibe suma una presentación (con su número) o una carpeta.
 function bump(target, kind) {
-  if (!target.matches("li")) return;
   if (kind === "decks") {
     const n = Number(target.dataset.decks ?? 0) + 1;
     target.dataset.decks = String(n);
@@ -501,6 +550,49 @@ function bump(target, kind) {
     number.textContent = String(n);
     target.querySelector(".session-meta").replaceChildren("Carpeta · ", number, ` ${plural(n, "carpeta", "carpetas")} dentro`);
   }
+}
+
+// En el árbol, la carpeta movida pasa a su nueva carpeta, que se abre para
+// mostrarla, y se marca un momento.
+function moveInTree(id, dest) {
+  const node = treeNode(id);
+  const home = treeNode(dest);
+  if (!node || !home) return;
+  const from = node.parentElement;
+  let branch = home.querySelector(":scope > .tree-list");
+  if (!branch) {
+    branch = document.createElement("ul");
+    branch.className = "tree-list";
+    home.append(branch);
+    const spot = home.querySelector(":scope > .tree-row > .tree-toggle");
+    if (spot) {
+      const toggle = document.createElement("button");
+      toggle.className = "tree-toggle";
+      toggle.type = "button";
+      toggle.setAttribute("aria-label", `Carpetas de «${home.querySelector(".tree-link").textContent.trim()}»`);
+      toggle.innerHTML = document.querySelector(".panel-side svg")?.outerHTML ?? "";
+      spot.replaceWith(toggle);
+    }
+  }
+  branch.append(node);
+  // La carpeta de donde salió, si quedó sin carpetas, pierde su flecha.
+  if (!from.children.length && from.parentElement.dataset.folder !== "raiz") {
+    const owner = from.parentElement;
+    from.remove();
+    const spot = document.createElement("span");
+    spot.className = "tree-toggle";
+    spot.setAttribute("aria-hidden", "true");
+    owner.querySelector(":scope > .tree-row > .tree-toggle")?.replaceWith(spot);
+  }
+  for (let item = home; item; item = item.parentElement.closest("li[data-folder]")) {
+    item.querySelector(":scope > .tree-row > .tree-toggle")?.setAttribute("aria-expanded", "true");
+    const list = item.querySelector(":scope > .tree-list");
+    if (list) list.hidden = false;
+  }
+  const row = node.querySelector(":scope > .tree-row");
+  row.classList.remove("is-new");
+  void row.offsetWidth;
+  row.classList.add("is-new");
 }
 
 // Sin la hilera que se fue: una lista vacía se quita con su rótulo y, si no
@@ -566,9 +658,10 @@ function later() {
 
 // ── Tomar la hilera ──────────────────────────────────────────────────────
 
-const CONTROLS = "a, button, input, select, label, textarea, form";
-// Con el dedo, el título de una carpeta (un enlace) también se puede mantener.
-const TOUCH_CONTROLS = "button, input, select, label, textarea, form, .btn";
+// El nombre de una carpeta es un enlace, pero también se toma para arrastrarla:
+// un clic sin mover la abre.
+const CONTROLS = "a:not(.session-title a), button, input, select, label, textarea, form, details";
+const TOUCH_CONTROLS = "button, input, select, label, textarea, form, details, .btn";
 
 function grabbable(target, list, controls) {
   const row = target.closest("li[data-id]");
@@ -577,7 +670,7 @@ function grabbable(target, list, controls) {
   return row;
 }
 
-// Después de arrastrar con el dedo sobre un enlace, el toque no lo abre.
+// Después de arrastrar sobre un enlace, el clic o el toque no lo abre.
 let swallowClick = false;
 document.addEventListener(
   "click",
@@ -614,11 +707,13 @@ for (const list of lists) {
     event.preventDefault();
     const gesture = { row, how: "mouse", x: event.clientX, y: event.clientY, lifted: false, over: false };
     const id = event.pointerId;
-    list.setPointerCapture(id);
     const move = (e) => {
       if (e.pointerId !== id || gesture.over) return;
       if (!gesture.lifted) {
         if (Math.hypot(e.clientX - gesture.x, e.clientY - gesture.y) < 5) return;
+        // Se captura recién al levantarla: un clic sin mover sigue llegando al
+        // nombre de la carpeta y la abre.
+        list.setPointerCapture(id);
         lift(gesture);
       }
       drag.x = e.clientX;
@@ -629,7 +724,10 @@ for (const list of lists) {
       list.removeEventListener("pointermove", move);
       list.removeEventListener("pointerup", up);
       list.removeEventListener("pointercancel", up);
-      if (gesture.lifted && !gesture.over) release(e.type === "pointercancel");
+      if (!gesture.lifted || gesture.over) return;
+      swallowClick = true;
+      setTimeout(() => (swallowClick = false), 400);
+      release(e.type === "pointercancel");
     };
     list.addEventListener("pointermove", move);
     list.addEventListener("pointerup", up);
@@ -694,6 +792,9 @@ for (const list of lists) {
     },
     { passive: false },
   );
+
+  // El navegador no arrastra el enlace del nombre por su cuenta: lo hace drag.js.
+  list.addEventListener("dragstart", (event) => event.preventDefault());
 
   // Mantener el dedo sobre un enlace abre su menú: mientras se arrastra, no.
   list.addEventListener("contextmenu", (event) => {

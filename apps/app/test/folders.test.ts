@@ -194,6 +194,64 @@ describe("el panel con carpetas", () => {
     const withDeck = await t.page("/panel");
     expect(withDeck).toContain(">Música / Unidad 1 / Semana 1</option>");
   });
+
+  it("muestra el árbol de carpetas, abierto hasta la carpeta abierta (#21)", async () => {
+    const t = await owner();
+    const course = await t.folder("Música");
+    const unit = await t.folder("Unidad 1", course);
+    const week = await t.folder("Semana 1", unit);
+    const other = await t.folder("Teatro");
+    const act = await t.folder("Acto 1", other);
+    const html = await t.page(`/panel/f/${unit}`);
+    const tree = html.slice(html.indexOf('<nav class="tree"'), html.indexOf("</nav>", html.indexOf('<nav class="tree"')));
+    // Cada carpeta del árbol recibe lo que se arrastra; la abierta va marcada.
+    expect(tree).toMatch(/<a class="tree-link" href="\/panel" data-drop="raiz"\s*>Tus presentaciones<\/a>/);
+    expect(tree).toContain(`<a class="tree-link" href="/panel/f/${unit}" data-drop="${unit}" aria-current="page">Unidad 1</a>`);
+    for (const id of [course, week, other, act]) expect(tree).toContain(`href="/panel/f/${id}" data-drop="${id}"`);
+    // La ruta hasta la carpeta abierta se ve; lo de Teatro queda cerrado.
+    const branchOf = (id: string) => {
+      const start = tree.indexOf(`<li data-folder="${id}">`);
+      return tree.slice(start, tree.indexOf("</a>", start) + 200);
+    };
+    expect(branchOf(course)).toContain('aria-expanded="true"');
+    expect(branchOf(unit)).toContain('aria-expanded="true"');
+    expect(branchOf(other)).toContain('aria-expanded="false"');
+    expect(branchOf(other)).toMatch(/<ul class="tree-list"\s+hidden>/);
+  });
+
+  it("sin carpetas no muestra el árbol (#21)", async () => {
+    const t = await owner();
+    await t.deck("Charla");
+    expect(await t.page("/panel")).not.toContain('<nav class="tree"');
+  });
+
+  it("deja Reemplazar, Mover a y Borrar en el menú «Más» de cada hilera (#21)", async () => {
+    const t = await owner();
+    await t.folder("Música");
+    await t.deck("Charla");
+    const html = await t.page("/panel");
+    const menus = html.split('<details class="more">').slice(1).map((part) => part.slice(0, part.indexOf("</details>")));
+    expect(menus).toHaveLength(2);
+    const [folderMenu, deckMenu] = menus;
+    expect(folderMenu).toContain("Más<span class=\"visually-hidden\"> sobre «Música»</span>");
+    expect(folderMenu).toContain('class="delete"');
+    expect(deckMenu).toContain('class="replace"');
+    expect(deckMenu).toContain('class="move"');
+    expect(deckMenu).toContain('class="delete"');
+  });
+
+  it("«Nueva carpeta» pide el nombre con su rótulo, y lo deja abierto si faltó (#21)", async () => {
+    const t = await owner();
+    const course = await t.folder("Música");
+    const html = await t.page(`/panel/f/${course}`);
+    expect(html).toContain("data-new-folder");
+    expect(html).toContain('<label for="nueva-carpeta">Carpeta nueva dentro de «Música»</label>');
+    expect(html).not.toMatch(/<form class="new-folder"[^>]*data-open/);
+
+    const response = await t.post("/panel/carpetas", { nombre: "  ", carpeta: course });
+    expect(location(response)).toBe(`/panel/f/${course}?error=nombre`);
+    expect(await t.page(location(response)!)).toMatch(/<form class="new-folder"[^>]*data-open/);
+  });
 });
 
 describe("mover", () => {
