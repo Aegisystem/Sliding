@@ -146,12 +146,10 @@ export const homePage = ({ user, error, limits }: { user: User | null; error?: s
           <li class="track track-naranja">
             <h2>Al empezar</h2>
             <p>Abre tu Enlace para presentar en el computador del lugar y escanea el QR con tu celular.</p>
-            <span class="stamp">Por confirmar</span>
           </li>
           <li class="track track-verde">
             <h2>Durante</h2>
             <p>Avanza desde el celular con tus notas, el cronómetro y la diapositiva que sigue. El público solo ve la presentación.</p>
-            <span class="stamp">Por confirmar</span>
           </li>
           <li class="track track-amarillo">
             <h2>Después</h2>
