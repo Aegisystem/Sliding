@@ -13,7 +13,7 @@ async function saveDeck(title: string, { disabled = false } = {}): Promise<strin
   return id;
 }
 
-const get = (path: string) => exports.default.fetch(`https://app.test${path}`);
+const get = (path: string) => exports.default.fetch(`https://app.test${path}`, { headers: { "accept-language": "es" } });
 
 describe("Enlace de la presentación", () => {
   it("muestra el deck en un iframe servido desde el origen de los decks", async () => {
@@ -21,7 +21,7 @@ describe("Enlace de la presentación", () => {
     const response = await get(`/d/${id}`);
     expect(response.status).toBe(200);
     const html = await response.text();
-    expect(html).toContain(`<iframe\n    src="${env.DECKS_ORIGIN}/v/${id}"`);
+    expect(html).toContain(`<iframe\n    src="${env.DECKS_ORIGIN}/v/${id}?lang=es"`);
     expect(html).toContain("<title>Mi charla · Sliding</title>");
   });
 

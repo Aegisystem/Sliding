@@ -1,5 +1,9 @@
 // Mejoras del panel. Todo funciona sin JS; esto solo ahorra clics.
 
+// Los textos de la página, en el idioma de quien mira (#10): los pone el servidor.
+const T = JSON.parse(document.getElementById("textos")?.textContent || "{}");
+const say = (key, values = {}) => (T[key] ?? key).replace(/\{(\w+)\}/g, (hole, k) => (k in values ? String(values[k]) : hole));
+
 // Copiar un enlace.
 document.addEventListener("click", async (event) => {
   const button = event.target.closest("[data-copy]");
@@ -7,14 +11,14 @@ document.addEventListener("click", async (event) => {
   try {
     button.dataset.label ??= button.textContent;
     await navigator.clipboard.writeText(button.dataset.copy);
-    button.textContent = "Enlace copiado";
+    button.textContent = say("copied");
     button.classList.add("is-copied");
     setTimeout(() => {
       button.textContent = button.dataset.label;
       button.classList.remove("is-copied");
     }, 2000);
   } catch {
-    button.textContent = "No se pudo copiar";
+    button.textContent = say("copyFailed");
   }
 });
 
@@ -36,9 +40,8 @@ const readNotes = async (file) => {
   try {
     return (await readPptxNotes(file)).slides;
   } catch (error) {
-    throw new Error(
-      error instanceof PptxError ? error.message : "No se pudieron leer las notas de ese .pptx. Ábrelo en PowerPoint, guárdalo otra vez y vuelve a intentarlo.",
-    );
+    if (!(error instanceof PptxError)) throw new Error(say("pptxUnreadable"));
+    throw new Error(error.code === "too-many" ? say("pptxTooMany", { max: error.max }) : say("pptxNotPptx"));
   }
 };
 
@@ -62,15 +65,15 @@ async function sendDeck(form, files) {
   const chosen = [...files];
   const pptx = chosen.filter((file) => PPTX.test(file.name));
   const decks = chosen.filter((file) => !PPTX.test(file.name));
-  if (decks.length > 1 || pptx.length > 1) throw new Error("Elige una presentación a la vez: un .html, o un .pdf con su .pptx.");
+  if (decks.length > 1 || pptx.length > 1) throw new Error(say("oneAtATime"));
   if (!decks.length) {
-    throw new Error("Falta el PDF. Exporta tu presentación como PDF (en PowerPoint: Archivo › Exportar) y elige el PDF y el .pptx a la vez.");
+    throw new Error(say("missingPdf"));
   }
   const [deck] = decks;
   const notes = form.querySelector("input[name=notas]");
   notes.value = "";
   if (pptx.length) {
-    if (!/\.pdf$/i.test(deck.name)) throw new Error("Las notas de un .pptx van con su PDF. Elige el PDF y el .pptx a la vez.");
+    if (!/\.pdf$/i.test(deck.name)) throw new Error(say("notesNeedPdf"));
     notes.value = JSON.stringify(await readNotes(pptx[0]));
   }
   // Solo la presentación va en `file`: el .pptx se queda en este computador.
@@ -78,7 +81,7 @@ async function sendDeck(form, files) {
   transfer.items.add(deck);
   form.querySelector("input[name=file]").files = transfer.files;
   form.requestSubmit();
-  return pptx.length ? `${deck.name}, con las notas de ${pptx[0].name}` : deck.name;
+  return pptx.length ? say("withNotesOf", { deck: deck.name, pptx: pptx[0].name }) : deck.name;
 }
 
 // Reemplazar: elegir el archivo ya lo sube. «Mover a»: elegir la carpeta ya mueve.
@@ -191,6 +194,9 @@ if (treeOpen) {
   });
 }
 
+// El selector de idioma vuelve a esta misma página.
+for (const back of document.querySelectorAll("[data-back]")) back.value = location.pathname + location.search;
+
 // Ordenar y mover las hileras del panel: Subir, Bajar y arrastrar (drag.js).
 if (document.querySelector("[data-sortable]")) import("/drag.js");
 
@@ -205,9 +211,9 @@ if (upload) {
     if (!files.length) return;
     if (fileError) fileError.hidden = true;
     label.classList.add("has-file");
-    label.textContent = [...files].some((file) => PPTX.test(file.name)) ? "Leyendo las notas del .pptx…" : files[0].name;
+    label.textContent = [...files].some((file) => PPTX.test(file.name)) ? say("readingNotes") : files[0].name;
     try {
-      label.textContent = `Subiendo ${await sendDeck(upload, files)}…`;
+      label.textContent = say("uploading", { name: await sendDeck(upload, files) });
     } catch (error) {
       input.value = "";
       label.textContent = idle;
@@ -246,16 +252,16 @@ if (skillButton) {
       pre.textContent = t;
     })
     .catch(() => {
-      pre.textContent = "No se pudo cargar el texto. Usa el botón Descargar.";
+      pre.textContent = say("skillLoadFailed");
     });
   skillButton.addEventListener("click", async () => {
     try {
       text ??= await load();
       await navigator.clipboard.writeText(text);
-      skillButton.textContent = "Texto copiado";
-      status.textContent = "Listo: pégaselo a tu IA con el pedido del paso 2.";
+      skillButton.textContent = say("skillCopied");
+      status.textContent = say("skillReady");
     } catch {
-      status.textContent = "No se pudo copiar. Usa el botón Descargar.";
+      status.textContent = say("skillCopyFailed");
     }
   });
 }

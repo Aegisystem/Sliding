@@ -67,9 +67,10 @@ export function panelRoutes(limits: Limits) {
       deckCounts(db, user.id),
     ]);
     const folder = folderId ? (folders.find((f) => f.id === folderId) ?? null) : null;
-    if (folderId && !folder) return c.html(notFoundPage(user, "carpeta"), 404);
+    if (folderId && !folder) return c.html(notFoundPage(c.var.t, user, "carpeta"), 404);
     return c.html(
       panelPage({
+        t: c.var.t,
         user,
         decks,
         usage: used,
@@ -88,7 +89,7 @@ export function panelRoutes(limits: Limits) {
   panel.get("/", (c) => view(c, null));
   panel.get("/f/:id", (c) => {
     const id = c.req.param("id");
-    return isFolderId(id) ? view(c, id) : c.html(notFoundPage(c.var.user, "carpeta"), 404);
+    return isFolderId(id) ? view(c, id) : c.html(notFoundPage(c.var.t, c.var.user, "carpeta"), 404);
   });
 
   // ── Carpetas ────────────────────────────────────────────────────────────

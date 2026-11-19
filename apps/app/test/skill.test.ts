@@ -5,7 +5,7 @@ import template from "../../../skills/html-slides/assets/template.html?raw";
 import skill from "../../../skills/html-slides/SKILL.md?raw";
 
 it("la página de la skill explica los pasos y ofrece copiar y descargar", async () => {
-  const response = await exports.default.fetch("https://app.test/skill");
+  const response = await exports.default.fetch("https://app.test/skill", { headers: { "accept-language": "es" } });
   expect(response.status).toBe(200);
   const html = await response.text();
   expect(html).toContain("data-copy-skill");

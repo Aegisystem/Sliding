@@ -21,8 +21,11 @@ export function browser({
   profile = () => ada,
   limits,
   vars,
+  lang = "es",
 }: {
   origin?: string;
+  /** El Accept-Language del navegador. */
+  lang?: string;
   profile?: () => ProviderProfile;
   limits?: Limits;
   /** Variables de entorno de más, por ejemplo ADMIN_USER_IDS. Se leen en cada pedido, así que pueden cambiar después. */
@@ -36,6 +39,8 @@ export function browser({
   const setCookies: string[] = [];
   async function request(path: string, init: RequestInit = {}) {
     const headers = new Headers(init.headers);
+    // Los tests leen la interfaz en español salvo que pidan otro idioma (#10).
+    if (!headers.has("accept-language")) headers.set("accept-language", lang);
     if (jar.size) headers.set("cookie", [...jar].map(([k, v]) => `${k}=${v}`).join("; "));
     const response = await app.request(`${origin}${path}`, { ...init, headers }, vars ? { ...env, ...vars } : env);
     for (const line of response.headers.getSetCookie()) {

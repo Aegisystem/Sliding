@@ -7,6 +7,10 @@ const body = document.body;
 const sessionId = body.dataset.session;
 const decksOrigin = body.dataset.decksOrigin;
 const $ = (selector) => document.querySelector(selector);
+// Los textos de la página, en el idioma de quien mira (#10): los pone el servidor.
+const T = JSON.parse(document.getElementById("textos")?.textContent || "{}");
+const say = (key, values = {}) => (T[key] ?? key).replace(/\{(\w+)\}/g, (hole, k) => (k in values ? String(values[k]) : hole));
+const lang = document.documentElement.lang || "es";
 
 const ui = {
   title: $("[data-title]"),
@@ -60,7 +64,7 @@ const state = { title: "", kind: "generic", index: 0, total: null, slides: null,
 function render() {
   if (state.title) {
     ui.title.textContent = state.title;
-    document.title = `Control · ${state.title} · Sliding`;
+    document.title = say("controlTitle", { title: state.title });
   }
   const known = Number.isInteger(state.total);
   ui.count.textContent = known ? `${state.index + 1} / ${state.total}` : "";
@@ -77,7 +81,7 @@ function render() {
   ui.openList.hidden = !slides;
   if (hasNotes) {
     const notes = slides?.[state.index]?.notes ?? "";
-    ui.notes.textContent = notes || "Esta diapositiva no tiene notas.";
+    ui.notes.textContent = notes || say("noNotes");
     ui.notes.classList.toggle("is-empty", !notes);
     ui.notesBox.scrollTop = 0;
   }
@@ -109,7 +113,7 @@ function loadPreviews() {
   previewsLoaded = true;
   ui.next.addEventListener("load", showPreviews);
   // `?previa` le dice al visor de PDF que dibuje una miniatura; las HTML no lo usan.
-  ui.next.src = `${decksOrigin}/v/${state.deckId}?previa`;
+  ui.next.src = `${decksOrigin}/v/${state.deckId}?previa&lang=${lang}`;
 }
 
 function showPreviews() {
@@ -118,7 +122,7 @@ function showPreviews() {
   const last = Number.isInteger(state.total) && state.index + 1 >= state.total;
   ui.previewEnd.hidden = !last;
   const nextTitle = state.slides?.[state.index + 1]?.title;
-  ui.nextTitle.textContent = last ? "Sigue: fin de la presentación" : `Sigue: ${nextTitle || `diapositiva ${state.index + 2}`}`;
+  ui.nextTitle.textContent = last ? say("upNextEnd") : say("upNext", { title: nextTitle || say("slideLower", { n: state.index + 2 }) });
   if (!last) ui.next.contentWindow?.postMessage({ sliding: 1, type: "go", to: state.index + 1 }, decksOrigin);
 }
 
@@ -144,7 +148,7 @@ function renderList(slides) {
       number.className = "num";
       number.textContent = String(index + 1);
       const label = document.createElement("span");
-      label.textContent = slide.title || `Diapositiva ${index + 1}`;
+      label.textContent = slide.title || say("slideN", { n: index + 1 });
       button.append(number, label);
       item.append(button);
       return item;
@@ -192,7 +196,7 @@ function formatElapsed(ms) {
   return h ? `${h}:${String(m).padStart(2, "0")}:${s}` : `${m}:${s}`;
 }
 
-const clockFormat = new Intl.DateTimeFormat("es", { hour: "2-digit", minute: "2-digit" });
+const clockFormat = new Intl.DateTimeFormat(lang, { hour: "2-digit", minute: "2-digit" });
 
 function tick() {
   ui.timer.textContent = formatElapsed(elapsed());
@@ -280,7 +284,7 @@ function connect() {
   const key = controlKey.get();
   const query = key ? `key=${encodeURIComponent(key)}` : pairToken ? `pair=${encodeURIComponent(pairToken)}` : null;
   if (!query) {
-    return finish("Escanea el QR de la Pantalla", "Abre el Enlace para presentar en el computador y escanea su QR con este celular.");
+    return finish(say("scanTitle"), say("scanText"));
   }
   const scheme = location.protocol === "https:" ? "wss:" : "ws:";
   const current = new WebSocket(`${scheme}//${location.host}/live/${sessionId}/control?${query}`);
@@ -297,16 +301,16 @@ function connect() {
   });
   current.addEventListener("close", (event) => {
     if (current !== socket || finished || event.code === 4003) return;
-    if (event.code === 4000) return finish("La sesión terminó", "Puedes cerrar esta página.");
+    if (event.code === 4000) return finish(say("endedTitle"), say("endedText"));
     if (event.code === 4001) {
       controlKey.clear();
-      return finish("Otro celular tomó el control", "Para recuperarlo, presiona Q en la Pantalla y escanea el QR nuevo.");
+      return finish(say("takenTitle"), say("takenText"));
     }
     if (event.code === 4004) {
       controlKey.clear();
-      return finish("Esta sesión ya no existe", "Escanea otra vez el QR de la Pantalla.");
+      return finish(say("goneTitle"), say("goneText"));
     }
-    show("Sin conexión", "Reconectando…");
+    show(say("offlineTitle"), say("reconnecting"));
     setTimeout(connect, Math.min(1000 * 2 ** retries++, 10000));
   });
 }
@@ -334,7 +338,7 @@ function handle(msg, usedKey) {
     if (Number.isInteger(msg.total)) state.total = msg.total;
     render();
   } else if (msg.type === "ended") {
-    finish("La sesión terminó", "Puedes cerrar esta página.");
+    finish(say("endedTitle"), say("endedText"));
   } else if (msg.type === "denied") {
     if (usedKey && pairToken) {
       // La llave guardada ya no sirve, pero este celular trae un QR nuevo: se usa ese.
@@ -343,8 +347,8 @@ function handle(msg, usedKey) {
     }
     controlKey.clear();
     finish(
-      msg.reason === "qr" ? "Este QR ya se usó" : "Este celular ya no es el control",
-      "Presiona Q en la Pantalla para mostrar un QR nuevo y escanéalo.",
+      msg.reason === "qr" ? say("qrUsed") : say("notControl"),
+      say("newQr"),
     );
   }
 }
@@ -361,7 +365,7 @@ addEventListener("hashchange", () => {
   const old = socket;
   socket = null;
   old?.close(1000, "");
-  show("Conectando…");
+  show(say("connecting"));
   connect();
 });
 
@@ -371,8 +375,8 @@ document.addEventListener("click", (event) => {
 });
 
 $("[data-end]").addEventListener("click", () => {
-  if (confirm("¿Terminar la sesión? La Pantalla mostrará que terminó.")) send({ type: "end" });
+  if (confirm(say("confirmEnd"))) send({ type: "end" });
 });
 
-show("Conectando…");
+show(say("connecting"));
 connect();

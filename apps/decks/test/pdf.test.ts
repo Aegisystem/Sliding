@@ -19,6 +19,21 @@ async function savePdf({ title = "Clase 3", disabled = false, kind = "pdf", body
 }
 
 describe("una Presentación en PDF", () => {
+  it("habla el idioma que manda la app o, si no, el del navegador (#10)", async () => {
+    const id = await savePdf();
+    const lang = async (path: string, accept?: string) => {
+      const html = await (await exports.default.fetch(`https://decks.test${path}`, accept ? { headers: { "accept-language": accept } } : {})).text();
+      return { lang: /<html lang="(\w+)">/.exec(html)?.[1], html };
+    };
+    const english = await lang(`/v/${id}?lang=en`, "es-CL");
+    expect(english.lang).toBe("en");
+    expect(english.html).toContain("Loading the presentation…");
+    expect(english.html).toContain('data-t-slide="Slide {n} of {total}"');
+    expect((await lang(`/v/${id}`, "es-CL,es;q=0.9")).html).toContain("Cargando la presentación…");
+    expect((await lang(`/v/${id}`, "fr-FR")).lang).toBe("en");
+    expect((await lang(`/v/${id}?previa&lang=es`)).lang).toBe("es");
+  });
+
   it("se abre con el visor de pdf.js, que pide su PDF con la versión", async () => {
     const id = await savePdf();
     const response = await get(`/v/${id}`);

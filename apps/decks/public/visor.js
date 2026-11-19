@@ -4,6 +4,9 @@
 //   envía   { sliding: 1, type: "slide", index, total }  y  { sliding: 1, type: "key", key: "q" }
 
 const { pdf: PDF_URL, size: SIZE, app: APP, pdfjs: PDFJS } = document.body.dataset;
+// Los textos vienen del servidor, en el idioma de quien mira (#10).
+const { tProgress, tSlide, tError } = document.body.dataset;
+const fill = (text, values) => text.replace(/\{(\w+)\}/g, (hole, key) => (key in values ? String(values[key]) : hole));
 const stage = document.querySelector("[data-stage]");
 const status = document.querySelector("[data-status]");
 const live = document.querySelector("[data-live]");
@@ -42,7 +45,7 @@ async function download() {
     if (done) break;
     chunks.push(value);
     received += value.length;
-    if (size) status.textContent = `Cargando la presentación… ${Math.min(99, Math.floor((received / size) * 100))} %`;
+    if (size) status.textContent = fill(tProgress, { pct: Math.min(99, Math.floor((received / size) * 100)) });
   }
   const bytes = new Uint8Array(received);
   let offset = 0;
@@ -116,10 +119,11 @@ async function show(i) {
     return null;
   });
   if (!canvas || want !== index) return;
-  canvas.setAttribute("aria-label", `Diapositiva ${want + 1} de ${total}`);
+  const label = fill(tSlide, { n: want + 1, total });
+  canvas.setAttribute("aria-label", label);
   stage.replaceChildren(canvas);
   shown = want;
-  live.textContent = `Diapositiva ${want + 1} de ${total}`;
+  live.textContent = label;
   trim();
   // Las vecinas, después: así avanzar o volver no espera a pdf.js.
   if (want + 1 < total) await draw(want + 1).catch(() => {});
@@ -219,5 +223,5 @@ try {
   await show(index);
 } catch (error) {
   console.error(error);
-  status.textContent = "No se pudo abrir esta presentación. Recarga la página para intentarlo otra vez.";
+  status.textContent = tError;
 }

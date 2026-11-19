@@ -278,6 +278,7 @@ Tinta sobre cartulina, gruesos y sobrios, como la tipografía de un programa.
 
 ### Running head (Navigation)
 - Barra de tinta de 3rem a todo el ancho con la marca «Sliding» condensada a la izquierda y la navegación (600, 80% de ancho) a la derecha. Los enlaces van sin subrayado y lo ganan al hover. El usuario conectado aparece en amarillo con su avatar circular de 24px; bajo 560px queda solo el avatar.
+- **Idioma:** al final, el botón que lleva al otro idioma, escrito en ese idioma («English» o «Español») y con borde de cartulina de 2px y radio de 6px, como un sello pequeño; al hover se rellena de cartulina con texto en tinta. Bajo 560px dice solo «EN» o «ES». Vuelve a la misma página y recuerda el idioma. Sin elegir, la interfaz sigue al navegador, e inglés si no es español ni inglés.
 
 ### Tracks
 - Cuatro regiones de color a página entera, cada una titulada por su momento del día de la charla, con texto de 30ch. Separadas por reglas de 2px. La clase de pista se reutiliza para cualquier campo de color: banda de aviso, banda de lectura y código de sesión.

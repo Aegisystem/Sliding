@@ -281,6 +281,24 @@ body > main {
   text-underline-offset: 0.2em;
 }
 
+/* El idioma: un sello pequeño con borde, para que se vea entre los enlaces. */
+.lang-switch button {
+  padding: 0.15rem 0.5rem;
+  border: 2px solid currentColor;
+  border-radius: 6px;
+  line-height: 1.2;
+}
+
+.lang-switch button:hover {
+  background: var(--paper);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.lang-code {
+  display: none;
+}
+
 .running-user {
   display: inline-flex;
   align-items: center;
@@ -1992,6 +2010,15 @@ body > main {
 
   .running-nav {
     gap: 0.9rem;
+  }
+
+  /* En el celular, el idioma va en dos letras: EN o ES. */
+  .lang-name {
+    display: none;
+  }
+
+  .lang-code {
+    display: inline;
   }
 
   .tracks {

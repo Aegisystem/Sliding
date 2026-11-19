@@ -1,3 +1,4 @@
+import { TEXTS, pickLang } from "@sliding/core";
 import { serveDeck, servePdf } from "./serve-deck";
 
 // Los decks no se indexan: el Enlace del deck no está listado.
@@ -17,7 +18,8 @@ export default {
       return new Response(ROBOTS, { headers: { "content-type": "text/plain; charset=utf-8" } });
     }
     const deck = DECK_PATH.exec(pathname);
-    if (deck) return serveDeck(deck[1]!, env);
+    // El visor de PDF habla el idioma de la app: el que ella manda en `?lang=` o, si no, el del navegador (#10).
+    if (deck) return serveDeck(deck[1]!, env, TEXTS[pickLang(url.searchParams.get("lang"), request.headers.get("accept-language"))]);
     const pdf = PDF_PATH.exec(pathname);
     if (pdf) return servePdf(pdf[1]!, env, url.searchParams.get("v"));
     return new Response("No encontrado", { status: 404, headers: { "x-robots-tag": "noindex" } });

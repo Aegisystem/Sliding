@@ -2,3 +2,4 @@ export { type DeckInfo, type DeckKind, type SlideInfo, detectKind, inspectDeck, 
 export { DECK_ID_LENGTH, isDeckId, newDeckId } from "./deck-id";
 export { isPdf, pdfPageCount } from "./deck-pdf";
 export { VISIBLE_DECK } from "./visibility";
+export { LANGS, type Lang, TEXTS, type Texts, fill, isLang, pickLang } from "./i18n";

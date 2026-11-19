@@ -1,3 +1,4 @@
+import type { Texts } from "@sliding/core";
 import pdfjsPackage from "pdfjs-dist/package.json";
 
 /** Donde quedan los archivos de pdf.js que copia scripts/copy-pdfjs.mjs. */
@@ -25,9 +26,9 @@ export const pdfUrl = (deck: PdfDeck) => `/v/${deck.id}/pdf?v=${deck.updatedAt}`
  * prohibir cualquier script en línea. visor.js habla con la Pantalla igual
  * que el puente de las presentaciones HTML.
  */
-export function viewerHtml(deck: PdfDeck, appOrigin: string): Response {
+export function viewerHtml(deck: PdfDeck, appOrigin: string, t: Texts): Response {
   const page = `<!doctype html>
-<html lang="es">
+<html lang="${t.lang}">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -37,9 +38,10 @@ export function viewerHtml(deck: PdfDeck, appOrigin: string): Response {
 <link rel="modulepreload" href="${PDFJS_PATH}pdf.min.mjs" />
 <script type="module" src="/visor.js"></script>
 </head>
-<body data-pdf="${escape(pdfUrl(deck))}" data-size="${deck.size}" data-app="${escape(appOrigin)}" data-pdfjs="${PDFJS_PATH}">
+<body data-pdf="${escape(pdfUrl(deck))}" data-size="${deck.size}" data-app="${escape(appOrigin)}" data-pdfjs="${PDFJS_PATH}"
+  data-t-progress="${escape(t.viewer.progress)}" data-t-slide="${escape(t.viewer.slideOf)}" data-t-error="${escape(t.viewer.error)}">
 <main class="stage" data-stage></main>
-<p class="status" data-status>Cargando la presentación…</p>
+<p class="status" data-status>${escape(t.viewer.loading)}</p>
 <p class="visually-hidden" data-live aria-live="polite"></p>
 </body>
 </html>`;

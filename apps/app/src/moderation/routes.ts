@@ -13,8 +13,8 @@ const requireAdmin = createMiddleware<AppEnv>(async (c, next) => {
   const user = c.var.user;
   const admins = adminIds(c.env);
   if (user && admins.includes(user.id)) return next();
-  if (user && admins.length === 0 && c.req.method === "GET") return c.html(moderationSetupPage(user));
-  return c.html(notFoundPage(user), 404);
+  if (user && admins.length === 0 && c.req.method === "GET") return c.html(moderationSetupPage(c.var.t, user));
+  return c.html(notFoundPage(c.var.t, user), 404);
 });
 
 /** Vuelve a la página con lo que se había buscado y un aviso. */
@@ -39,6 +39,7 @@ export function moderationRoutes() {
     ]);
     return c.html(
       moderationPage({
+        t: c.var.t,
         user: c.var.user!,
         search,
         found,

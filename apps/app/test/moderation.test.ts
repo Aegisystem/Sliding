@@ -39,7 +39,7 @@ const post = (b: ReturnType<typeof browser>, path: string, fields: Record<string
 };
 
 // El Worker de las presentaciones vive aparte; aquí basta con sus dos caminos en la app.
-const app = (path: string) => exports.default.fetch(`${ORIGIN}${path}`);
+const app = (path: string) => exports.default.fetch(`${ORIGIN}${path}`, { headers: { "accept-language": "es" } });
 
 describe("la página de moderación", () => {
   it("sin administrador, a quien entra le muestra su id para copiarlo", async () => {

@@ -9,6 +9,7 @@ import { LIMITS, type Limits } from "./decks/limits";
 import { panelRoutes } from "./decks/routes";
 import { deckCounts, listPublicDecks } from "./decks/store";
 import { childrenOf, findFolder, listFolders, pathTo } from "./folders/store";
+import { language, languageRoutes } from "./lang";
 import { liveRoutes } from "./live/routes";
 import { moderationRoutes } from "./moderation/routes";
 import { folderPage, homePage, notFoundPage, privacyPage, skillPage, viewerPage } from "./pages";
@@ -39,20 +40,22 @@ export function createApp(overrides: Partial<Deps> = {}) {
   const deps: Deps = { ...defaultDeps, ...overrides };
   const app = new Hono<AppEnv>();
   app.use(sameOrigin);
+  app.use(language);
   app.use(loadUser);
 
   app.route("/auth", authRoutes(deps.providers));
   app.route("/panel", panelRoutes(deps.limits));
   app.route("/", liveRoutes());
   app.route("/moderacion", moderationRoutes());
+  app.route("/idioma", languageRoutes());
 
-  app.get("/", (c) => c.html(homePage({ user: c.var.user, error: c.req.query("error"), limits: deps.limits })));
+  app.get("/", (c) => c.html(homePage({ t: c.var.t, user: c.var.user, error: c.req.query("error"), limits: deps.limits })));
 
   // Google la pide para publicar el inicio de sesión (#12).
-  app.get("/privacidad", (c) => c.html(privacyPage({ user: c.var.user })));
+  app.get("/privacidad", (c) => c.html(privacyPage({ t: c.var.t, user: c.var.user })));
 
   // La skill html-slides para pasársela a tu IA (#17). El texto es un archivo estático.
-  app.get("/skill", (c) => c.html(skillPage({ user: c.var.user })));
+  app.get("/skill", (c) => c.html(skillPage({ t: c.var.t, user: c.var.user })));
 
   // Enlace de la presentación: cualquiera con el enlace la ve, sin notas ni opción de presentar.
   app.get("/d/:id", async (c) => {
@@ -62,8 +65,8 @@ export function createApp(overrides: Partial<Deps> = {}) {
           .bind(id)
           .first<{ title: string }>()
       : null;
-    if (!deck) return c.html(notFoundPage(c.var.user), 404);
-    return c.html(viewerPage({ title: deck.title, src: `${c.env.DECKS_ORIGIN}/v/${id}` }));
+    if (!deck) return c.html(notFoundPage(c.var.t, c.var.user), 404);
+    return c.html(viewerPage({ t: c.var.t, title: deck.title, src: `${c.env.DECKS_ORIGIN}/v/${id}?lang=${c.var.lang}` }));
   });
 
   // Enlace de la carpeta: sus carpetas y presentaciones, en el orden del Dueño y sin notas.
@@ -72,7 +75,7 @@ export function createApp(overrides: Partial<Deps> = {}) {
   app.get("/f/:id", async (c) => {
     const db = c.env.DB;
     const folder = await findFolder(db, c.req.param("id"));
-    if (!folder) return c.html(notFoundPage(c.var.user, "carpeta"), 404);
+    if (!folder) return c.html(notFoundPage(c.var.t, c.var.user, "carpeta"), 404);
     const [folders, decks, counts] = await Promise.all([
       listFolders(db, folder.ownerId),
       listPublicDecks(db, folder.ownerId, folder.id),
@@ -83,6 +86,7 @@ export function createApp(overrides: Partial<Deps> = {}) {
     const path = start >= 0 ? full.slice(start) : full.slice(-1);
     return c.html(
       folderPage({
+        t: c.var.t,
         user: c.var.user,
         folder,
         path,
@@ -93,7 +97,7 @@ export function createApp(overrides: Partial<Deps> = {}) {
     );
   });
 
-  app.notFound((c) => c.html(notFoundPage(c.var.user), 404));
+  app.notFound((c) => c.html(notFoundPage(c.var.t, c.var.user), 404));
   return app;
 }
 

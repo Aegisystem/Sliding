@@ -7,10 +7,19 @@
 //   ppt/slides/slideN.xml         su título y si está oculta
 //   ppt/notesSlides/notesSlideN.xml   sus notas
 
-/** Un error que se le puede mostrar al Dueño tal cual. */
-export class PptxError extends Error {}
+/**
+ * Un .pptx que no se puede leer. `code` dice por qué ("not-pptx" o
+ * "too-many"); app.js lo cuenta en el idioma de la página (#10).
+ */
+export class PptxError extends Error {
+  constructor(code, max) {
+    super(code);
+    this.code = code;
+    this.max = max;
+  }
+}
 
-const NOT_PPTX = "Ese archivo no parece un .pptx. Ábrelo en PowerPoint, guárdalo como .pptx y vuelve a intentarlo.";
+const NOT_PPTX = "not-pptx";
 const MAX_SLIDES = 1000;
 
 /**
@@ -36,7 +45,7 @@ export async function readPptxNotes(file) {
       hidden += 1;
       continue;
     }
-    if (slides.length >= MAX_SLIDES) throw new PptxError(`Sliding lee notas de hasta ${MAX_SLIDES} diapositivas.`);
+    if (slides.length >= MAX_SLIDES) throw new PptxError("too-many", MAX_SLIDES);
     const links = relationships(await zip.text(relsOf(path)), path);
     const notesPath = [...links.values()].find((link) => link.type.endsWith("/notesSlide"))?.target;
     const notesXml = notesPath ? await zip.text(notesPath) : null;

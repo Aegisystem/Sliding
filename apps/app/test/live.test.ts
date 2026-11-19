@@ -5,7 +5,11 @@ import { describe, expect, it } from "vitest";
 import { newPresentSecret } from "../src/decks/store";
 
 const ORIGIN = "https://app.test";
-const app = (path: string, init?: RequestInit) => exports.default.fetch(`${ORIGIN}${path}`, init);
+const app = (path: string, init?: RequestInit) => {
+  const headers = new Headers(init?.headers);
+  if (!headers.has("accept-language")) headers.set("accept-language", "es");
+  return exports.default.fetch(`${ORIGIN}${path}`, { ...init, headers });
+};
 
 type Msg = Record<string, unknown> & { type: string };
 
@@ -261,7 +265,7 @@ describe("las rutas", () => {
     const response = await app(`/p/${secret}`);
     expect(response.status).toBe(200);
     const html = await response.text();
-    expect(html).toContain(`src="${env.DECKS_ORIGIN}/v/${id}"`);
+    expect(html).toContain(`src="${env.DECKS_ORIGIN}/v/${id}?lang=es"`);
     expect(html).toContain(`data-secret="${secret}"`);
     expect(html).toContain("Este QR es el control de tus diapositivas. No lo compartas.");
     expect(html).toContain("Esta es la Pantalla, lo que ve el público.");

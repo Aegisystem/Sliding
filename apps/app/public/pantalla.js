@@ -1,6 +1,10 @@
 // La Pantalla: crea (o retoma) la Sesión en vivo, muestra el QR de control y
 // reenvía los comandos del Control a la presentación, que vive en otro origen.
 
+// Los textos de la página, en el idioma de quien mira (#10): los pone el servidor.
+const T = JSON.parse(document.getElementById("textos")?.textContent || "{}");
+const say = (key, values = {}) => (T[key] ?? key).replace(/\{(\w+)\}/g, (hole, k) => (k in values ? String(values[k]) : hole));
+
 const body = document.body;
 const secret = body.dataset.secret;
 const decksOrigin = body.dataset.decksOrigin;
@@ -66,7 +70,7 @@ async function start() {
   if (!session) {
     const response = await fetch(`/p/${secret}/sesion`, { method: "POST" }).catch(() => null);
     if (!response?.ok) {
-      setState("error", "No se pudo abrir la sesión. Revisa la conexión y recarga la página.");
+      setState("error", say("screenOpenFailed"));
       return;
     }
     session = await response.json();
@@ -89,14 +93,14 @@ function connect() {
     } catch {}
   });
   socket.addEventListener("close", (event) => {
-    if (event.code === 4000) return setState("ended", "La sesión terminó.");
-    if (event.code === 4001) return setState("error", "Esta Pantalla se abrió en otra pestaña o ventana.");
+    if (event.code === 4000) return setState("ended", say("screenEnded"));
+    if (event.code === 4001) return setState("error", say("screenOtherTab"));
     if (event.code === 4003 || event.code === 4004) {
       // La sesión ya no existe (o venció): se abre una nueva con su QR.
       store.clear();
       return start();
     }
-    if (paired) toast("Sin conexión. Reconectando…");
+    if (paired) toast(say("screenOffline"));
     setTimeout(connect, Math.min(1000 * 2 ** retries++, 10000));
   });
 }
@@ -115,21 +119,21 @@ function handle(msg) {
     if (msg.connected) {
       paired = true;
       setState("paired");
-      toast("Control conectado.");
+      toast(say("controlConnected"));
     } else {
-      toast("El control se desconectó. Esperando a que vuelva…");
+      toast(say("controlLeft"));
     }
   } else if (msg.type === "go") {
     toDeck({ type: "go", to: msg.to });
   } else if (msg.type === "ended") {
-    setState("ended", "La sesión terminó.");
+    setState("ended", say("screenEnded"));
   }
 }
 
 function repair() {
   if (prep.dataset.state === "ended" || prep.dataset.state === "error") return;
   send({ type: "repair" });
-  toast("QR nuevo. El control anterior quedó desconectado.");
+  toast(say("newQrDone"));
 }
 
 function fullscreen() {
@@ -170,9 +174,9 @@ document.querySelector("[data-share]").addEventListener("click", async () => {
   }
   try {
     await navigator.clipboard.writeText(location.href);
-    toast("Enlace copiado. Ábrelo en el computador del proyector.");
+    toast(say("linkCopied"));
   } catch {
-    toast("No se pudo copiar. Copia la dirección de esta página.");
+    toast(say("linkCopyFailed"));
   }
 });
 document.querySelector("[data-here]").addEventListener("click", () => setState("here"));

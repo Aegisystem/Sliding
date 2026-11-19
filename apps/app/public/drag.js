@@ -13,6 +13,10 @@
 //   sobre ella. Esc cancela.
 // El orden se guarda solo, en /panel/orden.
 
+// Los textos de la página, en el idioma de quien mira (#10): los pone el servidor.
+const T = JSON.parse(document.getElementById("textos")?.textContent || "{}");
+const say = (key, values = {}) => (T[key] ?? key).replace(/\{(\w+)\}/g, (hole, k) => (k in values ? String(values[k]) : hole));
+
 const board = document.querySelector(".panel-lists");
 const lists = [...document.querySelectorAll("[data-sortable]")];
 // Las carpetas de la ruta de arriba y del árbol: reciben lo que se arrastra.
@@ -31,7 +35,6 @@ const LIFT_MS = 200;
 const HOLD_MS = 320;
 
 const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
-const plural = (n, one, many) => (n === 1 ? one : many);
 const rowsOf = (list) => [...list.children].filter((el) => el.matches("li[data-id]"));
 const allRows = () => lists.flatMap((list) => (list.isConnected ? rowsOf(list) : []));
 const folderRows = () => allRows().filter((row) => row.parentElement.dataset.sortable === "folders");
@@ -81,7 +84,7 @@ function moved(row) {
   const list = row.parentElement;
   const rows = rowsOf(list);
   markEnds(list);
-  if (orderStatus) orderStatus.textContent = `«${nameOf(row)}» quedó en el lugar ${rows.indexOf(row) + 1} de ${rows.length}.`;
+  if (orderStatus) orderStatus.textContent = say("orderStatus", { name: nameOf(row), n: rows.indexOf(row) + 1, total: rows.length });
   saveOrder(list);
 }
 
@@ -361,7 +364,7 @@ function point(d, target) {
   d.target = target;
   target?.classList.add("is-drop-target");
   d.tag.hidden = !target;
-  if (target) d.tag.textContent = `Mover a «${targetName(target)}»`;
+  if (target) d.tag.textContent = say("moveTag", { name: targetName(target) });
   d.row.classList.toggle("is-leaving", Boolean(target));
   d.ficha.classList.toggle("is-over", Boolean(target));
 }
@@ -503,7 +506,7 @@ async function intoFolder(d) {
     restore(d);
     fold(false, row);
     if (moveError) {
-      moveError.textContent = `No se pudo mover «${name}». Recarga la página e intenta de nuevo.`;
+      moveError.textContent = say("moveFailed", { name });
       moveError.hidden = false;
     }
     return;
@@ -515,7 +518,7 @@ async function intoFolder(d) {
   if (kind === "folders") moveInTree(row.dataset.id, dest);
   tidy(list);
   fold(false, anchor);
-  offerUndo(`«${name}» quedó en «${where}».`, async () => {
+  offerUndo(say("movedTo", { name, where }), async () => {
     const back = await send(d.parent ?? "raiz");
     if (!back.ok) throw new Error("no se pudo deshacer");
     await fetch("/panel/orden", {
@@ -533,7 +536,7 @@ function bump(target, kind) {
     target.dataset.decks = String(n);
     const count = target.querySelector(".session-count");
     count.textContent = String(n);
-    target.querySelector(".session-unit").textContent = plural(n, "presentación", "presentaciones");
+    target.querySelector(".session-unit").textContent = say(n === 1 ? "deckOne" : "deckMany");
     if (!calm.matches) {
       count.animate([{ transform: "translateY(-0.5em)", opacity: 0 }, { transform: "none", opacity: 1 }], {
         duration: 360,
@@ -545,10 +548,12 @@ function bump(target, kind) {
   } else {
     const n = Number(target.dataset.folders ?? 0) + 1;
     target.dataset.folders = String(n);
+    // «Carpeta · 3 carpetas dentro», con la cifra tabular.
+    const [before, after] = say("folderMeta", { unit: say(n === 1 ? "folderOne" : "folderMany") }).split("{n}");
     const number = document.createElement("span");
     number.className = "num";
     number.textContent = String(n);
-    target.querySelector(".session-meta").replaceChildren("Carpeta · ", number, ` ${plural(n, "carpeta", "carpetas")} dentro`);
+    target.querySelector(".session-meta").replaceChildren(before, number, after ?? "");
   }
 }
 
@@ -569,7 +574,7 @@ function moveInTree(id, dest) {
       const toggle = document.createElement("button");
       toggle.className = "tree-toggle";
       toggle.type = "button";
-      toggle.setAttribute("aria-label", `Carpetas de «${home.querySelector(".tree-link").textContent.trim()}»`);
+      toggle.setAttribute("aria-label", say("treeToggle", { name: home.querySelector(".tree-link").textContent.trim() }));
       toggle.innerHTML = document.querySelector(".panel-side svg")?.outerHTML ?? "";
       spot.replaceWith(toggle);
     }
@@ -616,7 +621,8 @@ function offerUndo(text, undo) {
   if (!bar) {
     bar = document.createElement("div");
     bar.className = "undo-bar";
-    bar.innerHTML = '<p role="status"></p><button class="btn btn-small" type="button">Deshacer</button>';
+    bar.innerHTML = '<p role="status"></p><button class="btn btn-small" type="button"></button>';
+    bar.querySelector("button").textContent = say("undo");
     document.body.append(bar);
     bar.addEventListener("pointerenter", () => clearTimeout(barTimer));
     bar.addEventListener("pointerleave", later);
@@ -629,12 +635,12 @@ function offerUndo(text, undo) {
   button.onclick = async () => {
     button.disabled = true;
     clearTimeout(barTimer);
-    message.textContent = "Deshaciendo…";
+    message.textContent = say("undoing");
     try {
       await undo();
       location.reload();
     } catch {
-      message.textContent = "No se pudo deshacer. Recarga la página e intenta de nuevo.";
+      message.textContent = say("undoFailed");
       button.disabled = false;
     }
   };

@@ -22,12 +22,13 @@ export function liveRoutes() {
   live.get("/p/:secret", async (c) => {
     const secret = c.req.param("secret");
     const deck = await findBySecret(c.env.DB, secret);
-    if (!deck) return c.html(notFoundPage(c.var.user), 404);
+    if (!deck) return c.html(notFoundPage(c.var.t, c.var.user), 404);
     return c.html(
       screenPage({
+        t: c.var.t,
         title: deck.title,
         secret,
-        deckSrc: `${c.env.DECKS_ORIGIN}/v/${deck.id}`,
+        deckSrc: `${c.env.DECKS_ORIGIN}/v/${deck.id}?lang=${c.var.lang}`,
         decksOrigin: c.env.DECKS_ORIGIN,
       }),
     );
@@ -61,8 +62,8 @@ export function liveRoutes() {
   // El Control: la dirección del QR de control.
   live.get("/c/:id", (c) => {
     const id = c.req.param("id");
-    if (!isToken(id)) return c.html(notFoundPage(c.var.user), 404);
-    return c.html(controlPage({ sessionId: id, decksOrigin: c.env.DECKS_ORIGIN }));
+    if (!isToken(id)) return c.html(notFoundPage(c.var.t, c.var.user), 404);
+    return c.html(controlPage({ t: c.var.t, sessionId: id, decksOrigin: c.env.DECKS_ORIGIN }));
   });
 
   return live;

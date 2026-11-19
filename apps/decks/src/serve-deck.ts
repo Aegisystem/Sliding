@@ -1,4 +1,4 @@
-import { type DeckKind, VISIBLE_DECK, isDeckId, stripNotes } from "@sliding/core";
+import { type DeckKind, TEXTS, type Texts, VISIBLE_DECK, isDeckId, stripNotes } from "@sliding/core";
 import { withBridge } from "./bridge";
 import { pdfFile, viewerHtml } from "./pdf-viewer";
 
@@ -16,11 +16,11 @@ const findDeck = (id: string, env: Cloudflare.Env) =>
         .first<DeckFound>()
     : Promise.resolve(null);
 
-export async function serveDeck(id: string, env: Cloudflare.Env): Promise<Response> {
+export async function serveDeck(id: string, env: Cloudflare.Env, t: Texts = TEXTS.es): Promise<Response> {
   const deck = await findDeck(id, env);
   if (!deck) return notFound();
   // Una Presentación en PDF se muestra con el visor de pdf.js (ADR 0004).
-  if (deck.kind === "pdf") return viewerHtml({ id, ...deck }, env.APP_ORIGIN);
+  if (deck.kind === "pdf") return viewerHtml({ id, ...deck }, env.APP_ORIGIN, t);
 
   const html = await env.DECKS.get(`deck:${id}`, "stream");
   if (!html) return notFound();

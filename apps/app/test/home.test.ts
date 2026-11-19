@@ -1,7 +1,8 @@
 import { exports } from "cloudflare:workers";
 import { expect, it } from "vitest";
 
-const get = (path: string) => exports.default.fetch(`https://app.test${path}`);
+// La interfaz en español, salvo en los tests de idioma (#10).
+const get = (path: string) => exports.default.fetch(`https://app.test${path}`, { headers: { "accept-language": "es" } });
 
 it("la portada responde, se puede indexar y enlaza la privacidad", async () => {
   const response = await get("/");
