@@ -286,8 +286,8 @@ const orderButton = (dir: "up" | "down", name: string) => html`<button class="or
   <svg viewBox="0 0 16 10" width="16" height="10" aria-hidden="true" focusable="false"><path d="${dir === "up" ? "M2 8.5l6-6 6 6" : "M2 1.5l6 6 6-6"}" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 </button>`;
 
-/** La señal de que la hilera se arrastra: seis puntos a la derecha. Solo con mouse; el teclado y el celular usan Subir y Bajar. */
-const dragHint = html`<span class="drag-hint" title="Arrastra para cambiar el orden" aria-hidden="true">
+/** La señal de que la hilera se arrastra: seis puntos a la derecha. En el celular, tomarla de ahí la levanta al instante. El teclado usa Subir, Bajar y «Mover a». */
+const dragHint = html`<span class="drag-hint" title="Arrastra para ordenar o meter en una carpeta" aria-hidden="true">
   <svg viewBox="0 0 12 20" width="12" height="20" focusable="false"><circle cx="3" cy="4" r="1.75"/><circle cx="9" cy="4" r="1.75"/><circle cx="3" cy="10" r="1.75"/><circle cx="9" cy="10" r="1.75"/><circle cx="3" cy="16" r="1.75"/><circle cx="9" cy="16" r="1.75"/></svg>
 </span>`;
 
@@ -396,7 +396,7 @@ const deckRow = (deck: DeckRow, ctx: PanelContext) => html`<li class="session${d
 
 const folderRow = (folder: FolderRow, ctx: PanelContext) => {
   const inside = descendantsOf(ctx.folders, folder.id);
-  return html`<li class="session session-folder" data-id="${folder.id}">
+  return html`<li class="session session-folder" data-id="${folder.id}" data-decks="${folder.decks}" data-folders="${folder.folders}">
   <div class="session-code track-verde">
     ${orderButton("up", folder.name)}
     <span class="session-count num">${folder.decks}</span><span class="session-unit">${plural(folder.decks, "presentación", "presentaciones")}</span>
@@ -497,8 +497,8 @@ export const panelPage = ({
           ${folder
             ? html`<nav class="crumbs" aria-label="Carpetas">
                 <ol>
-                  <li><a href="/panel">Tus presentaciones</a></li>
-                  ${ancestors.map((f) => html`<li><a href="/panel/f/${f.id}">${f.name}</a></li>`)}
+                  <li><a href="/panel" data-drop="raiz">Tus presentaciones</a></li>
+                  ${ancestors.map((f) => html`<li><a href="/panel/f/${f.id}" data-drop="${f.id}">${f.name}</a></li>`)}
                 </ol>
               </nav>`
             : ""}
@@ -536,6 +536,7 @@ export const panelPage = ({
         )}
       </div>
       <p class="flash flash-error" data-order-error role="alert" hidden>No se pudo guardar el orden. Recarga la página e intenta de nuevo.</p>
+      <p class="flash flash-error" data-move-error role="alert" hidden></p>
       <p class="flash flash-error" data-file-error role="alert" hidden></p>
       ${okText ? html`<p class="flash flash-ok" role="status">${okText}</p>` : ""}
       ${errorText ? html`<p class="flash flash-error" role="alert">${errorText}</p>` : ""}
@@ -552,19 +553,17 @@ export const panelPage = ({
                 ${decks.map((deck) => deckRow(deck, ctx))}
               </ol>`
           : ""}
-        ${children.length || decks.length
-          ? ""
-          : folder
-            ? html`<div class="empty">
+        ${folder
+            ? html`<div class="empty" data-empty ${children.length || decks.length ? "hidden" : ""}>
                 <h2>Esta carpeta está vacía.</h2>
                 <p>Sube aquí una presentación, crea una carpeta dentro (una unidad, una semana) o trae presentaciones que ya subiste con «Mover a».</p>
               </div>`
-            : html`<div class="empty">
+            : html`<div class="empty" data-empty ${children.length || decks.length ? "hidden" : ""}>
                 <h2>Tu programa está vacío.</h2>
                 <p>Sube tu primera presentación con el botón de arriba. ¿Todavía no tienes una? Pásale a tu IA la <a href="/skill">skill html-slides</a> y pídele una, o usa cualquier HTML de un solo archivo. Para ordenarlas por curso, crea una carpeta.</p>
               </div>`}
       </div>
-      <p class="visually-hidden" id="orden-ayuda">Cambia el orden en que la ven los demás. Con el mouse también puedes arrastrar la hilera.</p>
+      <p class="visually-hidden" id="orden-ayuda">Cambia el orden en que la ven los demás. También puedes arrastrar la hilera, con el mouse o manteniendo el dedo sobre ella, y soltarla en una carpeta.</p>
       <p class="visually-hidden" data-order-status role="status"></p>`,
   });
 };

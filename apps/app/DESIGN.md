@@ -185,7 +185,7 @@ El mundo rechaza la landing SaaS de titular, degradado y maqueta de laptop con c
 - Cuatro pistas (azul, naranja, verde, amarillo), cada una con su tinta de texto medida.
 - Archivo variable: condensada al 62% y peso 800 para títulos; ancho normal para texto; 80% para controles.
 - Reglas negras de 2px separan todo: hileras, pistas, sesiones, cabecera y colofón.
-- Una sola cosa con sombra y movimiento: la credencial en su cinta.
+- Una sola cosa con sombra y movimiento: la credencial en su cinta. La única otra es la ficha de una hilera mientras se arrastra, porque en ese momento es un objeto en el aire.
 - Sellos de goma girados (−4°) marcan el estado: «Por confirmar», «Cancelada».
 
 ## Colors
@@ -253,10 +253,10 @@ Página a sangre con un margen fluido (`--gutter`, clamp(1rem, 3vw, 2.5rem)) y u
 Plano por completo: la profundidad la dan las reglas negras y los campos de color, no las sombras. La única excepción es la credencial, que es un objeto físico colgado delante del papel y por eso sí proyecta sombra.
 
 ### Shadow Vocabulary
-- **Credencial colgada** (`box-shadow: 0 1.5rem 2.5rem -1.25rem rgb(17 19 24 / 0.45), 0 0.25rem 0.5rem rgb(17 19 24 / 0.12)`): solo en la credencial.
+- **Credencial colgada** (`box-shadow: 0 1.5rem 2.5rem -1.25rem rgb(17 19 24 / 0.45), 0 0.25rem 0.5rem rgb(17 19 24 / 0.12)`): en la credencial y, mientras está en el aire, en la ficha de la hilera que se arrastra.
 
 ### Named Rules
-**The One Object Rule.** Solo la credencial tiene sombra y movimiento propio. Todo lo demás está impreso en la cartulina.
+**The One Object Rule.** Solo la credencial tiene sombra y movimiento propio. Todo lo demás está impreso en la cartulina. La excepción dura lo que dura un arrastre: la hilera que se levanta del programa es un objeto en la mano, y al soltarla vuelve a quedar impresa.
 
 **The Ruled Program Rule.** Las divisiones son reglas negras de 2px (`--rule`), no tarjetas ni fondos grises. Donde dos reglas coincidirían (un aviso sobre la lista), queda una sola.
 
@@ -294,7 +294,15 @@ La credencial plastificada colgada de una cinta amarilla de 3rem con bordes de t
 - **Desactivada por la moderación:** en vez de «Presentar con control», «Ver diapositivas» y «Copiar enlace», la columna lleva el aviso en una caja naranja con texto en tinta («Desactivada. Nadie puede verla ni presentarla.»), y de las acciones quedan «Mover a» y «Borrar».
 - **Presentación en PDF:** los metadatos dicen «con notas» o «sin notas», y entre las acciones va «Agregar notas» (o «Cambiar notas»), que pide el .pptx y no lo sube. Si el .pptx y el PDF no tienen las mismas diapositivas, bajo los metadatos sale un aviso en una franja naranja con texto en tinta 600, como los avisos de error.
 - **Carpeta:** la misma hilera con el código en verde y el número de presentaciones que tiene; el título es un enlace a la carpeta y los metadatos dicen cuántas carpetas tiene dentro. Botones «Abrir carpeta» (tinta) y «Copiar enlace para compartir»; acciones «Mover a» y «Borrar». Las carpetas van en su propia lista, antes de las presentaciones; cuando hay de las dos, cada lista lleva su rótulo en la talla Title.
-- **Subir y Bajar:** dos chevrones en el color del texto del código, arriba y abajo del número, cada uno en un blanco de 2.75 × 2rem; el de la primera hilera y el de la última quedan al 30% y no hacen nada, pero conservan el foco. Aparecen solo con JS y con dos hileras o más. Con el foco en uno, las flechas del teclado también mueven. Con el mouse, además, la hilera entera se arrastra desde cualquier parte que no sea un control (cursor de mano), y lo anuncian seis puntos en tinta suave a la derecha del título, que pasan a tinta sobre un fondo de tinta al 8% cuando el mouse está sobre la hilera. En el celular no se arrastra ni se ven los puntos, para que el dedo siga desplazando la página. La hilera que se arrastra se vuelve amarilla, como la caja de subir al soltarle un archivo, con sus metadatos en tinta, y las hileras se deslizan a su lugar en 180ms con `--ease`. El orden se guarda solo.
+- **Subir y Bajar:** dos chevrones en el color del texto del código, arriba y abajo del número, cada uno en un blanco de 2.75 × 2rem; el de la primera hilera y el de la última quedan al 30% y no hacen nada, pero conservan el foco. Aparecen solo con JS y con dos hileras o más. Con el foco en uno, las flechas del teclado también mueven. El orden se guarda solo.
+- **Arrastrar:** la hilera entera se arrastra desde cualquier parte que no sea un control, y lo anuncian seis puntos en tinta suave a la derecha del título (con el mouse pasan a tinta sobre un fondo de tinta al 8%). Con el mouse empieza al moverla 5px (cursor de mano). Con el dedo, al mantenerlo 320ms sin moverlo, o al instante desde los seis puntos (blanco de 2.75rem); deslizar sin esperar sigue desplazando la página, y mantener el título de una carpeta no la abre. Se arrastra si hay adónde: otro lugar en la lista, una carpeta o la ruta de carpetas.
+  - **Levantar:** el código y el título se despegan como una **ficha**: una tira amarilla con regla de 2px, el código en su color de pista y el título en condensada 800 en una línea, que crece al 103% y toma la sombra de la credencial en 200ms. Sigue al puntero (con el dedo, queda arriba de él) y se mece con la velocidad horizontal hasta ±6°, como la credencial en su cinta. Nunca se sale por la izquierda.
+  - **Plegar:** a la vez, cada hilera se pliega a su código y su título (las alturas se animan en 260ms con `--ease`), y la hilera levantada queda como un **hueco**: su lugar entre reglas con un borde discontinuo en tinta suave. El hueco se queda bajo el puntero mientras todo se pliega; si la página ya no puede subir, se abre un espacio arriba de las listas que se cierra al soltar.
+  - **Ordenar:** al pasar la mitad de una vecina, el hueco cambia de lugar y las hileras se deslizan en 180ms con `--ease`. Cerca del borde de la ventana, la página se desplaza sola.
+  - **Meter en una carpeta:** sobre otra carpeta (si es de la misma lista, en su mitad del medio) o sobre la ruta de carpetas, el destino se pinta de verde entero, la ficha se encoge al 60% y se transparenta un poco, el hueco se apaga, y junto al puntero aparece una etiqueta de tinta con texto en cartulina: «Mover a «Unidad 1»». Mientras se arrastra, la ruta de carpetas se subraya en guiones.
+  - **Soltar:** entre hileras, la ficha baja a su hueco en 200ms, pierde la sombra y se funde con la hilera; las hileras se despliegan en 340ms. Sobre una carpeta, la ficha entra en su código y desaparece (340ms), el hueco se cierra, la carpeta se apaga y su número sube con un pequeño salto. Esc cancela y todo vuelve a su lugar.
+  - **Deshacer:** después de mover algo a otra carpeta, un pie corrido de tinta sube desde abajo (300ms) con el texto en cartulina 600 («La célula» quedó en «Unidad 2».) y el botón pequeño «Deshacer» en cartulina, que pasa a amarillo al hover y con el foco. Se va solo a los 8s, salvo con el mouse o el foco encima.
+  - **Reducir movimiento:** sin balanceo, sin crecer ni encoger, y todos los cambios son inmediatos; los colores de estado se mantienen.
 - **En el Enlace de la carpeta:** la hilera pierde las acciones del Dueño y queda con un solo botón: «Abrir carpeta» o «Ver presentación» (tinta).
 
 ### Ruta de carpetas
@@ -353,7 +361,7 @@ La credencial plastificada colgada de una cinta amarilla de 3rem con bordes de t
 
 ### Don't:
 - **Don't** escribir en blanco sobre naranja, verde o amarillo, ni en tinta sobre azul.
-- **Don't** dar sombra, radio o movimiento a nada que no sea un objeto aparte; la sombra es solo de la credencial.
+- **Don't** dar sombra, radio o movimiento a nada que no sea un objeto aparte; la sombra es de la credencial y de la ficha mientras se arrastra.
 - **Don't** usar degradados, maquetas de dispositivos ni titulares de landing SaaS.
 - **Don't** usar tarjetas con fondo gris para agrupar: la agrupación es la hilera entre reglas.
 - **Don't** poner estilos, marca ni cabecera de Sliding en la página del Enlace de la presentación.

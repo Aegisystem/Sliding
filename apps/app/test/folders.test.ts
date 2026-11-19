@@ -68,11 +68,24 @@ describe("crear carpetas", () => {
 
     const html = await t.page(`/panel/f/${week}`);
     expect(html).toContain("<h1>Semana 1</h1>");
-    // La ruta lleva a cada carpeta de arriba.
-    expect(html).toContain(`<a href="/panel">Tus presentaciones</a>`);
-    expect(html).toContain(`<a href="/panel/f/${course}">Biología 2027</a>`);
-    expect(html).toContain(`<a href="/panel/f/${unit}">Unidad 1</a>`);
+    // La ruta lleva a cada carpeta de arriba, y cada una recibe lo que se arrastra (#20).
+    expect(html).toContain(`<a href="/panel" data-drop="raiz">Tus presentaciones</a>`);
+    expect(html).toContain(`<a href="/panel/f/${course}" data-drop="${course}">Biología 2027</a>`);
+    expect(html).toContain(`<a href="/panel/f/${unit}" data-drop="${unit}">Unidad 1</a>`);
     expect(html).toContain("Esta carpeta está vacía.");
+    expect(html).not.toMatch(/<div class="empty" data-empty\s+hidden>/);
+  });
+
+  it("con algo dentro, el aviso de vacía queda oculto y cada carpeta dice lo que tiene (#20)", async () => {
+    const t = await owner();
+    const course = await t.folder("Química");
+    const unit = await t.folder("Unidad 1", course);
+    await t.folder("Semana 1", unit);
+    await t.deck("Átomos", unit);
+    const html = await t.page(`/panel/f/${course}`);
+    // Si se le saca la última hilera arrastrándola, el panel muestra el aviso sin recargar.
+    expect(html).toMatch(/<div class="empty" data-empty\s+hidden>\s*<h2>Esta carpeta está vacía.<\/h2>/);
+    expect(html).toContain(`data-id="${unit}" data-decks="1" data-folders="1"`);
   });
 
   it("vuelve a la carpeta donde se creó", async () => {
@@ -232,6 +245,31 @@ describe("mover", () => {
       expect(location(await t.post(`/panel/carpetas/${course}/mover`, { destino }))).toBe("/panel?error=ciclo");
     }
     expect((await t.folders())[0]).toMatchObject({ id: course, parentId: null });
+  });
+
+  it("al arrastrar contesta en JSON, sin redirigir (#20)", async () => {
+    const t = await owner();
+    const course = await t.folder("Historia");
+    const unit = await t.folder("Unidad 1", course);
+    const id = await t.deck("Roma");
+    const drop = (path: string, destino: string) => {
+      const form = new FormData();
+      form.append("destino", destino);
+      return t.request(path, { method: "POST", body: form, headers: { origin: ORIGIN, accept: "application/json" } });
+    };
+
+    const moved = await drop(`/panel/decks/${id}/mover`, course);
+    expect(moved.status).toBe(204);
+    expect((await t.decks())[0]).toMatchObject({ folderId: course });
+    expect((await drop(`/panel/carpetas/${unit}/mover`, "raiz")).status).toBe(204);
+    expect((await t.folders()).find((f) => f.id === unit)).toMatchObject({ parentId: null });
+
+    const cycle = await drop(`/panel/carpetas/${course}/mover`, course);
+    expect(cycle.status).toBe(400);
+    expect(await cycle.json()).toEqual({ error: "ciclo" });
+    const missing = await drop(`/panel/decks/${id}/mover`, "no-existe");
+    expect(missing.status).toBe(404);
+    expect(await missing.json()).toEqual({ error: "no-existe" });
   });
 });
 

@@ -35,6 +35,17 @@ async function backTo(c: Context<AppEnv>, raw: unknown): Promise<string | null> 
   return (await ownFolder(c.env.DB, c.var.user!.id, raw))?.id ?? null;
 }
 
+/**
+ * Al mover, el formulario de «Mover a» espera que lo devuelvan al panel; el
+ * arrastre del panel pide JSON y se queda en la página (#20).
+ */
+function moveAnswer(c: Context<AppEnv>, back: string | null, error: string | null, ok: string) {
+  if (c.req.header("accept")?.includes("application/json")) {
+    return error ? c.json({ error }, error === "no-existe" ? 404 : 400) : c.body(null, 204);
+  }
+  return c.redirect(panelUrl(back, error ? `error=${error}` : `ok=${ok}`), 303);
+}
+
 /** «Mover a»: "raiz" es la raíz; cualquier otro valor tiene que ser una carpeta del Dueño. */
 async function destination(c: Context<AppEnv>, raw: unknown): Promise<{ ok: true; id: string | null } | { ok: false }> {
   if (raw === "raiz") return { ok: true, id: null };
@@ -103,7 +114,7 @@ export function panelRoutes(limits: Limits) {
     const back = await backTo(c, body["volver"]);
     const target = await destination(c, body["destino"]);
     const error = !isFolderId(id) || !target.ok ? "no-existe" : await moveFolder(c.env.DB, c.var.user!.id, id, target.id);
-    return c.redirect(panelUrl(back, error ? `error=${error}` : "ok=carpeta-movida"), 303);
+    return moveAnswer(c, back, error, "carpeta-movida");
   });
 
   panel.post("/carpetas/:id/borrar", async (c) => {
@@ -165,7 +176,7 @@ export function panelRoutes(limits: Limits) {
     const back = await backTo(c, body["volver"]);
     const target = await destination(c, body["destino"]);
     const error = !isDeckId(id) || !target.ok ? "no-existe" : await moveDeck(c.env.DB, c.var.user!.id, id, target.id);
-    return c.redirect(panelUrl(back, error ? `error=${error}` : "ok=movido"), 303);
+    return moveAnswer(c, back, error, "movido");
   });
 
   // ── Orden: lo guarda el panel al arrastrar o al usar Subir y Bajar ──────

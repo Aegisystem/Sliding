@@ -1086,10 +1086,38 @@ body > main {
   background: none;
 }
 
-/* Con el mouse, la hilera entera se arrastra: mano abierta sobre todo lo que
-   no es un control, y seis puntos a la derecha del título que lo anuncian. */
+/* ── Arrastrar (#20) ──────────────────────────────────────────────────────
+   La hilera se arrastra desde cualquier parte que no sea un control. Con el
+   mouse: mano abierta. Seis puntos a la derecha del título lo anuncian; en el
+   celular, tomarla de ahí la levanta al instante, y en el resto de la hilera
+   hay que mantener el dedo. */
 .drag-hint {
   display: none;
+}
+
+.is-sortable .session-main {
+  position: relative;
+  padding-right: 3.5rem;
+}
+
+.is-sortable .drag-hint {
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 2.5rem;
+  border-radius: 6px;
+  color: var(--ink-soft);
+  transform: translateY(-50%);
+  transition: color 160ms var(--ease), background-color 160ms var(--ease);
+  touch-action: none;
+}
+
+.drag-hint svg {
+  fill: currentColor;
 }
 
 @media (pointer: fine) {
@@ -1101,47 +1129,25 @@ body > main {
     cursor: default;
   }
 
-  .is-sortable .session-main {
-    position: relative;
-    padding-right: 3.5rem;
-  }
-
-  .is-sortable .drag-hint {
-    position: absolute;
-    top: 50%;
-    right: 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.75rem;
-    height: 2.5rem;
-    border-radius: 6px;
-    color: var(--ink-soft);
-    transform: translateY(-50%);
-    transition: color 160ms var(--ease), background-color 160ms var(--ease);
-  }
-
-  .drag-hint svg {
-    fill: currentColor;
-  }
-
-  .is-sortable > li:hover .drag-hint,
-  .is-dragging .drag-hint {
+  .is-sortable > li:hover .drag-hint {
     color: var(--ink);
     background: color-mix(in srgb, var(--ink) 8%, transparent);
   }
 }
 
-/* La hilera que se arrastra se vuelve amarilla, como la caja de subir cuando le sueltas un archivo. */
-.session.is-dragging {
-  position: relative;
-  z-index: 1;
-  background: var(--amarillo);
-}
+/* Con el dedo, mantenerlo sobre la hilera no selecciona texto ni abre menús. */
+@media (pointer: coarse) {
+  .is-sortable > li {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
 
-/* Sobre amarillo, el texto secundario va en tinta: la tinta suave no alcanza el contraste. */
-.session.is-dragging .session-meta {
-  color: var(--ink);
+  .is-sortable .drag-hint {
+    right: 0.5rem;
+    width: 2.75rem;
+    height: 2.75rem;
+  }
 }
 
 .is-sorting,
@@ -1149,6 +1155,193 @@ body > main {
   cursor: grabbing !important;
   user-select: none;
   -webkit-user-select: none;
+}
+
+/* Mientras se arrastra, cada hilera se pliega a su código y su título: todo
+   queda cerca. Las alturas se animan desde drag.js. */
+.panel-lists.is-folded .session {
+  min-height: 0;
+}
+
+.panel-lists.is-folded :is(.session-go, .session-actions, .session-meta, .session-warn, .order, .drag-hint) {
+  display: none;
+}
+
+.panel-lists.is-folded .session-code,
+.panel-lists.is-folded .session-code:has(.order:not([hidden])) {
+  grid-row: auto;
+  padding-block: 0.75rem;
+}
+
+.panel-lists.is-folded .session-count {
+  font-size: 2rem;
+}
+
+.panel-lists.is-folded .session-main {
+  padding-block: 0.75rem;
+}
+
+.panel-lists.is-folding .session {
+  overflow: clip;
+}
+
+/* El hueco que deja la hilera levantada: donde va a caer, entre sus reglas. */
+.session.is-held > * {
+  visibility: hidden;
+}
+
+.session.is-held {
+  outline: 2px dashed var(--ink-soft);
+  outline-offset: -0.5rem;
+  transition: outline-color 160ms var(--ease);
+}
+
+/* Si va a otra carpeta, el hueco se apaga: la hilera no vuelve aquí. */
+.session.is-held.is-leaving {
+  outline-color: color-mix(in srgb, var(--ink-soft) 30%, transparent);
+}
+
+/* La carpeta que la recibiría se pinta entera de su verde. */
+.session-folder {
+  transition: background-color 240ms var(--ease);
+}
+
+.session.is-drop-target {
+  background: var(--verde);
+}
+
+.crumbs [data-drop] {
+  border-radius: 4px;
+  transition: background-color 160ms var(--ease), outline-color 160ms var(--ease);
+}
+
+/* La ruta de carpetas también recibe: se subraya en guiones mientras se arrastra. */
+.is-sorting .crumbs [data-drop] {
+  text-decoration: underline dashed;
+  text-decoration-thickness: 2px;
+}
+
+.crumbs [data-drop].is-drop-target {
+  background: var(--verde);
+  outline: 0.3rem solid var(--verde);
+  text-decoration: none;
+}
+
+/* La ficha: el código y el título de la hilera levantada, como una tira
+   recortada del programa. Es un objeto aparte mientras está en el aire, así
+   que lleva la sombra de la credencial; al soltarla la pierde. */
+.ficha {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 60;
+  display: grid;
+  grid-template-columns: 7rem minmax(0, auto);
+  width: max-content;
+  max-width: min(32rem, calc(100vw - 2rem));
+  border: var(--rule);
+  background: var(--amarillo);
+  color: var(--ink);
+  pointer-events: none;
+  will-change: transform;
+  transition: box-shadow 200ms var(--ease), opacity 160ms var(--ease);
+}
+
+/* Sobre una carpeta se transparenta un poco: deja ver adónde va. */
+.ficha.is-over {
+  opacity: 0.88;
+}
+
+.ficha.is-up {
+  box-shadow:
+    0 1.5rem 2.5rem -1.25rem rgb(17 19 24 / 0.45),
+    0 0.25rem 0.5rem rgb(17 19 24 / 0.12);
+}
+
+.ficha .session-code {
+  grid-row: auto;
+  padding: 0.75rem 0.5rem;
+}
+
+.ficha .session-count {
+  font-size: 2rem;
+}
+
+.ficha-title {
+  align-self: center;
+  min-width: 0;
+  padding: 0.75rem 1.25rem;
+  overflow: hidden;
+  font-family: var(--display);
+  font-stretch: var(--condensed);
+  font-weight: 800;
+  font-size: clamp(1.5rem, 2.2vw, 1.875rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  word-spacing: var(--condensed-words);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Adónde va: una etiqueta de tinta junto al puntero. */
+.ficha-tag {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 61;
+  padding: 0.35rem 0.6rem;
+  pointer-events: none;
+  border-radius: 6px;
+  background: var(--ink);
+  color: var(--paper);
+  font-stretch: var(--semi);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* «Deshacer»: un pie corrido de tinta, como la cabecera, que sube desde abajo. */
+.undo-bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  min-height: 3.5rem;
+  padding: 0.6rem var(--gutter);
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 600;
+}
+
+.undo-bar p {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.undo-bar .btn {
+  flex: none;
+}
+
+.undo-bar .btn {
+  border-color: var(--paper);
+}
+
+.undo-bar .btn:hover,
+.undo-bar .btn:focus-visible {
+  border-color: var(--amarillo);
+  background: var(--amarillo);
+  color: var(--ink);
+}
+
+.undo-bar :focus-visible {
+  outline-color: var(--amarillo);
 }
 
 .session-folder .session-title a,
@@ -1358,6 +1551,10 @@ body > main {
     grid-template-columns: 6rem minmax(0, 1fr) auto;
   }
 
+  .ficha {
+    grid-template-columns: 6rem minmax(0, auto);
+  }
+
   .session-go {
     grid-column: 2 / -1;
     grid-row: 2;
@@ -1495,6 +1692,15 @@ body > main {
 
   .session-code {
     grid-row: 1;
+  }
+
+  .ficha {
+    grid-template-columns: 5.5rem minmax(0, auto);
+  }
+
+  .ficha .session-count,
+  .panel-lists.is-folded .session-count {
+    font-size: 1.75rem;
   }
 
   .session-count {
