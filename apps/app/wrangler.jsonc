@@ -23,7 +23,7 @@
   "vars": {
     "DECKS_ORIGIN": "https://decks.sliding.workers.dev",
     // Ids de cuenta de quienes moderan, separados por comas (#11). /moderacion muestra el tuyo mientras esté vacío.
-    "ADMIN_USER_IDS": ""
+    "ADMIN_USER_IDS": "fa7b279d-8b21-40ca-8113-5ef332f6d786"
   },
   // Una Sesión en vivo por Durable Object (ADR 0003). El plan gratis solo admite los de SQLite.
   "durable_objects": { "bindings": [{ "name": "LIVE", "class_name": "LiveSession" }] },
