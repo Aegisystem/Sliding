@@ -65,19 +65,38 @@ function render() {
   const known = Number.isInteger(state.total);
   ui.count.textContent = known ? `${state.index + 1} / ${state.total}` : "";
 
-  const slides = state.kind === "html-slides" && Array.isArray(state.slides) ? state.slides : null;
-  body.classList.toggle("is-generic", !slides);
-  ui.previews.hidden = !slides || !state.deckId;
-  ui.notesBox.hidden = !slides;
+  // html-slides y PDF se controlan por completo; una genérica, solo con anterior y siguiente.
+  const controllable = state.kind === "html-slides" || state.kind === "pdf";
+  const slides = controllable ? slideList() : null;
+  // Un PDF tiene notas solo si el Dueño agregó su .pptx.
+  const hasNotes = controllable && Array.isArray(state.slides);
+  body.classList.toggle("is-generic", !controllable);
+  body.classList.toggle("is-without-notes", controllable && !hasNotes);
+  ui.previews.hidden = !controllable || !state.deckId;
+  ui.notesBox.hidden = !hasNotes;
   ui.openList.hidden = !slides;
-  if (slides) {
-    const notes = slides[state.index]?.notes ?? "";
+  if (hasNotes) {
+    const notes = slides?.[state.index]?.notes ?? "";
     ui.notes.textContent = notes || "Esta diapositiva no tiene notas.";
     ui.notes.classList.toggle("is-empty", !notes);
     ui.notesBox.scrollTop = 0;
-    renderList(slides);
   }
+  if (slides) renderList(slides);
   showPreviews();
+}
+
+/**
+ * La lista de diapositivas con sus títulos y notas. En un PDF, las notas del
+ * .pptx se emparejan con las páginas por número; si no hay notas, o faltan,
+ * cada página va sin título.
+ */
+function slideList() {
+  const blank = (n) => Array.from({ length: n }, () => ({ title: "", notes: "" }));
+  const known = Number.isInteger(state.total);
+  if (state.kind !== "pdf") return Array.isArray(state.slides) ? state.slides : null;
+  if (!known) return Array.isArray(state.slides) ? state.slides : null;
+  const notes = Array.isArray(state.slides) ? state.slides.slice(0, state.total) : [];
+  return [...notes, ...blank(state.total - notes.length)];
 }
 
 // ── Vista previa de la que sigue: la misma presentación, en miniatura ─────
@@ -89,7 +108,8 @@ function loadPreviews() {
   if (previewsLoaded || ui.previews.hidden || !state.deckId) return;
   previewsLoaded = true;
   ui.next.addEventListener("load", showPreviews);
-  ui.next.src = `${decksOrigin}/v/${state.deckId}`;
+  // `?previa` le dice al visor de PDF que dibuje una miniatura; las HTML no lo usan.
+  ui.next.src = `${decksOrigin}/v/${state.deckId}?previa`;
 }
 
 function showPreviews() {

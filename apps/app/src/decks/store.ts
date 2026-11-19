@@ -1,8 +1,8 @@
-import { type DeckKind, inspectDeck, newDeckId } from "@sliding/core";
+import { type DeckKind, type SlideInfo, inspectDeck, isPdf, newDeckId, pdfPageCount } from "@sliding/core";
 import { nextPosition, ownFolder } from "../folders/store";
 import type { Limits } from "./limits";
 
-export type StoreError = "vacio" | "no-html" | "muy-grande" | "cupo-espacio" | "no-existe";
+export type StoreError = "vacio" | "formato" | "no-pdf" | "muy-grande" | "cupo-espacio" | "no-existe";
 export type StoreResult = { ok: true; id: string } | { ok: false; error: StoreError };
 
 export interface DeckRow {
@@ -11,6 +11,8 @@ export interface DeckRow {
   kind: DeckKind;
   size: number;
   slideCount: number | null;
+  /** Solo en una Presentación en PDF: cuántas diapositivas traían las notas del .pptx, o null sin notas. */
+  notesCount: number | null;
   presentSecret: string;
   updatedAt: number;
 }
@@ -24,6 +26,16 @@ export interface Usage {
 }
 
 const HTML_FILE = /\.html?$/i;
+const PDF_FILE = /\.pdf$/i;
+
+/** El formato lo dice el nombre o, si no, el tipo que manda el navegador. */
+function formatOf(file: File): "html" | "pdf" | null {
+  if (HTML_FILE.test(file.name)) return "html";
+  if (PDF_FILE.test(file.name)) return "pdf";
+  if (file.type === "text/html") return "html";
+  if (file.type === "application/pdf") return "pdf";
+  return null;
+}
 
 /** Secreto del Enlace para presentar: 128 bits en base64url. */
 export function newPresentSecret(): string {
@@ -45,7 +57,8 @@ export async function usage(db: D1Database, ownerId: string): Promise<Usage> {
 export async function listDecks(db: D1Database, ownerId: string, folderId: string | null = null): Promise<DeckRow[]> {
   const { results } = await db
     .prepare(
-      `SELECT id, title, kind, size, slide_count AS slideCount, present_secret AS presentSecret, updated_at AS updatedAt
+      `SELECT id, title, kind, size, slide_count AS slideCount, notes_count AS notesCount,
+              present_secret AS presentSecret, updated_at AS updatedAt
        FROM decks WHERE owner_id = ? AND folder_id IS ?
        ORDER BY position IS NULL, position, created_at DESC`,
     )
@@ -82,62 +95,94 @@ export async function deckCounts(db: D1Database, ownerId: string, { visibleOnly 
   return new Map(results.map((r) => [r.folder, r.n]));
 }
 
+/** Lo que se guarda de un archivo, ya revisado. */
+interface Prepared {
+  kind: DeckKind;
+  title: string;
+  slideCount: number | null;
+  body: string | Uint8Array;
+  /** Las notas para el Control: del HTML en html-slides, del .pptx en un PDF. */
+  slides: SlideInfo[] | null;
+}
+
+async function prepare(file: File, format: "html" | "pdf", notes: SlideInfo[] | null): Promise<Prepared | "no-pdf"> {
+  if (format === "pdf") {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    if (!isPdf(bytes)) return "no-pdf";
+    const title = file.name.replace(PDF_FILE, "").trim() || "Sin título";
+    return { kind: "pdf", title, slideCount: pdfPageCount(bytes), body: bytes, slides: notes };
+  }
+  const html = await file.text();
+  const info = await inspectDeck(html);
+  const title = info.title ?? (file.name.replace(HTML_FILE, "").trim() || "Sin título");
+  return { kind: info.kind, title, slideCount: info.slideCount, body: html, slides: info.slides };
+}
+
 /**
  * Guarda un deck nuevo, o reemplaza uno del Dueño si viene `deckId` (Q14: el
  * archivo anterior se borra y el enlace se mantiene). Lo usan el panel y la
- * API de Agentes.
+ * API de Agentes. `notes` son las notas del .pptx de una Presentación en PDF;
+ * si un PDF reemplaza a otro sin notas nuevas, se quedan las que tenía.
  */
 export async function storeDeck(
   env: Cloudflare.Env,
   limits: Limits,
-  { ownerId, file, deckId, folderId = null }: { ownerId: string; file: File; deckId?: string; folderId?: string | null },
+  {
+    ownerId,
+    file,
+    deckId,
+    folderId = null,
+    notes = null,
+  }: { ownerId: string; file: File; deckId?: string; folderId?: string | null; notes?: SlideInfo[] | null },
 ): Promise<StoreResult> {
   if (file.size === 0) return { ok: false, error: "vacio" };
-  if (!HTML_FILE.test(file.name) && file.type !== "text/html") return { ok: false, error: "no-html" };
+  const format = formatOf(file);
+  if (!format) return { ok: false, error: "formato" };
   if (file.size > limits.deckBytes) return { ok: false, error: "muy-grande" };
   if (folderId && !(await ownFolder(env.DB, ownerId, folderId))) return { ok: false, error: "no-existe" };
 
   const current = await usage(env.DB, ownerId);
-  let previousSize = 0;
+  let previous: { size: number; kind: DeckKind; notesCount: number | null } | null = null;
   if (deckId) {
-    const existing = await env.DB.prepare("SELECT size FROM decks WHERE id = ? AND owner_id = ?")
+    previous = await env.DB.prepare("SELECT size, kind, notes_count AS notesCount FROM decks WHERE id = ? AND owner_id = ?")
       .bind(deckId, ownerId)
-      .first<{ size: number }>();
-    if (!existing) return { ok: false, error: "no-existe" };
-    previousSize = existing.size;
+      .first();
+    if (!previous) return { ok: false, error: "no-existe" };
   }
-  if (current.bytes - previousSize + file.size > limits.bytesPerOwner) return { ok: false, error: "cupo-espacio" };
+  if (current.bytes - (previous?.size ?? 0) + file.size > limits.bytesPerOwner) return { ok: false, error: "cupo-espacio" };
 
-  const html = await file.text();
-  const info = await inspectDeck(html);
-  const title = info.title ?? (file.name.replace(HTML_FILE, "").trim() || "Sin título");
+  const deck = await prepare(file, format, notes);
+  if (deck === "no-pdf") return { ok: false, error: "no-pdf" };
   const id = deckId ?? newDeckId();
   const now = Date.now();
+  const keepNotes = deck.kind === "pdf" && !deck.slides && previous?.kind === "pdf";
+  const notesCount = deck.kind !== "pdf" ? null : deck.slides ? deck.slides.length : keepNotes ? (previous?.notesCount ?? null) : null;
 
   // Primero los archivos: una fila en D1 nunca apunta a una presentación que falta.
   // `notes:<id>` guarda el título y las notas de cada diapositiva, solo para el Control.
-  await env.DECKS.put(`deck:${id}`, html);
-  if (info.slides) await env.DECKS.put(`notes:${id}`, JSON.stringify(info.slides));
-  else await env.DECKS.delete(`notes:${id}`);
+  await env.DECKS.put(`deck:${id}`, deck.body);
+  if (deck.slides) await env.DECKS.put(`notes:${id}`, JSON.stringify(deck.slides));
+  else if (!keepNotes) await env.DECKS.delete(`notes:${id}`);
 
   if (deckId) {
     await env.DB.prepare(
-      "UPDATE decks SET title = ?, kind = ?, size = ?, slide_count = ?, updated_at = ? WHERE id = ? AND owner_id = ?",
+      "UPDATE decks SET title = ?, kind = ?, size = ?, slide_count = ?, notes_count = ?, updated_at = ? WHERE id = ? AND owner_id = ?",
     )
-      .bind(title, info.kind, file.size, info.slideCount, now, id, ownerId)
+      .bind(deck.title, deck.kind, file.size, deck.slideCount, notesCount, now, id, ownerId)
       .run();
   } else {
     await env.DB.prepare(
-      `INSERT INTO decks (id, owner_id, title, kind, size, slide_count, present_secret, folder_id, position, disabled, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)`,
+      `INSERT INTO decks (id, owner_id, title, kind, size, slide_count, notes_count, present_secret, folder_id, position, disabled, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)`,
     )
       .bind(
         id,
         ownerId,
-        title,
-        info.kind,
+        deck.title,
+        deck.kind,
         file.size,
-        info.slideCount,
+        deck.slideCount,
+        notesCount,
         newPresentSecret(),
         folderId,
         await nextPosition(env.DB, "decks", ownerId, folderId),
@@ -147,6 +192,20 @@ export async function storeDeck(
       .run();
   }
   return { ok: true, id };
+}
+
+/**
+ * «Agregar notas»: guarda las notas del .pptx de una Presentación en PDF del
+ * Dueño. No cambia el PDF, así que tampoco su fecha.
+ */
+export async function saveNotes(env: Cloudflare.Env, ownerId: string, deckId: string, notes: SlideInfo[]): Promise<boolean> {
+  const deck = await env.DB.prepare("SELECT kind FROM decks WHERE id = ? AND owner_id = ?")
+    .bind(deckId, ownerId)
+    .first<{ kind: DeckKind }>();
+  if (deck?.kind !== "pdf") return false;
+  await env.DECKS.put(`notes:${deckId}`, JSON.stringify(notes));
+  await env.DB.prepare("UPDATE decks SET notes_count = ? WHERE id = ? AND owner_id = ?").bind(notes.length, deckId, ownerId).run();
+  return true;
 }
 
 /** Borra un deck del Dueño: su fila, su archivo y sus notas. El enlace deja de funcionar. */

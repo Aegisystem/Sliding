@@ -17,7 +17,8 @@ import {
 import { notFoundPage, panelPage } from "../pages";
 import type { AppEnv } from "../types";
 import type { Limits } from "./limits";
-import { deckCounts, deleteDeck, listDecks, storeDeck, usage } from "./store";
+import { parseNotes } from "./notes";
+import { deckCounts, deleteDeck, listDecks, saveNotes, storeDeck, usage } from "./store";
 
 // El panel es solo del Dueño con sesión.
 const requireUser = createMiddleware<AppEnv>(async (c, next) => {
@@ -114,12 +115,15 @@ export function panelRoutes(limits: Limits) {
 
   // ── Presentaciones ──────────────────────────────────────────────────────
 
+  // `notas` llega solo con un PDF: las notas que el navegador leyó del .pptx (ADR 0004).
   panel.post("/decks", async (c) => {
     const body = await c.req.parseBody();
     const folderId = await backTo(c, body["carpeta"]);
     const file = body["file"];
     if (!(file instanceof File)) return c.redirect(panelUrl(folderId, "error=vacio"), 303);
-    const result = await storeDeck(c.env, limits, { ownerId: c.var.user!.id, file, folderId });
+    const notes = parseNotes(body["notas"]);
+    if (notes === "invalidas") return c.redirect(panelUrl(folderId, "error=notas"), 303);
+    const result = await storeDeck(c.env, limits, { ownerId: c.var.user!.id, file, folderId, notes });
     return c.redirect(panelUrl(folderId, result.ok ? "ok=subido" : `error=${result.error}`), 303);
   });
 
@@ -130,8 +134,22 @@ export function panelRoutes(limits: Limits) {
     const file = body["file"];
     if (!isDeckId(id)) return c.redirect(panelUrl(back, "error=no-existe"), 303);
     if (!(file instanceof File)) return c.redirect(panelUrl(back, "error=vacio"), 303);
-    const result = await storeDeck(c.env, limits, { ownerId: c.var.user!.id, file, deckId: id });
+    const notes = parseNotes(body["notas"]);
+    if (notes === "invalidas") return c.redirect(panelUrl(back, "error=notas"), 303);
+    const result = await storeDeck(c.env, limits, { ownerId: c.var.user!.id, file, deckId: id, notes });
     return c.redirect(panelUrl(back, result.ok ? "ok=reemplazado" : `error=${result.error}`), 303);
+  });
+
+  // «Agregar notas» de una Presentación en PDF: el .pptx no viene, solo su texto.
+  panel.post("/decks/:id/notas", async (c) => {
+    const id = c.req.param("id");
+    const body = await c.req.parseBody();
+    const back = await backTo(c, body["volver"]);
+    if (!isDeckId(id)) return c.redirect(panelUrl(back, "error=no-existe"), 303);
+    const notes = parseNotes(body["notas"]);
+    if (!notes || notes === "invalidas") return c.redirect(panelUrl(back, "error=notas"), 303);
+    const saved = await saveNotes(c.env, c.var.user!.id, id, notes);
+    return c.redirect(panelUrl(back, saved ? "ok=notas" : "error=no-existe"), 303);
   });
 
   panel.post("/decks/:id/delete", async (c) => {

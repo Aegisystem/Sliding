@@ -174,7 +174,7 @@ components:
 
 **Creative North Star: "Programa de congreso"**
 
-Sliding se ve como el programa impreso de un congreso con su credencial colgada de la cinta. Cartulina blanca, tinta negra y cuatro pistas de color que ocupan regiones enteras de la página, nunca detalles sueltos. Cada presentación es una sesión del programa: tiene su código (cuántas diapositivas, o «HTML genérica»), su título y lo que se hace con ella: presentarla con control, verla o compartirla. La información vive en hileras entre reglas negras de 2px, como las tablas del final de un programa.
+Sliding se ve como el programa impreso de un congreso con su credencial colgada de la cinta. Cartulina blanca, tinta negra y cuatro pistas de color que ocupan regiones enteras de la página, nunca detalles sueltos. Cada presentación es una sesión del programa: tiene su código (cuántas diapositivas, «PDF» o «HTML genérica»), su título y lo que se hace con ella: presentarla con control, verla o compartirla. La información vive en hileras entre reglas negras de 2px, como las tablas del final de un programa.
 
 La densidad es de impreso, no de aplicación: títulos condensados muy grandes, texto corrido de ancho normal, cifras tabulares, y casi ningún adorno que no exista en papel. El único objeto con volumen es la credencial plastificada, que cuelga de una cinta amarilla, se balancea una vez al cargar y se asienta. Es el control para entrar y, ya dentro, la identidad del Dueño en el panel.
 
@@ -270,7 +270,7 @@ Rectángulos de papel con esquinas vivas: pistas, bandas, hileras y sesiones no 
 Tinta sobre cartulina, gruesos y sobrios, como la tipografía de un programa.
 - **Shape:** esquinas suavizadas (10px), borde de tinta de 2px, alto mínimo de 3rem (2.5rem en la variante pequeña).
 - **Default:** cartulina con texto en tinta, Archivo 700 al 80% de ancho.
-- **Primary (tinta):** tinta con texto en cartulina; es «Entrar con GitHub», «Ir a tu panel», «Subir una presentación .html», «Abrir la presentación».
+- **Primary (tinta):** tinta con texto en cartulina; es «Entrar con GitHub», «Ir a tu panel», «Subir una presentación», «Abrir la presentación».
 - **Hover / Focus:** el default se invierte a tinta; el de tinta pasa a azul (fondo y borde). «Borrar» pasa a naranja con texto en tinta. Al pulsar baja 1px. Transiciones de 160ms con `--ease`. Foco: anillo de tinta de 3px a 3px de distancia; cartulina sobre azul, amarillo dentro de la cabecera.
 - **Copiar:** al copiar se vuelve verde con «Copiado» durante 2s.
 - **Disabled:** borde discontinuo, cartulina, texto en tinta suave.
@@ -290,7 +290,8 @@ La credencial plastificada colgada de una cinta amarilla de 3rem con bordes de t
 - **Movimiento:** se balancea una vez al cargar (1.8s, `--ease`, desde 6° amortiguándose a 0°) desde su ranura y se asienta.
 
 ### Session row (Cards / Containers)
-- Una hilera del programa entre reglas, sin radio ni sombra. El código va en un campo de pista: azul con el número de diapositivas para presentaciones html-slides, amarillo con «HTML genérica» para el resto. Le siguen el título y los metadatos; los botones «Presentar con control» (tinta), «Ver diapositivas» y «Copiar enlace para compartir» (sin mostrar direcciones: son botones, no enlaces a la vista); y las acciones «Reemplazar», «Mover a» y «Borrar».
+- Una hilera del programa entre reglas, sin radio ni sombra. El código va en un campo de pista: azul con el número de diapositivas para presentaciones html-slides, naranja para las Presentaciones en PDF (el número de diapositivas o, si el servidor no lo pudo contar, «PDF») y amarillo con «HTML genérica» para el resto. Le siguen el título y los metadatos; los botones «Presentar con control» (tinta), «Ver diapositivas» y «Copiar enlace para compartir» (sin mostrar direcciones: son botones, no enlaces a la vista); y las acciones «Reemplazar», «Mover a» y «Borrar».
+- **Presentación en PDF:** los metadatos dicen «con notas» o «sin notas», y entre las acciones va «Agregar notas» (o «Cambiar notas»), que pide el .pptx y no lo sube. Si el .pptx y el PDF no tienen las mismas diapositivas, bajo los metadatos sale un aviso en una franja naranja con texto en tinta 600, como los avisos de error.
 - **Carpeta:** la misma hilera con el código en verde y el número de presentaciones que tiene; el título es un enlace a la carpeta y los metadatos dicen cuántas carpetas tiene dentro. Botones «Abrir carpeta» (tinta) y «Copiar enlace para compartir»; acciones «Mover a» y «Borrar». Las carpetas van en su propia lista, antes de las presentaciones; cuando hay de las dos, cada lista lleva su rótulo en la talla Title.
 - **Subir y Bajar:** dos chevrones en el color del texto del código, arriba y abajo del número, cada uno en un blanco de 2.75 × 2rem; el de la primera hilera y el de la última quedan al 30% y no hacen nada, pero conservan el foco. Aparecen solo con JS y con dos hileras o más. Con el foco en uno, las flechas del teclado también mueven. Con el mouse, además, la hilera entera se arrastra desde cualquier parte que no sea un control (cursor de mano), y lo anuncian seis puntos en tinta suave a la derecha del título, que pasan a tinta sobre un fondo de tinta al 8% cuando el mouse está sobre la hilera. En el celular no se arrastra ni se ven los puntos, para que el dedo siga desplazando la página. La hilera que se arrastra se vuelve amarilla, como la caja de subir al soltarle un archivo, con sus metadatos en tinta, y las hileras se deslizan a su lugar en 180ms con `--ease`. El orden se guarda solo.
 - **En el Enlace de la carpeta:** la hilera pierde las acciones del Dueño y queda con un solo botón: «Abrir carpeta» o «Ver presentación» (tinta).
@@ -311,12 +312,12 @@ La credencial plastificada colgada de una cinta amarilla de 3rem con bordes de t
 - Banda de título azul con texto en cartulina sobre una regla; debajo, texto de lectura en tinta sobre cartulina a 68ch, con secciones abiertas por una regla de 2px y viñetas azules.
 
 ### Inputs / Fields
-- **Subida:** caja con regla de 2px y radio de 10px que contiene el botón de tinta con el input de archivo oculto y una nota de tinta suave (34ch). Al arrastrar un archivo sobre la página se rellena de amarillo; elegir o soltar el archivo ya lo sube. El nombre elegido pasa a tinta y 600.
+- **Subida:** caja con regla de 2px y radio de 10px que contiene el botón de tinta con el input de archivo oculto, una nota de tinta suave (34ch) y, debajo a todo el ancho, cómo traer una presentación de PowerPoint (60ch). Al arrastrar un archivo sobre la página se rellena de amarillo; elegir o soltar el archivo (o el PDF con su .pptx) ya lo sube. El nombre elegido pasa a tinta y 600; mientras se leen las notas del .pptx, la nota lo dice.
 - **Crear carpeta:** caja hermana de la de subir, con el campo del nombre y el botón «Crear carpeta» en una línea; la caja crece hasta la credencial (34rem como máximo).
 - **Campo de texto:** cartulina con borde de tinta de 2px y radio de 10px, como los botones; texto en 600 y marcador en tinta suave 400.
 - **Mover a:** un select del alto de un botón pequeño (2.5rem), cartulina con chevrón de tinta, amarillo al hover. Lista cada carpeta con su ruta («Biología 2027 / Unidad 1») y marca «(aquí)» la actual; elegir una ya mueve.
 - **Carpeta abierta:** debajo del h1, botones pequeños «Copiar enlace de la carpeta», «Ver como la ven los demás», «Cambiar nombre» (abre el campo con «Guardar nombre») y «Borrar carpeta».
-- **Avisos (flash):** franja a todo el ancho con reglas arriba y abajo, amarilla para éxito y naranja para error, texto en tinta 600.
+- **Avisos (flash):** franja a todo el ancho con reglas arriba y abajo, amarilla para éxito y naranja para error, texto en tinta 600. Los errores al elegir archivos (un .pptx sin su PDF, un .pptx que no se puede leer) salen en la misma franja naranja, sin recargar.
 
 ### Pantalla (Sesión en vivo)
 - La presentación a toda la ventana y, encima, la preparación en tinta (la sala suele estar a oscuras): titular, pasos numerados en amarillo, botón «Pantalla completa» y, a la derecha, la tarjeta del QR de control en cartulina con su banda naranja «Este QR es el control de tus diapositivas. No lo compartas.». Al emparejar, la preparación se desvanece (600ms). Los avisos breves salen abajo a la izquierda en amarillo. Abierta en un celular, en vez del QR explica que la Pantalla va en el computador del proyector y ofrece enviar el enlace o ver la presentación ahí mismo.
@@ -325,10 +326,12 @@ La credencial plastificada colgada de una cinta amarilla de 3rem con bordes de t
 - Oscuro, porque se usa de pie y con poca luz: fondo de tinta y texto en cartulina. Arriba, el título y el contador en amarillo; debajo, el reloj y el cronómetro (verde lleno cuando corre, solo borde cuando está pausado o sin empezar; se pausa al tocarlo).
 - Con una Presentación html-slides: la miniatura de la diapositiva que sigue con su título al lado («Sigue: …»; la misma presentación dibujada a 1280 y escalada, con regla de cartulina y radio de 6px), las notas del presentador a 1.25rem con saltos de línea, «Siguiente» azul de al menos 7rem al alcance del pulgar, «Anterior» y «Diapositivas» con borde de cartulina, y «Terminar sesión» con borde naranja.
 - «Diapositivas» abre una hoja a pantalla completa con la lista numerada (número condensado y título de cada diapositiva); la actual va en amarillo.
+- Con una Presentación en PDF: igual que html-slides. Sin las notas de su .pptx, la miniatura de la que sigue va a todo el ancho y «Siguiente» toma el espacio de las notas.
 - Con una Presentación genérica: sin notas, miniaturas, lista ni contador; «Siguiente» ocupa casi toda la pantalla.
 
 ### Visor de la presentación
 - La página del Enlace de la presentación no carga la hoja de estilos ni la fuente de Sliding: un iframe a toda la ventana sobre negro, sin marca encima.
+- **Visor de PDF** (en el origen de las presentaciones): cada página centrada sobre negro, como en un proyector, dibujada con la nitidez de la pantalla (hasta 4K). Mientras carga, solo un texto gris del sistema al centro con el avance («Cargando la presentación… 45 %»). Se avanza con las flechas, un clic o deslizando.
 
 ## Do's and Don'ts
 

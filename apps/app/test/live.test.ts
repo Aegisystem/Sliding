@@ -165,6 +165,21 @@ describe("las Notas del presentador", () => {
     });
   });
 
+  it("una Presentación en PDF manda las notas de su .pptx, y nada si no las tiene", async () => {
+    for (const [notes, expected] of [
+      [slides, slides],
+      [undefined, null],
+    ] as const) {
+      const { secret } = await presentable({ kind: "pdf", ...(notes ? { notes } : {}) });
+      const { sessionId, screenKey } = await newSession(secret);
+      const screen = await socket(`/live/${sessionId}/screen?key=${screenKey}`);
+      expect(JSON.stringify(await screen.next("hello"))).not.toContain("Saluda");
+      const pair = await screen.next("pair");
+      const control = await socket(`/live/${sessionId}/control?pair=${new URL(pair.url as string).hash.slice(1)}`);
+      expect(await control.next("hello")).toMatchObject({ kind: "pdf", slides: expected });
+    }
+  });
+
   it("una Presentación genérica no manda notas", async () => {
     const { secret } = await presentable({ kind: "generic" });
     const { sessionId, screenKey } = await newSession(secret);

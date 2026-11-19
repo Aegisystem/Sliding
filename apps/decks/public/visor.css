@@ -1,0 +1,51 @@
+/* El visor de una Presentación en PDF: la diapositiva centrada sobre negro,
+   como en un proyector. Lo de alrededor no tiene marca: es el escenario. */
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+}
+
+body {
+  color: #a3a3a3;
+  font: 1rem/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Pellizcar para acercar sí; arrastrar es para pasar de diapositiva. */
+  touch-action: pinch-zoom;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.stage {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.stage canvas {
+  display: block;
+}
+
+.status {
+  position: fixed;
+  inset: 50% 1rem auto;
+  margin: 0;
+  transform: translateY(-50%);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.status[hidden] {
+  display: none;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

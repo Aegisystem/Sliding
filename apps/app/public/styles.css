@@ -670,6 +670,15 @@ body > main {
   font-weight: 600;
 }
 
+/* Cómo traer una presentación de PowerPoint: va debajo, a todo el ancho de la caja. */
+.upload-help {
+  flex: 1 1 100%;
+  max-width: 60ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.9375rem;
+}
+
 .flash {
   margin-bottom: 1.5rem;
   padding: 0.9rem 1.1rem;
@@ -750,6 +759,18 @@ body > main {
 .session-meta {
   color: var(--ink-soft);
   font-size: 0.9375rem;
+}
+
+/* El PDF y las notas de su .pptx no tienen las mismas diapositivas: una franja naranja, como los avisos de error. */
+.session-warn {
+  width: fit-content;
+  max-width: 60ch;
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.65rem;
+  background: var(--naranja);
+  color: var(--ink);
+  font-size: 0.9375rem;
+  font-weight: 600;
 }
 
 /* Lo que se hace con la presentación: presentarla, verla o compartirla. */
@@ -1915,6 +1936,23 @@ body > main {
   background: transparent;
   color: var(--paper);
   font-size: 1.5rem;
+}
+
+/* Sin notas (un PDF sin su .pptx): la que sigue se ve a todo el ancho y «Siguiente» toma el resto. */
+.page-control.is-without-notes .control-main {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.page-control.is-without-notes .control-preview {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.page-control.is-without-notes .control-buttons {
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.page-control.is-without-notes .control-next {
+  min-height: 7rem;
 }
 
 /* Sin notas ni miniaturas (presentación genérica), «Siguiente» ocupa casi todo. */

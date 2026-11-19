@@ -1,0 +1,9 @@
+# pdf.js lleva su versión en la ruta (scripts/copy-pdfjs.mjs): cada archivo se guarda un año.
+/pdfjs/*
+  Cache-Control: public, max-age=31536000, immutable
+  Cross-Origin-Resource-Policy: same-origin
+  X-Content-Type-Options: nosniff
+
+/visor.*
+  Cross-Origin-Resource-Policy: same-origin
+  X-Content-Type-Options: nosniff

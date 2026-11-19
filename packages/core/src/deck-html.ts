@@ -1,4 +1,5 @@
-export type DeckKind = "html-slides" | "generic";
+/** html-slides y generic son HTML; pdf es una Presentación en PDF (ADR 0004). */
+export type DeckKind = "html-slides" | "generic" | "pdf";
 
 // Un Deck html-slides tiene slides en <section class="slide"> y el motor que
 // avisa cada cambio con el evento `slidechange`.

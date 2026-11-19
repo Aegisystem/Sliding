@@ -118,7 +118,8 @@ export class LiveSession extends DurableObject<Cloudflare.Env> {
       }
       this.closeRole("control", CLOSE.replaced);
       this.accept(server, "control");
-      const slides = meta.kind === "html-slides" ? await slidesFor(this.env, meta.deckId) : null;
+      // Una Presentación en PDF tiene notas solo si el Dueño agregó su .pptx.
+      const slides = meta.kind !== "generic" ? await slidesFor(this.env, meta.deckId) : null;
       server.send(
         JSON.stringify({ ...this.hello(meta, "control"), deckId: meta.deckId, slides, ...(controlKey ? { controlKey } : {}) }),
       );

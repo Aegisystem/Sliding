@@ -12,3 +12,6 @@ coverage/
 **/.impeccable/questions/
 **/.impeccable/mocks/
 **/.impeccable/config.local.json
+
+# pdf.js: lo copia apps/decks/scripts/copy-pdfjs.mjs desde node_modules
+apps/decks/public/pdfjs/

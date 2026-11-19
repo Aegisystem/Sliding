@@ -1,8 +1,8 @@
 # Sliding
 
-Sube una presentación HTML y queda publicada, sin desplegar nada. Para presentarla, escanea con el celular el QR que muestra la Pantalla: el celular se convierte en el Control, con tus notas, el cronómetro y la vista previa de la diapositiva siguiente.
+Sube una presentación HTML o PDF y queda publicada, sin desplegar nada. Para presentarla, escanea con el celular el QR que muestra la Pantalla: el celular se convierte en el Control, con tus notas, el cronómetro y la vista previa de la diapositiva siguiente.
 
-Funciona mejor con presentaciones hechas con la skill html-slides. Cualquier otro HTML se aloja igual y se controla con anterior y siguiente.
+Funciona mejor con presentaciones hechas con la skill html-slides. Si tu presentación es de PowerPoint, Keynote o Google Slides, súbela como PDF; si eliges también el .pptx, tu navegador lee sus notas sin subirlo. Cualquier otro HTML se aloja igual y se controla con anterior y siguiente.
 
 ## Desarrollo local
 

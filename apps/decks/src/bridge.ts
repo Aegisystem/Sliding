@@ -11,7 +11,8 @@ import type { DeckKind } from "@sliding/core";
  *                          { sliding: 1, type: "key", key: "q" }         (nuevo QR)
  *
  * Con html-slides usa `show(n)` del motor y su evento `slidechange`; con
- * cualquier otra presentación simula las flechas del teclado.
+ * cualquier otra presentación simula las flechas del teclado. Una
+ * Presentación en PDF no lleva el puente: public/visor.js habla igual.
  */
 export function bridgeScript(appOrigin: string, kind: DeckKind): string {
   const source = `(() => {

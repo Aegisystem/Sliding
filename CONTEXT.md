@@ -7,7 +7,7 @@ Sitio donde las personas suben presentaciones en HTML para publicarlas sin despl
 ### Presentaciones
 
 **Presentación**:
-Un archivo HTML de diapositivas que una persona subió al sitio. Tiene un enlace estable.
+Un archivo HTML o PDF de diapositivas que una persona subió al sitio. Tiene un enlace estable.
 _Evitar_: deck, slides, archivo
 
 **Diapositiva**:
@@ -18,8 +18,12 @@ _Evitar_: slide, diapo, página, lámina
 Presentación hecha con la skill html-slides. El sitio conoce su estructura, así que la controla por completo y lee sus notas.
 
 **Presentación genérica**:
-Cualquier presentación que no es html-slides. Solo admite control básico: anterior y siguiente, sin notas ni contador.
+Cualquier presentación HTML que no es html-slides. Solo admite control básico: anterior y siguiente, sin notas ni contador.
 _Evitar_: presentación externa, presentación libre
+
+**Presentación en PDF**:
+Presentación subida como PDF, casi siempre exportada de PowerPoint, Keynote o Google Slides. Cada página es una diapositiva, así que el sitio la controla por completo. Sus notas llegan del `.pptx` si el Dueño lo agrega.
+_Evitar_: presentación PowerPoint, PDF genérico
 
 **Dueño**:
 La persona con cuenta que subió una presentación y la administra.

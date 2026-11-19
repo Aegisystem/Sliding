@@ -37,7 +37,7 @@ const runningHead = (user: User | null) => html`<header class="running-head">
 </header>`;
 
 const footer = () => html`<footer class="colophon">
-  <p>Sliding. Tus presentaciones HTML, desde el celular.</p>
+  <p>Sliding. Tus presentaciones, desde el celular.</p>
   <p><a href="/skill">Skill para tu IA</a> · <a href="/privacidad">Privacidad</a> · <a href="https://github.com/Aegisystem/Sliding">Código en GitHub</a></p>
 </footer>`;
 
@@ -134,14 +134,14 @@ export const homePage = ({ user, error, limits }: { user: User | null; error?: s
     body: html`<div class="cover">
         <div class="cover-top">
           <h1 class="cover-title">Sliding</h1>
-          <p class="cover-lead">Sube tu presentación HTML y queda publicada, sin desplegar nada. Para presentarla, tu celular se vuelve el control.</p>
+          <p class="cover-lead">Sube tu presentación HTML o PDF y queda publicada, sin desplegar nada. Para presentarla, tu celular se vuelve el control.</p>
         </div>
         <div class="cover-tracks">
         ${coverBadge(user, error)}
         <ol class="tracks" aria-label="El día de tu charla">
           <li class="track track-azul">
             <h2>Antes de la charla</h2>
-            <p>Sube tu presentación: un solo archivo .html de hasta ${mb(limits.deckBytes)} MB. Si la hiciste con html-slides, Sliding entiende sus diapositivas y sus notas.</p>
+            <p>Sube tu presentación: un archivo .html o .pdf de hasta ${mb(limits.deckBytes)} MB. ¿Es de PowerPoint? Elige el PDF junto con el .pptx y Sliding lee tus notas.</p>
           </li>
           <li class="track track-naranja">
             <h2>Al empezar</h2>
@@ -165,7 +165,7 @@ export const homePage = ({ user, error, limits }: { user: User | null; error?: s
         <dl class="info-rows">
           <div>
             <dt>Formatos</dt>
-            <dd>Cualquier presentación de un solo archivo HTML. Con html-slides tienes control de cada diapositiva y tus notas; con el resto, anterior y siguiente.</dd>
+            <dd>Un archivo HTML, o el PDF que exportas de PowerPoint, Keynote o Google Slides. Con html-slides y con PDF controlas cada diapositiva. Tus notas salen de html-slides o del .pptx que eliges junto al PDF. Con otro HTML, tienes anterior y siguiente.</dd>
           </div>
           <div>
             <dt>Ayuda</dt>
@@ -200,6 +200,7 @@ export const homePage = ({ user, error, limits }: { user: User | null; error?: s
 const PANEL_OK: Record<string, string> = {
   subido: "Presentación subida. Ya puedes compartir su enlace.",
   reemplazado: "Presentación reemplazada. Su enlace sigue siendo el mismo.",
+  notas: "Notas guardadas. Las verás en el celular al presentar.",
   borrado: "Presentación borrada. Su enlace ya no funciona.",
   movido: "Presentación movida. Su enlace sigue siendo el mismo.",
   "carpeta-creada": "Carpeta creada.",
@@ -211,7 +212,9 @@ const PANEL_OK: Record<string, string> = {
 const panelError = (code: string, usage: Usage, limits: Limits): string | null =>
   ({
     vacio: "Elige un archivo antes de subir.",
-    "no-html": "Sliding solo acepta archivos .html.",
+    formato: "Sliding acepta archivos .html y .pdf. Si tu presentación es de PowerPoint, Keynote o Google Slides, expórtala como PDF.",
+    "no-pdf": "Ese archivo no es un PDF válido. Expórtalo otra vez desde tu programa de presentaciones.",
+    notas: "No se pudieron leer las notas de ese .pptx. Ábrelo en PowerPoint, guárdalo otra vez y vuelve a intentarlo.",
     "muy-grande": `El archivo pasa de ${mb(limits.deckBytes)} MB. Reduce sus imágenes y vuelve a subirlo.`,
     "cupo-espacio": `No queda espacio: tus presentaciones ocupan ${formatBytes(usage.bytes)} de ${mb(limits.bytesPerOwner)} MB. Borra alguna o reduce sus imágenes.`,
     "no-existe": "Esa presentación o carpeta no existe, o no es tuya.",
@@ -301,21 +304,58 @@ interface PanelContext {
   level: 2 | 3;
 }
 
+/** El color de cada tipo de presentación en su cuadro de código. */
+const TRACK: Record<DeckRow["kind"], string> = { "html-slides": "track-azul", pdf: "track-naranja", generic: "track-amarillo" };
+
+/** Lo que va en el cuadro de código: cuántas diapositivas tiene o, si no se sabe, su formato. */
+const deckCount = (deck: Pick<DeckRow, "kind" | "slideCount">) =>
+  deck.kind === "html-slides" || (deck.kind === "pdf" && deck.slideCount)
+    ? html`<span class="session-count num">${deck.slideCount ?? 0}</span><span class="session-unit">${plural(deck.slideCount ?? 0, "diapositiva", "diapositivas")}</span>`
+    : deck.kind === "pdf"
+      ? html`<span class="session-count session-count-word">PDF</span><span class="session-unit">presentación</span>`
+      : html`<span class="session-count session-count-word">HTML</span><span class="session-unit">genérica</span>`;
+
+const KIND_LABEL: Record<DeckRow["kind"], string> = { "html-slides": "html-slides", pdf: "PDF", generic: "HTML genérico" };
+
+/** El PDF y las notas del .pptx se emparejan por número: si no tienen las mismas diapositivas, se avisa. */
+const notesMismatch = (deck: DeckRow) =>
+  deck.kind === "pdf" && deck.notesCount !== null && deck.slideCount !== null && deck.notesCount !== deck.slideCount;
+
+const pptxAccept = ".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation";
+const deckAccept = `.html,.htm,text/html,.pdf,application/pdf,${pptxAccept}`;
+
+/**
+ * «Agregar notas» de una Presentación en PDF. El .pptx no tiene `name`: nunca
+ * se sube. app.js lo lee y deja sus notas en el campo `notas`, así que sin JS
+ * el formulario no aparece.
+ */
+const notesForm = (deck: DeckRow, ctx: PanelContext) => html`<form class="add-notes" method="post" action="/panel/decks/${deck.id}/notas" enctype="multipart/form-data" data-needs-js hidden>
+  ${backField("volver", ctx.folderId)}
+  <input type="hidden" name="notas" />
+  <label class="btn btn-small">
+    ${deck.notesCount === null ? "Agregar notas" : "Cambiar notas"}
+    <input class="visually-hidden" type="file" accept="${pptxAccept}" data-pptx aria-describedby="pptx-${deck.id}" />
+  </label>
+  <span class="visually-hidden" id="pptx-${deck.id}">Elige el .pptx de esta presentación. Solo se leen sus notas: el archivo no se sube.</span>
+</form>`;
+
 const deckRow = (deck: DeckRow, ctx: PanelContext) => html`<li class="session" data-id="${deck.id}">
-  <div class="session-code ${deck.kind === "html-slides" ? "track-azul" : "track-amarillo"}">
+  <div class="session-code ${TRACK[deck.kind]}">
     ${orderButton("up", deck.title)}
-    ${deck.kind === "html-slides"
-      ? html`<span class="session-count num">${deck.slideCount ?? 0}</span><span class="session-unit">${plural(deck.slideCount ?? 0, "diapositiva", "diapositivas")}</span>`
-      : html`<span class="session-count session-count-word">HTML</span><span class="session-unit">genérica</span>`}
+    ${deckCount(deck)}
     ${orderButton("down", deck.title)}
   </div>
   <div class="session-main">
     ${dragHint}
     ${rowTitle(ctx.level, deck.title)}
     <p class="session-meta">
-      ${deck.kind === "html-slides" ? "html-slides" : "HTML genérico"} ·
+      ${KIND_LABEL[deck.kind]} ·
+      ${deck.kind === "pdf" ? html`${deck.notesCount === null ? "sin notas" : "con notas"} · ` : ""}
       <span class="num">${formatBytes(deck.size)}</span> · actualizada el ${day.format(deck.updatedAt)}
     </p>
+    ${notesMismatch(deck)
+      ? html`<p class="session-warn">Las notas no coinciden: el .pptx tiene <span class="num">${deck.notesCount}</span> ${plural(deck.notesCount ?? 0, "diapositiva visible", "diapositivas visibles")} y el PDF <span class="num">${deck.slideCount}</span>. Revisa que sean la misma versión.</p>`
+      : ""}
   </div>
   <div class="session-go">
     <a class="btn btn-ink" href="/p/${deck.presentSecret}" target="_blank" rel="noopener">Presentar con control</a>
@@ -323,14 +363,16 @@ const deckRow = (deck: DeckRow, ctx: PanelContext) => html`<li class="session" d
     <button class="btn btn-small copy" type="button" data-copy="${ctx.origin}/d/${deck.id}">Copiar enlace para compartir</button>
   </div>
   <div class="session-actions">
-    <form class="replace" method="post" action="/panel/decks/${deck.id}" enctype="multipart/form-data">
+    <form class="replace" method="post" action="/panel/decks/${deck.id}" enctype="multipart/form-data" data-deck-form>
       ${backField("volver", ctx.folderId)}
+      <input type="hidden" name="notas" />
       <label class="btn btn-small">
         Reemplazar
-        <input class="visually-hidden" type="file" name="file" accept=".html,.htm,text/html" required />
+        <input class="visually-hidden" type="file" name="file" accept="${deckAccept}" multiple required />
       </label>
       <noscript><button class="btn btn-small" type="submit">Subir reemplazo</button></noscript>
     </form>
+    ${deck.kind === "pdf" ? notesForm(deck, ctx) : ""}
     ${moveForm({
       id: deck.id,
       action: `/panel/decks/${deck.id}/mover`,
@@ -459,13 +501,15 @@ export const panelPage = ({
           <h1>${title}</h1>
           ${folder ? folderTools(folder, parentName, origin) : ""}
           <div class="panel-tools">
-            <form class="upload" method="post" action="/panel/decks" enctype="multipart/form-data">
+            <form class="upload" method="post" action="/panel/decks" enctype="multipart/form-data" data-deck-form>
               ${backField("carpeta", folderId)}
+              <input type="hidden" name="notas" />
               <label class="btn btn-ink">
-                Subir una presentación .html
-                <input class="visually-hidden" type="file" name="file" accept=".html,.htm,text/html" required />
+                Subir una presentación
+                <input class="visually-hidden" type="file" name="file" accept="${deckAccept}" multiple required aria-describedby="subir-ayuda" />
               </label>
-              <span class="upload-file" aria-live="polite">Hasta ${mb(limits.deckBytes)} MB. También puedes soltarla en esta página.</span>
+              <span class="upload-file" aria-live="polite">HTML o PDF, hasta ${mb(limits.deckBytes)} MB. También puedes soltarla en esta página.</span>
+              <p class="upload-help" id="subir-ayuda">¿Es de PowerPoint? Expórtala como PDF y elige el PDF y el .pptx a la vez: así ves tus notas en el celular. El .pptx no se sube.</p>
               <noscript><button class="btn" type="submit">Subir</button></noscript>
             </form>
             <form class="new-folder" method="post" action="/panel/carpetas">
@@ -488,6 +532,7 @@ export const panelPage = ({
         )}
       </div>
       <p class="flash flash-error" data-order-error role="alert" hidden>No se pudo guardar el orden. Recarga la página e intenta de nuevo.</p>
+      <p class="flash flash-error" data-file-error role="alert" hidden></p>
       ${okText ? html`<p class="flash flash-ok" role="status">${okText}</p>` : ""}
       ${errorText ? html`<p class="flash flash-error" role="alert">${errorText}</p>` : ""}
       <div class="panel-lists">
@@ -588,11 +633,7 @@ export const folderPage = ({
               <ol class="program" aria-label="Presentaciones">
                 ${decks.map(
                   (deck) => html`<li class="session session-public">
-                    <div class="session-code ${deck.kind === "html-slides" ? "track-azul" : "track-amarillo"}">
-                      ${deck.kind === "html-slides"
-                        ? html`<span class="session-count num">${deck.slideCount ?? 0}</span><span class="session-unit">${plural(deck.slideCount ?? 0, "diapositiva", "diapositivas")}</span>`
-                        : html`<span class="session-count session-count-word">HTML</span><span class="session-unit">genérica</span>`}
-                    </div>
+                    <div class="session-code ${TRACK[deck.kind]}">${deckCount(deck)}</div>
                     <div class="session-main">
                       ${rowTitle(level, html`<a href="/d/${deck.id}">${deck.title}</a>`)}
                       <p class="session-meta">Actualizada el ${day.format(deck.updatedAt)}</p>
@@ -784,12 +825,13 @@ export const privacyPage = ({ user }: { user: User | null }) =>
         </div>
       </header>
       <article class="read">
-      <p class="read-lead">Sliding es un sitio para subir presentaciones HTML y presentarlas con el celular. Esta página dice qué datos guarda, para qué y cómo borrarlos.</p>
+      <p class="read-lead">Sliding es un sitio para subir presentaciones HTML o PDF y presentarlas con el celular. Esta página dice qué datos guarda, para qué y cómo borrarlos.</p>
 
       <h2>Qué guardamos</h2>
       <ul>
         <li><strong>Tu cuenta.</strong> Al entrar con GitHub o Google guardamos el identificador de tu cuenta en ese servicio, tu nombre y tu correo. Los usamos para mostrarte tus presentaciones y para avisarte si hay un problema con ellas.</li>
-        <li><strong>Tus presentaciones.</strong> Guardamos los archivos HTML que subes y sus notas del presentador. Cualquiera con el enlace de una presentación puede verla, pero sin las notas.</li>
+        <li><strong>Tus presentaciones.</strong> Guardamos los archivos HTML o PDF que subes y sus notas del presentador. Cualquiera con el enlace de una presentación puede verla, pero sin las notas.</li>
+        <li><strong>Tu .pptx.</strong> Cuando lo eliges junto a un PDF, tu navegador lee las notas y el título de cada diapositiva, y solo ese texto llega a Sliding. El archivo no sale de tu computador.</li>
         <li><strong>Tus carpetas.</strong> Guardamos sus nombres y el orden que les das. Cualquiera con el enlace de una carpeta ve sus presentaciones y las carpetas que tiene dentro, también sin las notas.</li>
         <li><strong>Tus tokens.</strong> Si creas tokens para que un agente suba presentaciones por ti, guardamos solo una huella de cada token, su nombre y la última vez que se usó.</li>
         <li><strong>Las presentaciones en vivo.</strong> Mientras presentas guardamos en qué diapositiva vas. Se borra cuando termina la sesión.</li>

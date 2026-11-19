@@ -92,7 +92,7 @@ describe("subir", () => {
   });
 
   it.each([
-    ["un archivo que no es HTML", "<p>x</p>", "notas.txt", "text/plain", "no-html"],
+    ["un archivo que no es HTML ni PDF", "<p>x</p>", "notas.txt", "text/plain", "formato"],
     ["un archivo vacío", "", "vacio.html", "text/html", "vacio"],
     ["un deck más grande que el límite", "x".repeat(10_001), "grande.html", "text/html", "muy-grande"],
   ])("rechaza %s", async (_, html, name, type, error) => {

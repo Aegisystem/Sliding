@@ -24,11 +24,83 @@ document.addEventListener("submit", (event) => {
   if (form.matches(".delete") && !confirm(form.dataset.confirm)) event.preventDefault();
 });
 
+// ── PowerPoint: se sube el PDF, y del .pptx solo sus notas (ADR 0004) ─────
+// Leer el .pptx necesita JS; sin JS, «Agregar notas» no aparece y el PDF se sube solo.
+
+const PPTX = /\.pptx$/i;
+const fileError = document.querySelector("[data-file-error]");
+let pptxModule = null;
+const readNotes = async (file) => {
+  pptxModule ??= import("/pptx-notes.js");
+  const { readPptxNotes, PptxError } = await pptxModule;
+  try {
+    return (await readPptxNotes(file)).slides;
+  } catch (error) {
+    throw new Error(
+      error instanceof PptxError ? error.message : "No se pudieron leer las notas de ese .pptx. Ábrelo en PowerPoint, guárdalo otra vez y vuelve a intentarlo.",
+    );
+  }
+};
+
+function showFileError(text) {
+  if (!fileError) return alert(text);
+  // Un aviso anterior («Notas guardadas») ya no dice lo que pasa ahora.
+  for (const flash of document.querySelectorAll(".flash")) flash.hidden = flash !== fileError;
+  fileError.textContent = text;
+  fileError.hidden = false;
+  fileError.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
+for (const element of document.querySelectorAll("[data-needs-js]")) element.hidden = false;
+
+/**
+ * Sube una presentación desde Subir o Reemplazar. Con un PDF puede venir
+ * también su .pptx: se leen sus notas y se mandan en `notas`, sin el archivo.
+ * Devuelve el texto para mostrar mientras sube, o lanza un error para el Dueño.
+ */
+async function sendDeck(form, files) {
+  const chosen = [...files];
+  const pptx = chosen.filter((file) => PPTX.test(file.name));
+  const decks = chosen.filter((file) => !PPTX.test(file.name));
+  if (decks.length > 1 || pptx.length > 1) throw new Error("Elige una presentación a la vez: un .html, o un .pdf con su .pptx.");
+  if (!decks.length) {
+    throw new Error("Falta el PDF. Exporta tu presentación como PDF (en PowerPoint: Archivo › Exportar) y elige el PDF y el .pptx a la vez.");
+  }
+  const [deck] = decks;
+  const notes = form.querySelector("input[name=notas]");
+  notes.value = "";
+  if (pptx.length) {
+    if (!/\.pdf$/i.test(deck.name)) throw new Error("Las notas de un .pptx van con su PDF. Elige el PDF y el .pptx a la vez.");
+    notes.value = JSON.stringify(await readNotes(pptx[0]));
+  }
+  // Solo la presentación va en `file`: el .pptx se queda en este computador.
+  const transfer = new DataTransfer();
+  transfer.items.add(deck);
+  form.querySelector("input[name=file]").files = transfer.files;
+  form.requestSubmit();
+  return pptx.length ? `${deck.name}, con las notas de ${pptx[0].name}` : deck.name;
+}
+
 // Reemplazar: elegir el archivo ya lo sube. «Mover a»: elegir la carpeta ya mueve.
-document.addEventListener("change", (event) => {
+// «Agregar notas»: elegir el .pptx ya guarda sus notas.
+document.addEventListener("change", async (event) => {
   const input = event.target;
-  if (input.matches(".replace input[type=file]") && input.files.length) input.form.requestSubmit();
   if (input.matches(".move select") && input.value) input.form.requestSubmit();
+  if (!input.files?.length) return;
+  if (input.matches(".replace input[type=file]")) {
+    await sendDeck(input.form, input.files).catch((error) => {
+      input.value = "";
+      showFileError(error.message);
+    });
+  } else if (input.matches("[data-pptx]")) {
+    try {
+      input.form.querySelector("input[name=notas]").value = JSON.stringify(await readNotes(input.files[0]));
+      input.form.requestSubmit();
+    } catch (error) {
+      showFileError(error.message);
+    }
+    input.value = "";
+  }
 });
 
 // Cambiar el nombre de la carpeta: el formulario se abre con su botón.
@@ -181,16 +253,23 @@ const upload = document.querySelector(".upload");
 if (upload) {
   const input = upload.querySelector("input[type=file]");
   const label = upload.querySelector(".upload-file");
-  const show = () => {
-    if (!input.files.length) return;
-    label.textContent = input.files[0].name;
+  const idle = label.textContent;
+  // Elegir el archivo (o el PDF con su .pptx) ya lo sube, como en Reemplazar.
+  const start = async (files) => {
+    if (!files.length) return;
+    if (fileError) fileError.hidden = true;
     label.classList.add("has-file");
+    label.textContent = [...files].some((file) => PPTX.test(file.name)) ? "Leyendo las notas del .pptx…" : files[0].name;
+    try {
+      label.textContent = `Subiendo ${await sendDeck(upload, files)}…`;
+    } catch (error) {
+      input.value = "";
+      label.textContent = idle;
+      label.classList.remove("has-file");
+      showFileError(error.message);
+    }
   };
-  // Elegir el archivo ya lo sube, como en Reemplazar.
-  input.addEventListener("change", () => {
-    show();
-    if (input.files.length) upload.requestSubmit();
-  });
+  input.addEventListener("change", () => start(input.files));
   const page = document.querySelector("main");
   page.addEventListener("dragover", (event) => {
     if (input.disabled || !event.dataTransfer.types.includes("Files")) return;
@@ -204,9 +283,7 @@ if (upload) {
     if (input.disabled || !event.dataTransfer.files.length) return;
     event.preventDefault();
     upload.classList.remove("is-dragging");
-    input.files = event.dataTransfer.files;
-    show();
-    upload.requestSubmit();
+    start(event.dataTransfer.files);
   });
 }
 

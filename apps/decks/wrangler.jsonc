@@ -6,6 +6,10 @@
   "compatibility_date": "2026-11-01",
   "workers_dev": true,
   "preview_urls": false,
+  // pdf.js y el visor de las Presentaciones en PDF (ADR 0004). Se sirven antes que el Worker.
+  "assets": { "directory": "./public" },
+  // Copia pdf.js de node_modules a public/pdfjs/ antes de `wrangler dev` y `wrangler deploy`.
+  "build": { "command": "node scripts/copy-pdfjs.mjs" },
   // Los mismos datos que la app.
   "kv_namespaces": [{ "binding": "DECKS", "id": "8ae143757cbd46079c8e3e6121264195" }],
   "d1_databases": [
