@@ -280,7 +280,7 @@ export const en: Texts = {
     steps: [
       "Copy the skill's text with the button below.",
       "Paste it to your AI (Claude, ChatGPT, Gemini…) and ask: “Create the html-slides skill from these files and use it whenever I ask for a presentation”.",
-      "Ask it for a presentation, for example: “Make a presentation about photosynthesis for first-year students, with notes for me on every slide”.",
+      "Ask it for a presentation, for example: “Make a presentation about photosynthesis for first-year students, with notes for me on every slide”. Before building it, it will show you three design options, the first one on a light background, so you can pick one.",
       "Upload the .html file in [your dashboard](/panel) and tap “Present with remote”: your notes show up on your phone.",
     ],
     copy: "Copy the skill's text",

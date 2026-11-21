@@ -11,7 +11,7 @@ Pégale todo este texto a tu IA, junto con este pedido:
 - **Claude** la guarda como skill y la usa sola cuando le pidas una presentación.
 - **Otra IA** puede usar SKILL.md como instrucciones y assets/template.html como punto de partida.
 
-Después pídele, por ejemplo: «Haz una presentación sobre la fotosíntesis para estudiantes de primer año, con notas para mí en cada diapositiva».
+Después pídele, por ejemplo: «Haz una presentación sobre la fotosíntesis para estudiantes de primer año, con notas para mí en cada diapositiva». Antes de armarla, tu IA te mostrará tres opciones de diseño (la primera con fondo claro) y esperará a que elijas una.
 
 ## Publicar en Sliding
 
@@ -31,7 +31,7 @@ description: Presentaciones HTML de un solo archivo con ilustraciones SVG animad
 
 # HTML Slides
 
-Un deck es un solo `index.html` (sin build, publicable tal cual en GitHub Pages) donde cada slide lleva una idea, poco texto grande y, cuando suma, una ilustración SVG que aparece animada al entrar. El motor es fijo; el **estilo** (paleta, fuentes, tipo de ilustración, ritmo) cambia en cada presentación.
+Un deck es un solo `index.html` (sin build, publicable tal cual en GitHub Pages) donde cada slide lleva una idea, poco texto grande y, cuando suma, una ilustración SVG que aparece animada al entrar. El motor es fijo; el **diseño** (fondo, paleta, fuentes, tipo de ilustración, ritmo) cambia en cada presentación y lo elige el usuario entre las opciones que le propones.
 
 Archivos de la skill (rutas relativas a esta carpeta):
 - `assets/template.html` — el motor (navegación, notas del orador, animaciones de trazo/pop/rise, filtro a mano opcional) con un ejemplo de cada layout.
@@ -48,9 +48,11 @@ Archivos de la skill (rutas relativas a esta carpeta):
 
    Listo cuando cada slide cabe en una frase, las frases memorables están solo donde la charla las necesita y cada una tiene detrás una explicación concreta, y el recorrido completo cuenta la historia sin el orador.
 
-2. **Estilo.** Lee `references/design.md` y elige estilo de ilustración, paleta, fuentes y ritmo según el tono de la charla; si el usuario pidió un estilo, ese manda. Listo cuando `contrast.py` da OK para los cuatro colores y puedes decir en una frase por qué ese estilo encaja con esta charla.
+2. **Opciones de diseño.** Lee `references/design.md` y propón **3 opciones** para esta charla, distintas de verdad entre sí: fondo, paleta, fuentes, estilo de ilustración y ritmo. **La opción 1 tiene fondo claro**; las otras exploran, por ejemplo, un fondo oscuro o de color. Si el usuario pidió un estilo, las tres son variantes de ese estilo, y la 1 es su versión de fondo claro. Marca una como recomendada y di en una frase por qué encaja con la charla. Comprueba con `contrast.py` los cuatro colores de cada opción, arma la vista previa (sección «Vista previa de las opciones» de `design.md`) y muéstrasela.
 
-3. **Armar el deck.** Copia `assets/template.html` al proyecto como `index.html`, pon el tema en `:root` (incluido `--art-filter`) y en el `<link>` de fuentes, borra las slides de ejemplo y escribe las tuyas alternando layouts (`big`, `split`, `grid`, `row`, cita). Listo cuando todas las slides del paso 1 están escritas y no hay tres seguidas con el mismo layout.
+   Luego **detente y espera su respuesta**. Puede elegir una, mezclarlas («el fondo de la 1 con las fuentes de la 3») o pedir otras; si cambia algo, muestra la vista previa de nuevo. Si te dice que decidas tú, usa la recomendada y avísale cuál es. Listo cuando el usuario eligió un diseño (o te dejó decidir) y `contrast.py` da OK para sus cuatro colores.
+
+3. **Armar el deck.** Copia `assets/template.html` al proyecto como `index.html`, pon el diseño elegido en `:root` (incluido `--art-filter`) y en el `<link>` de fuentes, borra las slides de ejemplo y escribe las tuyas alternando layouts (`big`, `split`, `grid`, `row`, cita). Listo cuando todas las slides del paso 1 están escritas y no hay tres seguidas con el mismo layout.
 
 4. **Ilustraciones.** Lee `references/drawings.md`. Ilustra en el estilo elegido cada slide que tenga una metáfora clara y diseña **un** momento firma animado ligado a la idea central. Listo cuando cada ilustración se puede explicar en una frase y el momento firma existe.
 
@@ -344,7 +346,7 @@ Archivos de la skill (rutas relativas a esta carpeta):
 `````markdown
 # Dirección visual
 
-El motor es el mismo; la **forma** cambia en cada presentación. Elige una dirección según el tono de la charla y cámbiala de verdad: paleta, fuentes, grosor de trazo, nivel de temblor y ritmo de la animación.
+El motor es el mismo; la **forma** cambia en cada presentación. Cada opción que propones al usuario (paso 2 de SKILL.md) es una dirección completa según el tono de la charla: fondo, paleta, fuentes, grosor de trazo, nivel de temblor y ritmo de la animación.
 
 ## Principios (siempre)
 
@@ -371,7 +373,7 @@ Mantén **un** estilo en toda la presentación; el único cambio permitido es us
 
 ## Direcciones de ejemplo
 
-Úsalas como punto de partida y mézclalas; no repitas la misma dirección en dos presentaciones seguidas.
+Úsalas como punto de partida y mézclalas; no repitas la misma dirección en dos presentaciones seguidas. Las de fondo claro, para la opción 1, son Calma, Cuaderno, Póster y Editorial.
 
 | Dirección | Para charlas… | `--bg` / `--fg` / `--accent` | Fuentes (display / texto) | Ilustración y movimiento |
 |---|---|---|---|---|
@@ -394,6 +396,17 @@ Verifica el contraste de cada combinación antes de usarla; las de la tabla son 
 - **Textura del fondo**: un `radial-gradient` suave, líneas de cuaderno, o una cuadrícula de plano con `background-image`.
 - **Temblor** (solo estilo a mano): `scale` del filtro `#rough` (1 sutil – 5 muy marcado) y `baseFrequency` (0.02 suave – 0.06 nervioso). Para línea limpia, `--art-filter: none`.
 - **Ritmo**: `--draw-time`, `--stagger`, `--fade`. Charla tranquila → lento; charla enérgica → rápido.
+
+## Vista previa de las opciones
+
+Arma `opciones.html`, un archivo aparte y sin el motor que solo sirve para elegir; no es parte de la presentación. Lleva las tres portadas una debajo de otra, cada una en una caja 16:9 con:
+
+- encima de la caja, el número y el nombre de la opción, y «recomendada» en la que corresponde;
+- su fondo (con textura si la tiene), sus fuentes y sus colores;
+- el título real de la charla con la palabra clave en `<em>` y el subtítulo en `--muted`;
+- un dibujo chico en su estilo de ilustración, o la palabra como imagen si es tipográfico.
+
+Carga las fuentes de las tres en un solo `<link>` de Google Fonts. Ábrelo en el navegador y muestra una captura de cada caja; si no tienes navegador, entrégale el archivo al usuario para que lo abra. En el chat, junto a la vista previa, escribe una línea por opción: número, nombre, fondo, colores en hex, fuentes, ilustración y ritmo. Así puede contestar «la 2» o mezclar partes.
 `````
 
 ## html-slides/references/drawings.md

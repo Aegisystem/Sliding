@@ -1,6 +1,6 @@
 # Dirección visual
 
-El motor es el mismo; la **forma** cambia en cada presentación. Elige una dirección según el tono de la charla y cámbiala de verdad: paleta, fuentes, grosor de trazo, nivel de temblor y ritmo de la animación.
+El motor es el mismo; la **forma** cambia en cada presentación. Cada opción que propones al usuario (paso 2 de SKILL.md) es una dirección completa según el tono de la charla: fondo, paleta, fuentes, grosor de trazo, nivel de temblor y ritmo de la animación.
 
 ## Principios (siempre)
 
@@ -27,7 +27,7 @@ Mantén **un** estilo en toda la presentación; el único cambio permitido es us
 
 ## Direcciones de ejemplo
 
-Úsalas como punto de partida y mézclalas; no repitas la misma dirección en dos presentaciones seguidas.
+Úsalas como punto de partida y mézclalas; no repitas la misma dirección en dos presentaciones seguidas. Las de fondo claro, para la opción 1, son Calma, Cuaderno, Póster y Editorial.
 
 | Dirección | Para charlas… | `--bg` / `--fg` / `--accent` | Fuentes (display / texto) | Ilustración y movimiento |
 |---|---|---|---|---|
@@ -50,3 +50,14 @@ Verifica el contraste de cada combinación antes de usarla; las de la tabla son 
 - **Textura del fondo**: un `radial-gradient` suave, líneas de cuaderno, o una cuadrícula de plano con `background-image`.
 - **Temblor** (solo estilo a mano): `scale` del filtro `#rough` (1 sutil – 5 muy marcado) y `baseFrequency` (0.02 suave – 0.06 nervioso). Para línea limpia, `--art-filter: none`.
 - **Ritmo**: `--draw-time`, `--stagger`, `--fade`. Charla tranquila → lento; charla enérgica → rápido.
+
+## Vista previa de las opciones
+
+Arma `opciones.html`, un archivo aparte y sin el motor que solo sirve para elegir; no es parte de la presentación. Lleva las tres portadas una debajo de otra, cada una en una caja 16:9 con:
+
+- encima de la caja, el número y el nombre de la opción, y «recomendada» en la que corresponde;
+- su fondo (con textura si la tiene), sus fuentes y sus colores;
+- el título real de la charla con la palabra clave en `<em>` y el subtítulo en `--muted`;
+- un dibujo chico en su estilo de ilustración, o la palabra como imagen si es tipográfico.
+
+Carga las fuentes de las tres en un solo `<link>` de Google Fonts. Ábrelo en el navegador y muestra una captura de cada caja; si no tienes navegador, entrégale el archivo al usuario para que lo abra. En el chat, junto a la vista previa, escribe una línea por opción: número, nombre, fondo, colores en hex, fuentes, ilustración y ritmo. Así puede contestar «la 2» o mezclar partes.

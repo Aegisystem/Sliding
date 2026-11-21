@@ -284,7 +284,7 @@ export const es = {
     steps: [
       "Copia el texto de la skill con el botón de abajo.",
       "Pégaselo a tu IA (Claude, ChatGPT, Gemini…) y pídele: «Crea la skill html-slides con estos archivos y úsala cuando te pida una presentación».",
-      "Pídele una presentación, por ejemplo: «Haz una presentación sobre la fotosíntesis para primer año, con notas para mí en cada diapositiva».",
+      "Pídele una presentación, por ejemplo: «Haz una presentación sobre la fotosíntesis para primer año, con notas para mí en cada diapositiva». Antes de armarla te mostrará tres opciones de diseño, la primera con fondo claro, para que elijas una.",
       "Sube el archivo .html en [tu panel](/panel) y toca «Presentar con control»: tus notas aparecen en el celular.",
     ],
     copy: "Copiar el texto de la skill",

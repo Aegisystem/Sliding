@@ -11,6 +11,7 @@ it("la página de la skill explica los pasos y ofrece copiar y descargar", async
   expect(html).toContain("data-copy-skill");
   expect(html).toContain('href="/skill/html-slides.md"');
   expect(html).toContain("Crea la skill html-slides con estos archivos");
+  expect(html).toContain("tres opciones de diseño, la primera con fondo claro");
 });
 
 it("el texto publicado está al día con los archivos de la skill (npm run build:skill)", () => {

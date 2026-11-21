@@ -34,7 +34,7 @@ Pégale todo este texto a tu IA, junto con este pedido:
 - **Claude** la guarda como skill y la usa sola cuando le pidas una presentación.
 - **Otra IA** puede usar SKILL.md como instrucciones y assets/template.html como punto de partida.
 
-Después pídele, por ejemplo: «Haz una presentación sobre la fotosíntesis para estudiantes de primer año, con notas para mí en cada diapositiva».
+Después pídele, por ejemplo: «Haz una presentación sobre la fotosíntesis para estudiantes de primer año, con notas para mí en cada diapositiva». Antes de armarla, tu IA te mostrará tres opciones de diseño (la primera con fondo claro) y esperará a que elijas una.
 
 ## Publicar en Sliding
 
