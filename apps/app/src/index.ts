@@ -91,7 +91,12 @@ export function createApp(overrides: Partial<Deps> = {}) {
         folder,
         path,
         root: path[0]!.id,
-        children: childrenOf(folders, folder.id, counts),
+        // Lo oculto no se ve, ni lo que tiene dentro (#23).
+        children: childrenOf(
+          folders.filter((f) => !f.hidden),
+          folder.id,
+          counts,
+        ),
         decks,
       }),
     );

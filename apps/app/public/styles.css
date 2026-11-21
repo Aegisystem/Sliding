@@ -1273,7 +1273,7 @@ body > main {
   min-height: 0;
 }
 
-.panel-lists.is-folded :is(.session-go, .session-actions, .session-meta, .session-warn, .order, .drag-hint) {
+.panel-lists.is-folded :is(.session-go, .session-actions, .session-meta, .session-warn, .session-hidden, .order, .drag-hint) {
   display: none;
 }
 
@@ -1463,6 +1463,62 @@ body > main {
 .session-public .session-title a:hover {
   text-decoration: underline;
   text-decoration-thickness: 3px;
+}
+
+/* ── Mostrar y ocultar en el Enlace de la carpeta (#23) ──────────────── */
+
+/* Lo oculto lleva un sello, como una sesión que todavía no se anuncia, y su
+   título pasa a tinta suave. La clase de la hilera decide qué forma se ve. */
+.session:not(.is-hidden) .session-hidden,
+.session.is-hidden .hide-form {
+  display: none;
+}
+
+.session.is-hidden .session-title {
+  color: var(--ink-soft);
+}
+
+.session-hidden {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.session-hidden form {
+  margin: 0;
+}
+
+.stamp.stamp-small {
+  align-self: center;
+  margin-top: 0;
+  padding: 0.1rem 0.45rem;
+  border-width: 2px;
+  font-size: 0.9375rem;
+}
+
+.session-hidden-note {
+  color: var(--ink-soft);
+  font-size: 0.9375rem;
+}
+
+/* Al ocultar, el sello cae sobre la hilera. */
+.session.just-hidden .stamp-small {
+  animation: stamp-in 320ms var(--ease);
+}
+
+@keyframes stamp-in {
+  from {
+    opacity: 0;
+    transform: rotate(-10deg) scale(1.6);
+  }
+}
+
+/* En el árbol, una carpeta oculta va en tinta suave. */
+.tree-link.is-hidden:not([aria-current]) {
+  color: var(--ink-soft);
+  font-weight: 600;
 }
 
 /* ── Menú «Más» de cada hilera ────────────────────────────────────────── */

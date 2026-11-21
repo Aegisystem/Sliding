@@ -58,7 +58,8 @@ export const es = {
     help: "Ayuda",
     helpText: "¿Cómo hago una presentación? Pásale a tu IA la [skill html-slides](/skill) y pídesela: queda lista para subir.",
     folders: "Carpetas",
-    foldersText: "Ordena tus presentaciones por curso, unidad o semana, en carpetas dentro de carpetas. Comparte una carpeta entera con un solo enlace.",
+    foldersText:
+      "Ordena tus presentaciones por curso, unidad o semana, en carpetas dentro de carpetas. Comparte una carpeta entera con un solo enlace y muestra cada unidad cuando llegue su momento.",
     space: "Espacio",
     spaceText: (total: string, each: string) =>
       `Todas las presentaciones que quieras, mientras sumen hasta ${total} MB, con ${each} MB como máximo cada una.`,
@@ -97,6 +98,12 @@ export const es = {
       "carpeta-renombrada": "Nombre guardado.",
       "carpeta-movida": "Carpeta movida.",
       "carpeta-borrada": "Carpeta borrada. Lo que tenía dentro quedó aquí.",
+      "subida-oculta": "Presentación subida. Está oculta en esta carpeta: toca «Mostrar» cuando quieras que salga en su enlace.",
+      "carpeta-creada-oculta": "Carpeta creada. Está oculta: toca «Mostrar» cuando quieras que salga en el enlace de esta carpeta.",
+      mostrada: "Presentación mostrada: ya se ve en el enlace de la carpeta.",
+      oculta: "Presentación oculta: ya no sale en el enlace de la carpeta.",
+      "carpeta-mostrada": "Carpeta mostrada: ya se ve en el enlace de la carpeta.",
+      "carpeta-oculta": "Carpeta oculta: ya no sale en el enlace de la carpeta, ni lo que tiene dentro.",
     } as Record<string, string>,
     errors: {
       vacio: "Elige un archivo antes de subir.",
@@ -172,6 +179,12 @@ export const es = {
     changeNotes: "Cambiar notas",
     notesHint: "Elige el .pptx de esta presentación. Solo se leen sus notas: el archivo no se sube.",
     delete: "Borrar",
+    hiddenStamp: "Oculta",
+    hiddenNote: "No sale en el enlace de la carpeta.",
+    show: "Mostrar",
+    hide: "Ocultar de la carpeta",
+    /** Para un lector de pantalla, junto al nombre en el árbol. */
+    hiddenInTree: " (oculta)",
     deleteDeck: (name: string) => `¿Borrar «${name}»? Su enlace dejará de funcionar y no se puede deshacer.`,
 
     folderWord: "Carpeta",
@@ -295,14 +308,14 @@ export const es = {
 
   privacy: {
     title: "Privacidad",
-    updated: "Última actualización: 19 de noviembre de 2026.",
+    updated: "Última actualización: 20 de noviembre de 2026.",
     lead: "Sliding es un sitio para subir presentaciones HTML o PDF y presentarlas con el celular. Esta página dice qué datos guarda, para qué y cómo borrarlos.",
     whatTitle: "Qué guardamos",
     what: [
       "**Tu cuenta.** Al entrar con GitHub o Google guardamos el identificador de tu cuenta en ese servicio, tu nombre y tu correo. Los usamos para mostrarte tus presentaciones y para avisarte si hay un problema con ellas.",
       "**Tus presentaciones.** Guardamos los archivos HTML o PDF que subes y sus notas del presentador. Cualquiera con el enlace de una presentación puede verla, pero sin las notas.",
       "**Tu .pptx.** Cuando lo eliges junto a un PDF, tu navegador lee las notas y el título de cada diapositiva, y solo ese texto llega a Sliding. El archivo no sale de tu computador.",
-      "**Tus carpetas.** Guardamos sus nombres y el orden que les das. Cualquiera con el enlace de una carpeta ve sus presentaciones y las carpetas que tiene dentro, también sin las notas.",
+      "**Tus carpetas.** Guardamos sus nombres, el orden que les das y qué muestras en cada una. Cualquiera con el enlace de una carpeta ve las presentaciones y carpetas que muestras en ella, también sin las notas.",
       "**Tus tokens.** Si creas tokens para que un agente suba presentaciones por ti, guardamos solo una huella de cada token, su nombre y la última vez que se usó.",
       "**Las presentaciones en vivo.** Mientras presentas guardamos en qué diapositiva vas. Se borra cuando termina la sesión.",
     ],
@@ -367,6 +380,9 @@ export const es = {
     folderOne: "carpeta",
     folderMany: "carpetas",
     treeToggle: "Carpetas de «{name}»",
+    shownStatus: "«{name}» ya se ve en el enlace de la carpeta.",
+    hiddenStatus: "«{name}» ya no sale en el enlace de la carpeta.",
+    visibilityFailed: "No se pudo cambiar «{name}». Recarga la página e intenta de nuevo.",
 
     controlTitle: "Control · {title} · Sliding",
     noNotes: "Esta diapositiva no tiene notas.",

@@ -303,7 +303,7 @@ const folderTreeNav = (t: Texts, folders: Folder[], currentId: string | null) =>
           ${inner.length
             ? html`<button class="tree-toggle" type="button" aria-expanded="${String(isOpen)}" aria-label="${t.panel.treeToggle(f.name)}" data-needs-js hidden>${chevron}</button>`
             : html`<span class="tree-toggle" aria-hidden="true"></span>`}
-          <a class="tree-link" href="/panel/f/${f.id}" data-drop="${f.id}" ${f.id === currentId ? html`aria-current="page"` : ""}>${f.name}</a>
+          <a class="tree-link${f.hidden ? " is-hidden" : ""}" href="/panel/f/${f.id}" data-drop="${f.id}" ${f.id === currentId ? html`aria-current="page"` : ""}>${f.name}<span class="visually-hidden tree-hidden">${t.panel.hiddenInTree}</span></a>
         </div>
         ${inner.length ? branch(inner, isOpen) : ""}
       </li>`;
@@ -387,6 +387,29 @@ const moreMenu = (t: Texts, title: string, items: Html) => html`<details class="
   <div class="more-menu">${items}</div>
 </details>`;
 
+/**
+ * Mostrar y ocultar en el Enlace de la carpeta (#23). Solo dentro de una
+ * carpeta: en la raíz nada está en un Enlace de la carpeta. Van las dos
+ * formas y la clase `is-hidden` de la hilera dice cuál se ve, así app.js
+ * cambia el estado sin volver a dibujar la hilera.
+ */
+const visibility = (ctx: PanelContext, action: string, title: string) => {
+  const { t } = ctx;
+  const form = (visible: boolean, button: Html) => html`<form class="visibility ${visible ? "show-form" : "hide-form"}" method="post" action="${action}" data-visibility>
+    ${backField("volver", ctx.folderId)}
+    <input type="hidden" name="visible" value="${visible ? "1" : "0"}" />
+    ${button}
+  </form>`;
+  return {
+    note: html`<div class="session-hidden">
+      <span class="stamp stamp-small">${t.panel.hiddenStamp}</span>
+      <span class="session-hidden-note">${t.panel.hiddenNote}</span>
+      ${form(true, html`<button class="btn btn-small btn-ink" type="submit">${t.panel.show}<span class="visually-hidden"> «${title}»</span></button>`)}
+    </div>`,
+    menu: form(false, html`<button class="btn btn-small" type="submit">${t.panel.hide}</button>`),
+  };
+};
+
 /** Un título de hilera: h3 bajo los rótulos «Carpetas» y «Presentaciones», h2 si no hay rótulos. */
 const rowTitle = (level: 2 | 3, inner: Html | string) =>
   level === 3 ? html`<h3 class="session-title">${inner}</h3>` : html`<h2 class="session-title">${inner}</h2>`;
@@ -435,7 +458,8 @@ const notesForm = (deck: DeckRow, { t, folderId }: PanelContext) => html`<form c
 
 const deckRow = (deck: DeckRow, ctx: PanelContext) => {
   const { t } = ctx;
-  return html`<li class="session${deck.disabled ? " is-disabled" : ""}" data-id="${deck.id}">
+  const shown = ctx.folderId ? visibility(ctx, `/panel/decks/${deck.id}/visible`, deck.title) : null;
+  return html`<li class="session${deck.disabled ? " is-disabled" : ""}${shown && deck.hidden ? " is-hidden" : ""}" data-id="${deck.id}">
   <div class="session-code ${TRACK[deck.kind]}">
     ${orderButton(t, "up", deck.title)}
     ${deckCount(t, deck)}
@@ -452,6 +476,7 @@ const deckRow = (deck: DeckRow, ctx: PanelContext) => {
     ${notesMismatch(deck)
       ? html`<p class="session-warn">${raw(t.panel.notesMismatch(num(deck.notesCount ?? 0), escapeText(t.units.visibleSlides(deck.notesCount ?? 0)), num(deck.slideCount ?? 0)))}</p>`
       : ""}
+    ${shown?.note ?? ""}
   </div>
   <div class="session-go">
     ${deck.disabled
@@ -488,6 +513,7 @@ const deckRow = (deck: DeckRow, ctx: PanelContext) => {
         ...ctx.tree.map(({ folder, label }) => ({ value: folder.id, label, here: folder.id === ctx.folderId })),
       ],
     })}
+    ${shown?.menu ?? ""}
     <form class="delete" method="post" action="/panel/decks/${deck.id}/delete" data-confirm="${t.panel.deleteDeck(deck.title)}">
       ${backField("volver", ctx.folderId)}
       <button class="btn btn-small btn-danger" type="submit">${t.panel.delete}</button>
@@ -504,7 +530,8 @@ const folderMeta = (t: Texts, folders: number) =>
 const folderRow = (folder: FolderRow, ctx: PanelContext) => {
   const { t } = ctx;
   const inside = descendantsOf(ctx.folders, folder.id);
-  return html`<li class="session session-folder" data-id="${folder.id}" data-decks="${folder.decks}" data-folders="${folder.folders}">
+  const shown = ctx.folderId ? visibility(ctx, `/panel/carpetas/${folder.id}/visible`, folder.name) : null;
+  return html`<li class="session session-folder${shown && folder.hidden ? " is-hidden" : ""}" data-id="${folder.id}" data-decks="${folder.decks}" data-folders="${folder.folders}">
   <div class="session-code track-verde">
     ${orderButton(t, "up", folder.name)}
     <span class="session-count num">${folder.decks}</span><span class="session-unit">${t.units.decks(folder.decks)}</span>
@@ -516,6 +543,7 @@ const folderRow = (folder: FolderRow, ctx: PanelContext) => {
     <p class="session-meta">
       ${folderMeta(t, folder.folders)}
     </p>
+    ${shown?.note ?? ""}
   </div>
   <div class="session-go">
     <a class="btn btn-ink" href="/panel/f/${folder.id}">${t.panel.openFolder}</a>
@@ -538,6 +566,7 @@ const folderRow = (folder: FolderRow, ctx: PanelContext) => {
           .map(({ folder: f, label }) => ({ value: f.id, label, here: f.id === ctx.folderId })),
       ],
     })}
+    ${shown?.menu ?? ""}
     <form class="delete" method="post" action="/panel/carpetas/${folder.id}/borrar" data-confirm="${t.panel.deleteFolderHere(folder.name)}">
       <button class="btn btn-small btn-danger" type="submit">${t.panel.delete}</button>
     </form>`,

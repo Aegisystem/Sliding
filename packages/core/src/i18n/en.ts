@@ -55,7 +55,8 @@ export const en: Texts = {
     help: "Help",
     helpText: "How do I make a presentation? Give your AI the [html-slides skill](/skill) and ask for one: it comes out ready to upload.",
     folders: "Folders",
-    foldersText: "Organize your presentations by course, unit or week, in folders inside folders. Share a whole folder with a single link.",
+    foldersText:
+      "Organize your presentations by course, unit or week, in folders inside folders. Share a whole folder with a single link and show each unit when its time comes.",
     space: "Space",
     spaceText: (total: string, each: string) =>
       `As many presentations as you like, up to ${total} MB in total and ${each} MB each.`,
@@ -94,6 +95,12 @@ export const en: Texts = {
       "carpeta-renombrada": "Name saved.",
       "carpeta-movida": "Folder moved.",
       "carpeta-borrada": "Folder deleted. What it held is now here.",
+      "subida-oculta": "Presentation uploaded. It's hidden in this folder: tap “Show” when you want it on the folder link.",
+      "carpeta-creada-oculta": "Folder created. It's hidden: tap “Show” when you want it on this folder's link.",
+      mostrada: "Presentation shown: it's now on the folder link.",
+      oculta: "Presentation hidden: it's no longer on the folder link.",
+      "carpeta-mostrada": "Folder shown: it's now on the folder link.",
+      "carpeta-oculta": "Folder hidden: it's no longer on the folder link, and neither is what's inside it.",
     },
     errors: {
       vacio: "Choose a file before uploading.",
@@ -169,6 +176,11 @@ export const en: Texts = {
     changeNotes: "Change notes",
     notesHint: "Choose this presentation's .pptx. Only its notes are read: the file isn't uploaded.",
     delete: "Delete",
+    hiddenStamp: "Hidden",
+    hiddenNote: "Not shown on the folder link.",
+    show: "Show",
+    hide: "Hide from folder",
+    hiddenInTree: " (hidden)",
     deleteDeck: (name: string) => `Delete “${name}”? Its link will stop working, and this can't be undone.`,
 
     folderWord: "Folder",
@@ -291,14 +303,14 @@ export const en: Texts = {
 
   privacy: {
     title: "Privacy",
-    updated: "Last updated: November 19, 2026.",
+    updated: "Last updated: November 20, 2026.",
     lead: "Sliding is a site for uploading HTML or PDF presentations and presenting them from your phone. This page explains what data it keeps, why, and how to delete it.",
     whatTitle: "What we keep",
     what: [
       "**Your account.** When you sign in with GitHub or Google we keep your account's identifier on that service, your name and your email. We use them to show you your presentations and to let you know if there's a problem with them.",
       "**Your presentations.** We keep the HTML or PDF files you upload and their speaker notes. Anyone with a presentation's link can view it, but without the notes.",
       "**Your .pptx.** When you choose it along with a PDF, your browser reads the notes and the title of each slide, and only that text reaches Sliding. The file never leaves your computer.",
-      "**Your folders.** We keep their names and the order you give them. Anyone with a folder's link sees its presentations and the folders inside it, also without the notes.",
+      "**Your folders.** We keep their names, the order you give them and what you show in each one. Anyone with a folder's link sees the presentations and folders you show in it, also without the notes.",
       "**Your tokens.** If you create tokens so an agent can upload presentations for you, we keep only a fingerprint of each token, its name and when it was last used.",
       "**Live presentations.** While you present we keep track of which slide you're on. It's deleted when the session ends.",
     ],
@@ -361,6 +373,9 @@ export const en: Texts = {
     folderOne: "folder",
     folderMany: "folders",
     treeToggle: "Folders in “{name}”",
+    shownStatus: "“{name}” is now on the folder link.",
+    hiddenStatus: "“{name}” is no longer on the folder link.",
+    visibilityFailed: "Couldn't change “{name}”. Reload the page and try again.",
 
     controlTitle: "Remote · {title} · Sliding",
     noNotes: "This slide has no notes.",

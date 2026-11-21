@@ -17,6 +17,8 @@ export interface DeckRow {
   updatedAt: number;
   /** 1 si el administrador la desactivó (#11): nadie puede verla ni presentarla. */
   disabled: number;
+  /** 1 si está oculta (#23): no aparece en el Enlace de la carpeta. */
+  hidden: number;
 }
 
 /** Lo que el Enlace de la carpeta muestra de cada presentación: nada secreto. */
@@ -60,7 +62,7 @@ export async function listDecks(db: D1Database, ownerId: string, folderId: strin
   const { results } = await db
     .prepare(
       `SELECT id, title, kind, size, slide_count AS slideCount, notes_count AS notesCount,
-              present_secret AS presentSecret, updated_at AS updatedAt, disabled
+              present_secret AS presentSecret, updated_at AS updatedAt, disabled, hidden
        FROM decks WHERE owner_id = ? AND folder_id IS ?
        ORDER BY position IS NULL, position, created_at DESC`,
     )
@@ -69,12 +71,12 @@ export async function listDecks(db: D1Database, ownerId: string, folderId: strin
   return results;
 }
 
-/** Las presentaciones de una carpeta que ve quien tiene su enlace: sin las desactivadas. */
+/** Las presentaciones de una carpeta que ve quien tiene su enlace: sin las desactivadas ni las ocultas (#23). */
 export async function listPublicDecks(db: D1Database, ownerId: string, folderId: string): Promise<PublicDeck[]> {
   const { results } = await db
     .prepare(
       `SELECT id, title, kind, slide_count AS slideCount, updated_at AS updatedAt
-       FROM decks WHERE owner_id = ? AND folder_id = ? AND disabled = 0
+       FROM decks WHERE owner_id = ? AND folder_id = ? AND disabled = 0 AND hidden = 0
        ORDER BY position IS NULL, position, created_at DESC`,
     )
     .bind(ownerId, folderId)
@@ -90,7 +92,7 @@ export async function deckCounts(db: D1Database, ownerId: string, { visibleOnly 
   const { results } = await db
     .prepare(
       `SELECT COALESCE(folder_id, '') AS folder, COUNT(*) AS n FROM decks
-       WHERE owner_id = ? ${visibleOnly ? "AND disabled = 0" : ""} GROUP BY folder_id`,
+       WHERE owner_id = ? ${visibleOnly ? "AND disabled = 0 AND hidden = 0" : ""} GROUP BY folder_id`,
     )
     .bind(ownerId)
     .all<{ folder: string; n: number }>();
@@ -174,8 +176,9 @@ export async function storeDeck(
       .run();
   } else {
     await env.DB.prepare(
-      `INSERT INTO decks (id, owner_id, title, kind, size, slide_count, notes_count, present_secret, folder_id, position, disabled, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)`,
+      // Lo nuevo llega oculto: el Dueño lo muestra en su carpeta cuando quiere (#23).
+      `INSERT INTO decks (id, owner_id, title, kind, size, slide_count, notes_count, present_secret, folder_id, position, disabled, hidden, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 1, ?, ?)`,
     )
       .bind(
         id,
@@ -218,4 +221,13 @@ export async function deleteDeck(env: Cloudflare.Env, ownerId: string, deckId: s
   if (!deleted) return false;
   await Promise.all([env.DECKS.delete(`deck:${deckId}`), env.DECKS.delete(`notes:${deckId}`)]);
   return true;
+}
+
+/** Muestra u oculta una presentación del Dueño en el Enlace de su carpeta (#23). False si no es suya. */
+export async function setDeckHidden(db: D1Database, ownerId: string, id: string, hidden: boolean): Promise<boolean> {
+  const { meta } = await db
+    .prepare("UPDATE decks SET hidden = ? WHERE id = ? AND owner_id = ?")
+    .bind(hidden ? 1 : 0, id, ownerId)
+    .run();
+  return meta.changes > 0;
 }

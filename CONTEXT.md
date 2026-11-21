@@ -57,6 +57,11 @@ Dirección no listada para ver una carpeta: sus presentaciones y subcarpetas, en
 _En inglés_: folder link
 _Evitar_: enlace del curso, página del curso
 
+**Oculta**:
+Una presentación o carpeta que no aparece en el Enlace de la carpeta que la contiene, y con ella lo que tenga dentro. El Dueño la muestra cuando quiere, por ejemplo al llegar la unidad en su curso. Lo nuevo llega oculto. Ocultar no apaga su propio enlace: quien ya lo tiene la sigue viendo.
+_En inglés_: hidden (y «show» / «hide» para mostrar y ocultar)
+_Evitar_: privada, borrador, no publicada
+
 **Notas del presentador**:
 Texto que acompaña a una diapositiva y es para quien presenta, no para el público.
 _En inglés_: speaker notes

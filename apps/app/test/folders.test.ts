@@ -49,7 +49,9 @@ async function owner() {
   const order = (body: unknown, origin = ORIGIN) =>
     b.request("/panel/orden", { method: "POST", body: JSON.stringify(body), headers: { origin, "content-type": "application/json" } });
   const page = async (path: string) => (await b.request(path)).text();
-  return { ...b, name, post, folders, decks, folder, deck, order, page };
+  /** Muestra en el Enlace de su carpeta una presentación o carpeta, que llegan ocultas (#23). */
+  const show = (kind: "decks" | "carpetas", id: string, visible = "1") => post(`/panel/${kind}/${id}/visible`, { visible });
+  return { ...b, name, post, folders, decks, folder, deck, order, page, show };
 }
 
 const location = (response: Response) => response.headers.get("location");
@@ -92,7 +94,7 @@ describe("crear carpetas", () => {
     const t = await owner();
     const course = await t.folder("Física");
     const response = await t.post("/panel/carpetas", { nombre: "Unidad 1", carpeta: course });
-    expect(location(response)).toBe(`/panel/f/${course}?ok=carpeta-creada`);
+    expect(location(response)).toBe(`/panel/f/${course}?ok=carpeta-creada-oculta`);
   });
 
   it.each([
@@ -154,7 +156,8 @@ describe("el panel con carpetas", () => {
       file: new File([htmlSlidesDeck], "charla.html", { type: "text/html" }),
       carpeta: course,
     });
-    expect(location(response)).toBe(`/panel/f/${course}?ok=subido`);
+    expect(location(response)).toBe(`/panel/f/${course}?ok=subida-oculta`);
+    expect(await t.page(location(response)!)).toContain("Está oculta en esta carpeta");
     expect(await t.decks()).toMatchObject([{ folderId: course }]);
   });
 
@@ -206,7 +209,7 @@ describe("el panel con carpetas", () => {
     const tree = html.slice(html.indexOf('<nav class="tree"'), html.indexOf("</nav>", html.indexOf('<nav class="tree"')));
     // Cada carpeta del árbol recibe lo que se arrastra; la abierta va marcada.
     expect(tree).toMatch(/<a class="tree-link" href="\/panel" data-drop="raiz"\s*>Tus presentaciones<\/a>/);
-    expect(tree).toContain(`<a class="tree-link" href="/panel/f/${unit}" data-drop="${unit}" aria-current="page">Unidad 1</a>`);
+    expect(tree).toMatch(new RegExp(`<a class="tree-link is-hidden" href="/panel/f/${unit}" data-drop="${unit}" aria-current="page">Unidad 1<span`));
     for (const id of [course, week, other, act]) expect(tree).toContain(`href="/panel/f/${id}" data-drop="${id}"`);
     // La ruta hasta la carpeta abierta se ve; lo de Teatro queda cerrado.
     const branchOf = (id: string) => {
@@ -430,6 +433,8 @@ describe("Enlace de la carpeta", () => {
     const unit = await t.folder("Unidad 1", course);
     await t.deck("Célula", course, htmlSlidesDeck);
     const [deck] = await t.decks();
+    await t.show("carpetas", unit);
+    await t.show("decks", deck!.id);
 
     const visitor = browser();
     const response = await visitor.request(`/f/${course}`);
@@ -469,10 +474,11 @@ describe("Enlace de la carpeta", () => {
   it("no muestra presentaciones desactivadas", async () => {
     const t = await owner();
     const course = await t.folder("Curso");
-    const id = await t.deck("Oculta", course);
+    const id = await t.deck("Charla desactivada", course);
+    await t.show("decks", id);
     await env.DB.prepare("UPDATE decks SET disabled = 1 WHERE id = ?").bind(id).run();
     const html = await (await browser().request(`/f/${course}`)).text();
-    expect(html).not.toContain("Oculta");
+    expect(html).not.toContain("Charla desactivada");
     expect(html).toContain("Esta carpeta todavía está vacía.");
   });
 
@@ -490,5 +496,130 @@ describe("Enlace de la carpeta", () => {
     const html = await (await browser().request(`/f/${id}`)).text();
     expect(html).not.toContain("<script>alert");
     expect(html).toContain("&lt;script&gt;");
+  });
+});
+
+describe("mostrar y ocultar en el Enlace de la carpeta (#23)", () => {
+  it("lo nuevo llega oculto y se ve en la carpeta solo al mostrarlo, con las cifras de lo que se ve", async () => {
+    const t = await owner();
+    const course = await t.folder("Química");
+    const unit1 = await t.folder("Unidad 1", course);
+    const unit2 = await t.folder("Unidad 2", course);
+    const intro = await t.deck("Introducción", course);
+    await t.deck("Examen", course);
+    const visitor = browser();
+
+    let html = await (await visitor.request(`/f/${course}`)).text();
+    expect(html).toContain("Esta carpeta todavía está vacía.");
+    expect(html).not.toMatch(/Unidad 1|Introducción|Examen/);
+
+    await t.show("carpetas", unit1);
+    await t.show("decks", intro);
+    html = await (await visitor.request(`/f/${course}`)).text();
+    expect(html).toContain(`href="/f/${unit1}?desde=${course}"`);
+    expect(html).toContain(`href="/d/${intro}"`);
+    expect(html).not.toContain(unit2);
+    expect(html).not.toContain("Examen");
+    expect(html).toMatch(/<p class="folder-sub">\s*<span class="num">1<\/span> presentación · <span class="num">1<\/span> carpeta/);
+
+    // Ocultar lo vuelve a sacar.
+    await t.show("decks", intro, "0");
+    expect(await (await visitor.request(`/f/${course}`)).text()).not.toContain("Introducción");
+  });
+
+  it("lo que tiene una carpeta oculta no se ve desde arriba, y las cifras no lo cuentan", async () => {
+    const t = await owner();
+    const course = await t.folder("Física");
+    const unit = await t.folder("Unidad 1", course);
+    const week = await t.folder("Semana 1", unit);
+    const lesson = await t.deck("Caída libre", unit);
+    await t.show("carpetas", week);
+    await t.show("decks", lesson);
+    await t.show("carpetas", unit);
+
+    // Visible, Unidad 1 dice lo suyo; oculta una semana, deja de contarla.
+    let html = await (await browser().request(`/f/${course}`)).text();
+    expect(html).toContain("Carpeta · <span class=\"num\">1</span> carpeta dentro");
+    await t.show("carpetas", week, "0");
+    html = await (await browser().request(`/f/${course}`)).text();
+    expect(html).not.toContain("carpeta dentro");
+
+    await t.show("carpetas", unit, "0");
+    html = await (await browser().request(`/f/${course}`)).text();
+    expect(html).not.toContain("Unidad 1");
+    expect(html).not.toContain("Caída libre");
+  });
+
+  it("ocultar no apaga el enlace propio ni el Enlace para presentar", async () => {
+    const t = await owner();
+    const course = await t.folder("Historia");
+    const unit = await t.folder("Unidad 1", course);
+    const id = await t.deck("Roma", course);
+    const [deck] = await t.decks();
+    const visitor = browser();
+    expect((await visitor.request(`/d/${id}`)).status).toBe(200);
+    expect((await visitor.request(`/p/${deck!.secret}`)).status).toBe(200);
+    expect((await visitor.request(`/f/${unit}`)).status).toBe(200);
+  });
+
+  it("lo que ya existía antes sigue visible", async () => {
+    const t = await owner();
+    const course = await t.folder("Arte");
+    const id = await t.deck("Barroco", course);
+    // Así quedó lo de antes de la migración: la columna en 0.
+    await env.DB.prepare("UPDATE decks SET hidden = 0 WHERE id = ?").bind(id).run();
+    expect(await (await browser().request(`/f/${course}`)).text()).toContain("Barroco");
+  });
+
+  it("en el panel, dentro de una carpeta, lo oculto lleva su sello y «Mostrar»; en la raíz no", async () => {
+    const t = await owner();
+    const course = await t.folder("Música");
+    const id = await t.deck("Ritmo", course);
+    await t.deck("Suelta");
+    const inside = await t.page(`/panel/f/${course}`);
+    expect(inside).toContain(`<li class="session is-hidden" data-id="${id}">`);
+    expect(inside).toContain('<span class="stamp stamp-small">Oculta</span>');
+    expect(inside).toContain(`action="/panel/decks/${id}/visible"`);
+    expect(inside).toMatch(/<button class="btn btn-small btn-ink" type="submit">Mostrar<span class="visually-hidden"> «Ritmo»<\/span><\/button>/);
+    expect(inside).toContain("Ocultar de la carpeta");
+
+    await t.show("decks", id);
+    expect(await t.page(`/panel/f/${course}`)).toContain(`<li class="session" data-id="${id}">`);
+
+    const root = await t.page("/panel");
+    expect(root).not.toContain('class="session-hidden"');
+    expect(root).not.toContain("Ocultar de la carpeta");
+  });
+
+  it("contesta en JSON al panel, vuelve a la carpeta sin JS y no toca lo ajeno", async () => {
+    const t = await owner();
+    const course = await t.folder("Teatro");
+    const id = await t.deck("Acto 1", course);
+    const json = await t.request(`/panel/decks/${id}/visible`, {
+      method: "POST",
+      body: new URLSearchParams({ visible: "1" }),
+      headers: { origin: ORIGIN, accept: "application/json" },
+    });
+    expect(json.status).toBe(204);
+
+    const back = await t.show("carpetas", course, "0");
+    expect(back.status).toBe(303);
+    expect(location(back)).toBe("/panel?ok=carpeta-oculta");
+    const inFolder = await t.post(`/panel/decks/${id}/visible`, { visible: "0", volver: course });
+    expect(location(inFolder)).toBe(`/panel/f/${course}?ok=oculta`);
+
+    const intruder = await owner();
+    expect(location(await intruder.show("decks", id))).toBe("/panel?error=no-existe");
+    expect(location(await intruder.show("carpetas", course))).toBe("/panel?error=no-existe");
+    expect((await t.decks())[0]!.id).toBe(id);
+    const hidden = await env.DB.prepare("SELECT hidden FROM decks WHERE id = ?").bind(id).first<{ hidden: number }>();
+    expect(hidden?.hidden).toBe(1);
+
+    const foreign = await t.request(`/panel/decks/${id}/visible`, {
+      method: "POST",
+      body: new URLSearchParams({ visible: "1" }),
+      headers: { origin: "https://otro.test" },
+    });
+    expect(foreign.status).toBe(403);
   });
 });

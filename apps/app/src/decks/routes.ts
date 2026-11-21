@@ -13,12 +13,13 @@ import {
   pathTo,
   renameFolder,
   reorder,
+  setFolderHidden,
 } from "../folders/store";
 import { notFoundPage, panelPage } from "../pages";
 import type { AppEnv } from "../types";
 import type { Limits } from "./limits";
 import { parseNotes } from "./notes";
-import { deckCounts, deleteDeck, listDecks, saveNotes, storeDeck, usage } from "./store";
+import { deckCounts, deleteDeck, listDecks, saveNotes, setDeckHidden, storeDeck, usage } from "./store";
 
 // El panel es solo del Dueño con sesión.
 const requireUser = createMiddleware<AppEnv>(async (c, next) => {
@@ -36,8 +37,8 @@ async function backTo(c: Context<AppEnv>, raw: unknown): Promise<string | null> 
 }
 
 /**
- * Al mover, el formulario de «Mover a» espera que lo devuelvan al panel; el
- * arrastre del panel pide JSON y se queda en la página (#20).
+ * Al mover (o mostrar y ocultar), el formulario espera que lo devuelvan al
+ * panel; con JS el panel pide JSON y se queda en la página (#20, #23).
  */
 function moveAnswer(c: Context<AppEnv>, back: string | null, error: string | null, ok: string) {
   if (c.req.header("accept")?.includes("application/json")) {
@@ -98,7 +99,9 @@ export function panelRoutes(limits: Limits) {
     const body = await c.req.parseBody();
     const parent = await backTo(c, body["carpeta"]);
     const result = await createFolder(c.env.DB, c.var.user!.id, body["nombre"], parent);
-    return c.redirect(panelUrl(parent, result.ok ? "ok=carpeta-creada" : `error=${result.error}`), 303);
+    // Dentro de una carpeta, lo nuevo llega oculto (#23) y el aviso lo dice.
+    const ok = parent ? "ok=carpeta-creada-oculta" : "ok=carpeta-creada";
+    return c.redirect(panelUrl(parent, result.ok ? ok : `error=${result.error}`), 303);
   });
 
   panel.post("/carpetas/:id/nombre", async (c) => {
@@ -136,7 +139,8 @@ export function panelRoutes(limits: Limits) {
     const notes = parseNotes(body["notas"]);
     if (notes === "invalidas") return c.redirect(panelUrl(folderId, "error=notas"), 303);
     const result = await storeDeck(c.env, limits, { ownerId: c.var.user!.id, file, folderId, notes });
-    return c.redirect(panelUrl(folderId, result.ok ? "ok=subido" : `error=${result.error}`), 303);
+    const ok = folderId ? "ok=subida-oculta" : "ok=subido";
+    return c.redirect(panelUrl(folderId, result.ok ? ok : `error=${result.error}`), 303);
   });
 
   panel.post("/decks/:id", async (c) => {
@@ -178,6 +182,28 @@ export function panelRoutes(limits: Limits) {
     const target = await destination(c, body["destino"]);
     const error = !isDeckId(id) || !target.ok ? "no-existe" : await moveDeck(c.env.DB, c.var.user!.id, id, target.id);
     return moveAnswer(c, back, error, "movido");
+  });
+
+  // ── Mostrar y ocultar en el Enlace de la carpeta (#23) ──────────────────
+  // `visible` es "1" para mostrar y "0" para ocultar. Con JS el panel pide
+  // JSON y cambia la hilera en el lugar; sin JS vuelve a la carpeta.
+
+  panel.post("/decks/:id/visible", async (c) => {
+    const id = c.req.param("id");
+    const body = await c.req.parseBody();
+    const back = await backTo(c, body["volver"]);
+    const show = body["visible"] === "1";
+    const done = isDeckId(id) && (await setDeckHidden(c.env.DB, c.var.user!.id, id, !show));
+    return moveAnswer(c, back, done ? null : "no-existe", show ? "mostrada" : "oculta");
+  });
+
+  panel.post("/carpetas/:id/visible", async (c) => {
+    const id = c.req.param("id");
+    const body = await c.req.parseBody();
+    const back = await backTo(c, body["volver"]);
+    const show = body["visible"] === "1";
+    const done = isFolderId(id) && (await setFolderHidden(c.env.DB, c.var.user!.id, id, !show));
+    return moveAnswer(c, back, done ? null : "no-existe", show ? "carpeta-mostrada" : "carpeta-oculta");
   });
 
   // ── Orden: lo guarda el panel al arrastrar o al usar Subir y Bajar ──────

@@ -304,11 +304,13 @@ La credencial plastificada colgada de una cinta amarilla de 3rem con bordes de t
   - **Soltar:** entre hileras, la ficha baja a su hueco en 200ms, pierde la sombra y se funde con la hilera; las hileras se despliegan en 340ms. Sobre una carpeta, la ficha entra en su código (en el árbol, por el comienzo del nombre) y desaparece (340ms), el hueco se cierra, la carpeta se apaga y su número sube con un pequeño salto. Una carpeta movida pasa en el árbol a su carpeta nueva, que se abre, y su nombre se marca en amarillo y se apaga en 1.2s. Esc cancela y todo vuelve a su lugar.
   - **Deshacer:** después de mover algo a otra carpeta, un pie corrido de tinta sube desde abajo (300ms) con el texto en cartulina 600 («La célula» quedó en «Unidad 2».) y el botón pequeño «Deshacer» en cartulina, que pasa a amarillo al hover y con el foco. Se va solo a los 8s, salvo con el mouse o el foco encima.
   - **Reducir movimiento:** sin balanceo, sin crecer ni encoger, y todos los cambios son inmediatos; los colores de estado se mantienen.
+- **Oculta (#23):** dentro de una carpeta, una hilera oculta lleva bajo los metadatos un sello pequeño «Oculta» (borde de 2px, 0.9375rem, girado −4°), la nota en tinta suave «No sale en el enlace de la carpeta.» y el botón pequeño de tinta «Mostrar»; su título pasa a tinta suave. Una visible se oculta con «Ocultar de la carpeta» en «Más». El cambio no recarga: al ocultar, el sello cae sobre la hilera (320ms, desde 1.6× y −10°) y el foco pasa a «Mostrar»; al mostrar, a «Más». En la raíz del panel no aparece nada de esto, porque ahí nada está en un Enlace de la carpeta.
 - **En el Enlace de la carpeta:** la hilera pierde las acciones del Dueño y queda con un solo botón: «Abrir carpeta» o «Ver presentación» (tinta).
 
 ### Árbol de carpetas
 - La columna izquierda del panel: el título «Carpetas» en la talla Title small y, debajo, «Tus presentaciones» con todas las carpetas del Dueño en el orden que les dio. Cada nivel entra 0.8rem con una guía de 2px en tinta al 14%. Los nombres van en 700 al 80% de ancho, en una línea que se parte si hace falta; al hover, un fondo de tinta al 8% con radio de 6px.
 - **Carpeta abierta:** un campo de tinta con texto en cartulina, como la cabecera.
+- **Carpeta oculta:** su nombre en tinta suave y 600; un lector de pantalla oye «(oculta)».
 - **Abrir y cerrar:** una flecha de tinta (blanco de 1.75rem) antes de cada carpeta con carpetas dentro gira 90° en 160ms. Al cargar se ve abierta la ruta hasta la carpeta abierta; las demás, cerradas. Sin JS la flecha no se ve pero guarda su lugar.
 - **En el celular:** el botón pequeño «Carpetas» con su flecha, encima de las listas, abre el árbol en una caja con regla de 2px y radio de 10px. Sin JS el árbol se ve siempre.
 - Sin carpetas no hay árbol, y el panel ocupa todo el ancho.
@@ -320,7 +322,7 @@ La credencial plastificada colgada de una cinta amarilla de 3rem con bordes de t
 - Banda verde a todo el ancho con la ruta, el nombre de la carpeta en la talla Headline y cuántas presentaciones y carpetas tiene; la regla de abajo de la banda es la de arriba de la primera lista. Sin notas, sin Enlace para presentar y sin acciones del Dueño.
 
 ### Stamp
-- Sello de goma: mayúsculas condensadas 800, borde de 3px en el color del texto, radio de 6px, girado −4°. Marca lo que todavía no existe («Por confirmar») o lo que ya no está («Cancelada»).
+- Sello de goma: mayúsculas condensadas 800, borde de 3px en el color del texto, radio de 6px, girado −4°. Marca lo que todavía no existe («Por confirmar»), lo que ya no está («Cancelada») o lo que el Dueño todavía no muestra en su carpeta («Oculta», en su variante pequeña).
 
 ### Notices
 - Una sesión del programa a escala de página: la banda naranja llena el espacio entre cabecera y colofón, con titular, texto de 52ch, un botón de tinta y el sello en la esquina inferior derecha (en flujo bajo 560px). El 404 dice «Cancelada».

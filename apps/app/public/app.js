@@ -194,6 +194,36 @@ if (treeOpen) {
   });
 }
 
+// Mostrar y ocultar en el Enlace de la carpeta (#23): sin recargar. La clase
+// `is-hidden` de la hilera decide si se ve el sello con «Mostrar» o, en «Más»,
+// «Ocultar de la carpeta».
+document.addEventListener("submit", async (event) => {
+  const form = event.target.closest?.("[data-visibility]");
+  if (!form) return;
+  event.preventDefault();
+  const row = form.closest("li[data-id]");
+  const show = form.elements.visible.value === "1";
+  const name = row.querySelector(".session-title")?.textContent.trim() ?? "";
+  const button = form.querySelector("button");
+  button.disabled = true;
+  const response = await fetch(form.action, { method: "POST", body: new FormData(form), headers: { accept: "application/json" } }).catch(() => null);
+  button.disabled = false;
+  if (!response?.ok) {
+    showFileError(say("visibilityFailed", { name }));
+    return;
+  }
+  row.classList.toggle("is-hidden", !show);
+  row.classList.toggle("just-hidden", !show);
+  form.closest("details")?.removeAttribute("open");
+  document
+    .querySelector(`.tree li[data-folder="${CSS.escape(row.dataset.id)}"] > .tree-row .tree-link`)
+    ?.classList.toggle("is-hidden", !show);
+  const status = document.querySelector("[data-order-status]");
+  if (status) status.textContent = say(show ? "shownStatus" : "hiddenStatus", { name });
+  // El botón que se apretó ya no se ve: el foco pasa al que deshace el cambio.
+  (show ? row.querySelector(".more > summary") : row.querySelector(".show-form button"))?.focus();
+});
+
 // El selector de idioma vuelve a esta misma página.
 for (const back of document.querySelectorAll("[data-back]")) back.value = location.pathname + location.search;
 

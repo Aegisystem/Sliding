@@ -8,6 +8,8 @@ export interface Folder {
   name: string;
   parentId: string | null;
   position: number;
+  /** 1 si está oculta (#23): no aparece en el Enlace de la carpeta de arriba, ni lo suyo. */
+  hidden: number;
 }
 
 export type FolderError = "nombre" | "no-existe" | "ciclo";
@@ -25,7 +27,7 @@ export function cleanName(raw: unknown): string | null {
 export async function listFolders(db: D1Database, ownerId: string): Promise<Folder[]> {
   const { results } = await db
     .prepare(
-      `SELECT id, name, parent_id AS parentId, position FROM folders
+      `SELECT id, name, parent_id AS parentId, position, hidden FROM folders
        WHERE owner_id = ? ORDER BY position, created_at`,
     )
     .bind(ownerId)
@@ -74,7 +76,7 @@ async function nextPosition(db: D1Database, table: "folders" | "decks", ownerId:
 export async function ownFolder(db: D1Database, ownerId: string, id: unknown): Promise<Folder | null> {
   if (typeof id !== "string" || !isFolderId(id)) return null;
   return db
-    .prepare("SELECT id, name, parent_id AS parentId, position FROM folders WHERE id = ? AND owner_id = ?")
+    .prepare("SELECT id, name, parent_id AS parentId, position, hidden FROM folders WHERE id = ? AND owner_id = ?")
     .bind(id, ownerId)
     .first<Folder>();
 }
@@ -85,7 +87,7 @@ export async function findFolder(db: D1Database, id: string): Promise<(Folder & 
   return db
     // La carpeta de un Dueño desactivado no se ve (#11).
     .prepare(
-      `SELECT id, name, parent_id AS parentId, position, owner_id AS ownerId FROM folders
+      `SELECT id, name, parent_id AS parentId, position, hidden, owner_id AS ownerId FROM folders
        WHERE id = ? AND NOT EXISTS (SELECT 1 FROM users WHERE users.id = folders.owner_id AND users.disabled = 1)`,
     )
     .bind(id)
@@ -112,8 +114,9 @@ export async function createFolder(
   const now = Date.now();
   await db
     .prepare(
-      `INSERT INTO folders (id, owner_id, parent_id, name, position, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      // Lo nuevo llega oculto: el Dueño lo muestra en su carpeta cuando quiere (#23).
+      `INSERT INTO folders (id, owner_id, parent_id, name, position, hidden, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, 1, ?, ?)`,
     )
     .bind(id, ownerId, parentId, name, await nextPosition(db, "folders", ownerId, parentId), now, now)
     .run();
@@ -193,6 +196,15 @@ export async function reorder(
   if (ids.length !== siblings.size || !ids.every((id) => siblings.has(id))) return false;
   await db.batch(ids.map((id, position) => db.prepare(`UPDATE ${kind} SET position = ? WHERE id = ? AND owner_id = ?`).bind(position, id, ownerId)));
   return true;
+}
+
+/** Muestra u oculta una carpeta del Dueño en el Enlace de la carpeta de arriba (#23). False si no es suya. */
+export async function setFolderHidden(db: D1Database, ownerId: string, id: string, hidden: boolean): Promise<boolean> {
+  const { meta } = await db
+    .prepare("UPDATE folders SET hidden = ? WHERE id = ? AND owner_id = ?")
+    .bind(hidden ? 1 : 0, id, ownerId)
+    .run();
+  return meta.changes > 0;
 }
 
 export { nextPosition };
