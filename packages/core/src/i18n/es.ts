@@ -289,6 +289,39 @@ export const es = {
       "Para que esta cuenta modere Sliding, agrega ese id a `ADMIN_USER_IDS` en `apps/app/wrangler.jsonc` y despliega. Desde entonces, esta página existe solo para quien esté en esa lista.",
   },
 
+  /** Las Claves para Agentes del Dueño (#7). */
+  agents: {
+    title: "Claves para Agentes",
+    /** El enlace desde la credencial del panel. */
+    link: "Claves para Agentes",
+    lead: "Con una clave, un Agente como Claude sube y reemplaza presentaciones a tu nombre. No sirve para entrar a Sliding, y puedes revocarla cuando quieras.",
+    nameLabel: "Nombre de la clave",
+    nameHelp: "Para reconocerla después: dónde la usas o qué Agente la tiene.",
+    namePlaceholder: "Claude en mi Mac",
+    create: "Crear clave",
+    createdTitle: (name: string) => `Tu clave «${name}»`,
+    createdText: "Cópiala ahora y dásela a tu Agente: Sliding no la vuelve a mostrar. Si la pierdes, revócala y crea otra.",
+    copy: "Copiar la clave",
+    copied: "Clave copiada",
+    done: "Ya la copié",
+    yours: "Tus claves",
+    none: "Todavía no tienes claves.",
+    createdOn: (date: string) => `creada el ${date}`,
+    usedOn: (date: string) => `Usada por última vez el ${date}`,
+    unused: "Todavía no se usa",
+    revoke: "Revocar",
+    revokeLabel: (name: string) => `Revocar «${name}»`,
+    revokeConfirm: (name: string) => `¿Revocar «${name}»? El Agente que la tiene ya no podrá subir presentaciones con ella.`,
+    ok: {
+      revocada: "Clave revocada. Ya no sirve para nada.",
+    } as Record<string, string>,
+    errors: {
+      nombre: "Escribe un nombre para la clave, de hasta 80 caracteres.",
+      "no-existe": "Esa clave ya no existe.",
+    } as Record<string, string>,
+    limit: (max: number) => `Ya tienes ${max} claves, el máximo. Revoca una que no uses para crear otra.`,
+  },
+
   skill: {
     title: "Crea tus presentaciones con IA",
     sub: "La skill html-slides, lista para pasársela a tu IA.",

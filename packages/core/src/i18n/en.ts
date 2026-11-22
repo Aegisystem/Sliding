@@ -284,6 +284,37 @@ export const en: Texts = {
       "To let this account moderate Sliding, add that id to `ADMIN_USER_IDS` in `apps/app/wrangler.jsonc` and deploy. From then on, this page exists only for the people on that list.",
   },
 
+  agents: {
+    title: "Agent keys",
+    link: "Agent keys",
+    lead: "With a key, an agent like Claude uploads and replaces presentations in your name. It can't sign in to Sliding, and you can revoke it whenever you want.",
+    nameLabel: "Key name",
+    nameHelp: "So you can recognize it later: where you use it or which agent has it.",
+    namePlaceholder: "Claude on my Mac",
+    create: "Create key",
+    createdTitle: (name: string) => `Your key “${name}”`,
+    createdText: "Copy it now and give it to your agent: Sliding won't show it again. If you lose it, revoke it and create another one.",
+    copy: "Copy key",
+    copied: "Key copied",
+    done: "I've copied it",
+    yours: "Your keys",
+    none: "You don't have any keys yet.",
+    createdOn: (date: string) => `created ${date}`,
+    usedOn: (date: string) => `Last used ${date}`,
+    unused: "Not used yet",
+    revoke: "Revoke",
+    revokeLabel: (name: string) => `Revoke “${name}”`,
+    revokeConfirm: (name: string) => `Revoke “${name}”? The agent that has it won't be able to upload presentations with it anymore.`,
+    ok: {
+      revocada: "Key revoked. It no longer works.",
+    },
+    errors: {
+      nombre: "Write a name for the key, up to 80 characters.",
+      "no-existe": "That key no longer exists.",
+    },
+    limit: (max: number) => `You already have ${max} keys, the most you can have. Revoke one you don't use to create another.`,
+  },
+
   skill: {
     title: "Make your presentations with AI",
     sub: "The html-slides skill, ready to give to your AI.",

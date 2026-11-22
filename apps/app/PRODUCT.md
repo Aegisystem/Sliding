@@ -12,7 +12,7 @@ La persona principal prepara una charla o una clase como presentación HTML, muc
 
 Audiencias secundarias confirmadas:
 - **Público:** quien mira la Pantalla o abre el Enlace de la presentación después de la charla. No tiene cuenta.
-- **Agentes:** programas como Claude que suben presentaciones en nombre de un Dueño con un token.
+- **Agentes:** programas como Claude que suben presentaciones en nombre de un Dueño con una Clave para Agentes.
 
 ## Product Purpose
 
@@ -27,7 +27,7 @@ Sliding no es un editor de diapositivas: la presentación ya existe como HTML (h
 - **Panel del Dueño:** desde un computador, antes de la charla. Sube, reemplaza y borra presentaciones, y copia el Enlace de la presentación y el Enlace para presentar.
 - **Pantalla:** el computador conectado al proyector, a menudo uno ajeno, en un aula o sala con la luz baja. Muestra la presentación a pantalla completa y, en la preparación, el QR de control.
 - **Control:** el celular del Presentador, en la mano, de pie, con poca luz y con apuro. Botones grandes y notas legibles.
-- **Agentes:** suben presentaciones por API siguiendo `/llms.txt`, con un token que el Dueño crea en su panel.
+- **Agentes:** suben presentaciones por API siguiendo `/llms.txt`, con una Clave para Agentes que el Dueño crea en su panel.
 
 ## Capabilities and Constraints
 

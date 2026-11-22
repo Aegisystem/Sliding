@@ -7,15 +7,20 @@ const PATTERN = new RegExp(`^[${ALPHABET}]{${DECK_ID_LENGTH}}$`);
 // encima se descartan para que cada carácter salga con la misma probabilidad.
 const LIMIT = 256 - (256 % ALPHABET.length);
 
-/** Id de deck al azar, imposible de adivinar: el Enlace del deck no está listado. */
-export function newDeckId(): string {
-  let id = "";
-  while (id.length < DECK_ID_LENGTH) {
-    for (const byte of crypto.getRandomValues(new Uint8Array(DECK_ID_LENGTH * 2))) {
-      if (byte < LIMIT && id.length < DECK_ID_LENGTH) id += ALPHABET[byte % ALPHABET.length];
+/** Texto al azar de ese largo, imposible de adivinar, con letras y números fáciles de leer. */
+export function randomText(length: number): string {
+  let text = "";
+  while (text.length < length) {
+    for (const byte of crypto.getRandomValues(new Uint8Array(length * 2))) {
+      if (byte < LIMIT && text.length < length) text += ALPHABET[byte % ALPHABET.length];
     }
   }
-  return id;
+  return text;
+}
+
+/** Id de deck al azar, imposible de adivinar: el Enlace del deck no está listado. */
+export function newDeckId(): string {
+  return randomText(DECK_ID_LENGTH);
 }
 
 export function isDeckId(value: string): boolean {

@@ -1,6 +1,7 @@
 import { isDeckId } from "@sliding/core";
 import { type Context, Hono } from "hono";
 import { createMiddleware } from "hono/factory";
+import { agentRoutes } from "../agents/routes";
 import {
   childrenOf,
   createFolder,
@@ -86,6 +87,8 @@ export function panelRoutes(limits: Limits) {
       }),
     );
   };
+
+  panel.route("/agentes", agentRoutes());
 
   panel.get("/", (c) => view(c, null));
   panel.get("/f/:id", (c) => {

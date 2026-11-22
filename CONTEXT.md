@@ -82,6 +82,11 @@ Un programa, como Claude u otro asistente, que sube presentaciones en nombre de 
 _En inglés_: agent
 _Evitar_: bot, integración, cliente
 
+**Clave para Agentes**:
+Texto secreto que el Dueño crea en su panel, con un nombre como «Claude en mi Mac», y le da a un Agente para que suba presentaciones a su nombre. Sliding la muestra una sola vez, al crearla. Revocarla la deja sin efecto para siempre; no sirve para entrar a Sliding.
+_En inglés_: agent key
+_Evitar_: token, contraseña, API key
+
 ### Presentar
 
 **Sesión en vivo**:

@@ -11,7 +11,7 @@ document.addEventListener("click", async (event) => {
   try {
     button.dataset.label ??= button.textContent;
     await navigator.clipboard.writeText(button.dataset.copy);
-    button.textContent = say("copied");
+    button.textContent = button.dataset.copied ?? say("copied");
     button.classList.add("is-copied");
     setTimeout(() => {
       button.textContent = button.dataset.label;

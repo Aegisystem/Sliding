@@ -1,6 +1,7 @@
 import { TEXTS, type Texts } from "@sliding/core";
 import { html, raw } from "hono/html";
 import type { HtmlEscapedString } from "hono/utils/html";
+import { type AgentKey, MAX_KEYS } from "./agents/keys";
 import type { User } from "./auth/users";
 import type { Limits } from "./decks/limits";
 import type { DeckRow, PublicDeck, Usage } from "./decks/store";
@@ -680,7 +681,8 @@ export const panelPage = ({
             <p class="badge-quota">
               <span class="num">${usage.decks}</span> ${t.units.decks(usage.decks)}<br />
               ${raw(p.quota(num(formatBytes(usage.bytes, t)), num(mb(limits.bytesPerOwner, t))))}
-            </p>`,
+            </p>
+            <a class="badge-link" href="/panel/agentes">${t.agents.link}</a>`,
           { variant: "panel" },
         )}
       </div>
@@ -1093,6 +1095,94 @@ export const moderationSetupPage = (t: Texts, user: User) =>
         <p>${rich(t.moderation.setupText)}</p>
       </article>`,
   });
+
+// ── Claves para Agentes (#7) ──────────────────────────────────────────────
+
+const keyRow = (t: Texts, key: AgentKey) => {
+  const a = t.agents;
+  return html`<li class="session session-key">
+  <div class="session-main">
+    ${rowTitle(3, key.name)}
+    <p class="session-meta">
+      ${key.lastUsedAt ? a.usedOn(day(key.lastUsedAt, t)) : a.unused} · ${a.createdOn(day(key.createdAt, t))}
+    </p>
+  </div>
+  <div class="session-actions">
+    <form method="post" action="/panel/agentes/${key.id}/revocar" data-confirm="${a.revokeConfirm(key.name)}">
+      <button class="btn btn-small btn-danger" type="submit" aria-label="${a.revokeLabel(key.name)}">${a.revoke}</button>
+    </form>
+  </div>
+</li>`;
+};
+
+/**
+ * Las claves del Dueño y el formulario para crear otra. Recién creada, la
+ * clave sale arriba una sola vez: Sliding guarda solo su hash.
+ */
+export const agentKeysPage = ({
+  t,
+  user,
+  keys,
+  created,
+  ok,
+  error,
+}: {
+  t: Texts;
+  user: User;
+  keys: AgentKey[];
+  created?: { key: string; name: string };
+  ok?: string;
+  error?: string;
+}) => {
+  const a = t.agents;
+  const okText = ok ? a.ok[ok] : undefined;
+  const errorText = error === "limite" ? a.limit(MAX_KEYS) : error ? a.errors[error] : undefined;
+  return layout({
+    t,
+    title: titled(t, a.title),
+    user,
+    page: "panel",
+    body: html`<div class="panel-intro mod-intro">
+        <nav class="crumbs" aria-label="${t.panel.crumbs}">
+          <ol>
+            <li><a href="/panel">${t.panel.root}</a></li>
+          </ol>
+        </nav>
+        <h1>${a.title}</h1>
+        <p class="mod-lead">${a.lead}</p>
+        ${created
+          ? ""
+          : html`<form class="new-folder key-new" method="post" action="/panel/agentes">
+              <label for="clave-nombre">${a.nameLabel}</label>
+              <div class="new-folder-row">
+                <input class="field" id="clave-nombre" name="nombre" maxlength="80" required autocomplete="off"
+                  placeholder="${a.namePlaceholder}" aria-describedby="clave-ayuda" ${error === "nombre" ? html`autofocus` : ""} />
+                <button class="btn btn-ink" type="submit">${a.create}</button>
+              </div>
+              <p class="upload-help" id="clave-ayuda">${a.nameHelp}</p>
+            </form>`}
+      </div>
+      ${created
+        ? html`<section class="key-created track-amarillo" aria-labelledby="clave-nueva">
+            <h2 id="clave-nueva">${a.createdTitle(created.name)}</h2>
+            <p class="key-created-text">${a.createdText}</p>
+            <div class="key-created-row">
+              <code class="key-value">${created.key}</code>
+              <button class="btn btn-ink copy" type="button" data-copy="${created.key}" data-copied="${a.copied}">${a.copy}</button>
+            </div>
+            <a class="btn btn-small key-done" href="/panel/agentes">${a.done}</a>
+          </section>`
+        : ""}
+      ${okText ? html`<p class="flash flash-ok" role="status">${okText}</p>` : ""}
+      ${errorText ? html`<p class="flash flash-error" role="alert">${errorText}</p>` : ""}
+      <section class="mod-section" aria-labelledby="claves">
+        <h2 class="program-label" id="claves">${a.yours}</h2>
+        ${keys.length
+          ? html`<ol class="program">${keys.map((key) => keyRow(t, key))}</ol>`
+          : html`<p class="mod-note">${a.none}</p>`}
+      </section>`,
+  });
+};
 
 // ── La skill para tu IA ───────────────────────────────────────────────────
 

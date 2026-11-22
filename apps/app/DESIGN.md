@@ -287,7 +287,7 @@ Tinta sobre cartulina, gruesos y sobrios, como la tipografía de un programa.
 La credencial plastificada colgada de una cinta amarilla de 3rem con bordes de tinta.
 - **Anatomía:** ranura de tinta perforada arriba, foto circular opcional, nombre en condensada grande, contenido y, al pie y a sangre, la franja de tinta con «PRESENTADOR» en amarillo. Cartulina, borde de 3px, radio de 16px, sombra de la credencial.
 - **Variante tapa:** la cinta sube por detrás de la cabecera corrida y la credencial queda centrada sobre la última pista, pero nunca más allá del margen (ancho clamp(13.5rem, 25vw − 2rem, 20rem)). Lleva el saludo y los botones para entrar, o «Ir a tu panel» si ya hay sesión. Bajo 900px cuelga en flujo, centrada, desde la regla superior de las pistas sobre el campo azul, con una cinta de 2.5rem.
-- **Variante panel:** cuelga de la cabecera corrida con una cinta de 2.5rem, 17rem de ancho, con el nombre del Dueño y su cuota en cifras tabulares.
+- **Variante panel:** cuelga de la cabecera corrida con una cinta de 2.5rem, 17rem de ancho, con el nombre del Dueño, su cuota en cifras tabulares y el enlace subrayado «Claves para Agentes» (700 al 80% de ancho, 0.9375rem).
 - **Movimiento:** se balancea una vez al cargar (1.8s, `--ease`, desde 6° amortiguándose a 0°) desde su ranura y se asienta.
 
 ### Session row (Cards / Containers)
@@ -354,6 +354,11 @@ La credencial plastificada colgada de una cinta amarilla de 3rem con bordes de t
 - Hilera de presentación: su código de pista, título (enlace a la presentación si se ve), «tipo · de Dueño · subida el · peso», y una acción: «Desactivar» (pide confirmación, hover naranja) o «Reactivar». Lo desactivado lleva su aviso en franja naranja bajo los metadatos.
 - Hilera de Dueño: el código en cartulina con cuántas presentaciones tiene; nombre, proveedor, correo, peso y última entrada; «Desactivar cuenta» o «Reactivar cuenta». La propia dice «Tu cuenta.» y no se puede desactivar.
 - Mientras no hay Administrador, la página es de lectura con banda amarilla y muestra el id de la cuenta en un recuadro con regla de 2px, fácil de seleccionar.
+
+### Claves para Agentes
+- Página del Dueño con el marco de la moderación: la ruta «Tus presentaciones», el h1 en la talla del panel, una línea de tinta suave y la caja de «Nueva carpeta» con «Nombre de la clave», el campo («Claude en mi Mac»), «Crear clave» (tinta) y una ayuda en tinta suave.
+- **Clave recién creada:** en lugar de la caja, un campo amarillo entre reglas con «Tu clave «…»» en condensada, el aviso en 600 («Cópiala ahora…»), la clave en monoespaciada sobre una caja de cartulina con regla de 2px (se selecciona entera), «Copiar la clave» (tinta; al copiar, verde con «Clave copiada») y el botón pequeño «Ya la copié», que vuelve a la página sin la clave.
+- **Hileras:** sin código de pista; el nombre, «Usada por última vez el …» o «Todavía no se usa» y la fecha de creación, y «Revocar» pequeño (pide confirmación, hover naranja). En el celular, «Revocar» baja bajo el nombre.
 
 ### Visor de la presentación
 - La página del Enlace de la presentación no carga la hoja de estilos ni la fuente de Sliding: un iframe a toda la ventana sobre negro, sin marca encima.
