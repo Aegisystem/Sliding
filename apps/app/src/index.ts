@@ -1,6 +1,8 @@
 import { VISIBLE_DECK, isDeckId } from "@sliding/core";
 import { type Context, Hono } from "hono";
 import { createMiddleware } from "hono/factory";
+import { apiRoutes } from "./agents/api";
+import { llmsTxt } from "./agents/llms";
 import { type Providers, realProviders } from "./auth/providers";
 import { authRoutes } from "./auth/routes";
 import { readSession } from "./auth/session";
@@ -48,6 +50,13 @@ export function createApp(overrides: Partial<Deps> = {}) {
   app.route("/", liveRoutes());
   app.route("/moderacion", moderationRoutes());
   app.route("/idioma", languageRoutes());
+  app.route("/api/v1", apiRoutes(deps.limits));
+
+  // Cómo usa la API un Agente, en inglés (#8). Las direcciones salen de este origen.
+  app.get("/llms.txt", (c) => {
+    c.header("content-type", "text/plain; charset=utf-8");
+    return c.body(llmsTxt(new URL(c.req.url).origin, deps.limits));
+  });
 
   app.get("/", (c) => c.html(homePage({ t: c.var.t, user: c.var.user, error: c.req.query("error"), limits: deps.limits })));
 

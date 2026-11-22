@@ -13,6 +13,7 @@ export function agentRoutes() {
       agentKeysPage({
         t: c.var.t,
         user,
+        origin: new URL(c.req.url).origin,
         keys: await listKeys(c.env.DB, user.id),
         ok: c.req.query("ok"),
         error: c.req.query("error"),
@@ -28,7 +29,13 @@ export function agentRoutes() {
     if (!created.ok) return c.redirect(`/panel/agentes?error=${created.error}`, 303);
     c.header("cache-control", "no-store");
     return c.html(
-      agentKeysPage({ t: c.var.t, user, keys: await listKeys(c.env.DB, user.id), created: { key: created.key, name: created.name } }),
+      agentKeysPage({
+        t: c.var.t,
+        user,
+        origin: new URL(c.req.url).origin,
+        keys: await listKeys(c.env.DB, user.id),
+        created: { key: created.key, name: created.name },
+      }),
     );
   });
 

@@ -915,6 +915,14 @@ body > main {
   width: min(100%, 40rem);
 }
 
+/* El enlace a /llms.txt va completo: el Dueño se lo copia a su Agente. */
+.key-guide {
+  max-width: 60ch;
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
 /* La clave recién creada: un aviso de éxito a escala de sección, entre
    reglas, con la clave en una caja de cartulina que se selecciona entera. */
 .key-created {

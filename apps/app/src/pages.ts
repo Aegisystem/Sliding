@@ -1122,6 +1122,7 @@ const keyRow = (t: Texts, key: AgentKey) => {
 export const agentKeysPage = ({
   t,
   user,
+  origin,
   keys,
   created,
   ok,
@@ -1129,6 +1130,7 @@ export const agentKeysPage = ({
 }: {
   t: Texts;
   user: User;
+  origin: string;
   keys: AgentKey[];
   created?: { key: string; name: string };
   ok?: string;
@@ -1150,6 +1152,7 @@ export const agentKeysPage = ({
         </nav>
         <h1>${a.title}</h1>
         <p class="mod-lead">${a.lead}</p>
+        <p class="key-guide">${a.guide} <a href="${origin}/llms.txt">${origin}/llms.txt</a></p>
         ${created
           ? ""
           : html`<form class="new-folder key-new" method="post" action="/panel/agentes">

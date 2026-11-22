@@ -297,6 +297,7 @@ export const es = {
     lead: "Con una clave, un Agente como Claude sube y reemplaza presentaciones a tu nombre. No sirve para entrar a Sliding, y puedes revocarla cuando quieras.",
     nameLabel: "Nombre de la clave",
     nameHelp: "Para reconocerla después: dónde la usas o qué Agente la tiene.",
+    guide: "Para que tu Agente sepa usarla, dale también este enlace:",
     namePlaceholder: "Claude en mi Mac",
     create: "Crear clave",
     createdTitle: (name: string) => `Tu clave «${name}»`,

@@ -290,6 +290,7 @@ export const en: Texts = {
     lead: "With a key, an agent like Claude uploads and replaces presentations in your name. It can't sign in to Sliding, and you can revoke it whenever you want.",
     nameLabel: "Key name",
     nameHelp: "So you can recognize it later: where you use it or which agent has it.",
+    guide: "So your agent knows how to use it, also give it this link:",
     namePlaceholder: "Claude on my Mac",
     create: "Create key",
     createdTitle: (name: string) => `Your key “${name}”`,

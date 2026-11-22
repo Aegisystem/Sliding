@@ -17,5 +17,6 @@ Sitio para subir presentaciones HTML y presentarlas con el celular como Control.
 - Las Notas del presentador nunca van en el HTML servido. Llegan al Control por la Sesión en vivo.
 - Toda consulta que sirve o abre una presentación filtra con `VISIBLE_DECK` de `@sliding/core`: así lo que desactivó el Administrador (o su Dueño desactivado) da 404 en todas partes (#11).
 - Una Clave para Agentes existe en claro solo en la respuesta que la crea: Sliding guarda su hash y nunca la escribe en logs, cookies ni URLs (#7).
+- La API para Agentes (`/api/v1/`) acepta solo la Clave para Agentes en `Authorization`, nunca la sesión: por eso no pide el mismo origen. Lo que lee un Agente (`/llms.txt` y las respuestas de la API) va solo en inglés, en `apps/app/src/agents/`, y `/llms.txt` cambia junto con la API (#8).
 - El `.pptx` nunca se sube: el navegador del Dueño lee sus notas y manda solo ese texto ([ADR 0004](docs/adr/0004-powerpoint-como-pdf-mas-notas.md)).
 - Todo cabe en el plan gratis de Cloudflare, sin tarjeta ([ADR 0002](docs/adr/0002-archivos-en-kv.md)).
