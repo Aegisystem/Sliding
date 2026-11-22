@@ -17,13 +17,23 @@ export function llmsTxt(origin: string, limits: Limits): string {
 
 ## 1. Get the owner's agent key
 
-Every request needs an agent key. The owner creates it at ${origin}/panel/agentes. It looks like \`sliding_\` followed by 40 letters and digits.
+Every request needs an agent key. The owner creates it at ${origin}/panel/agentes. It looks like \`sliding_\` followed by 40 letters and digits. Look for it in this order:
 
-Read it from the \`SLIDING_KEY\` environment variable. If it isn't set, ask the owner to create a key and give it to you. Treat it like a password: don't print it, don't save it in the project, and send it only to ${origin}.
+1. The \`SLIDING_KEY\` environment variable.
+2. The file \`~/.config/sliding/key\`.
+3. The conversation: the owner may have pasted it, usually in a message that points to this file and ends with \`My agent key:\` or \`Mi Clave para Agentes:\`.
 
-Send it in every request as a header:
+If there's no key, ask the owner to create one at ${origin}/panel/agentes and paste you the message that page gives them. When the key came from the conversation, offer to save it on their computer so you don't have to ask next time. Put the key in place of \`sliding_…\`:
+
+\`\`\`sh
+mkdir -p ~/.config/sliding && (umask 077 && printf '%s\\n' "sliding_…" > ~/.config/sliding/key)
+\`\`\`
+
+Treat it like a password: don't print it, don't save it in the project or in a commit, and send it only to ${origin}. Send it in every request as a header:
 
     Authorization: Bearer $SLIDING_KEY
+
+The commands below start by loading the key from the variable or the file. Run each one as a single command: a variable set in one command is gone in the next. If the key only came from the conversation and the owner didn't want it saved, put it in place of that first line: \`SLIDING_KEY="sliding_…"\`.
 
 ## 2. Upload a new presentation
 
@@ -35,6 +45,7 @@ Send the file in a multipart form field named \`file\`. Sliding accepts:
 Each file can be up to ${deckSize}, and all of the owner's presentations together up to ${space}.
 
 \`\`\`sh
+SLIDING_KEY="\${SLIDING_KEY:-$(cat ~/.config/sliding/key 2>/dev/null)}"
 curl -sS -X POST "${api}" \\
   -H "Authorization: Bearer $SLIDING_KEY" \\
   -F "file=@index.html"
@@ -74,6 +85,7 @@ Save only the id: never the key or the presenting link.
 If \`.sliding.json\` already exists, replace that presentation instead of uploading a new one. Put its id in place of \`<id>\`:
 
 \`\`\`sh
+SLIDING_KEY="\${SLIDING_KEY:-$(cat ~/.config/sliding/key 2>/dev/null)}"
 curl -sS -X PUT "${api}/<id>" \\
   -H "Authorization: Bearer $SLIDING_KEY" \\
   -F "file=@index.html"

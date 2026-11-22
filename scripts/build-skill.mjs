@@ -38,7 +38,7 @@ Después pídele, por ejemplo: «Haz una presentación sobre la fotosíntesis pa
 
 ## Publicar en Sliding
 
-Cuando la presentación esté lista, no hace falta desplegarla: entra a https://sliding.aegisystem.xyz/panel, sube el archivo .html y toca «Presentar con control». Las notas de cada diapositiva aparecen en tu celular, nunca en la pantalla del público.
+Cuando la presentación esté lista, tu IA te preguntará si la publica en Sliding. Si puede ejecutar comandos, como Claude Code, la sube y te da sus dos enlaces; la primera vez te pedirá una Clave para Agentes, que creas en https://sliding.aegisystem.xyz/panel/agentes. Si no puede, sube el archivo .html en https://sliding.aegisystem.xyz/panel. Para presentar, abre el Enlace para presentar en el computador y escanea el QR con el celular: las notas de cada diapositiva aparecen ahí, nunca en la pantalla del público.
 
 ---
 

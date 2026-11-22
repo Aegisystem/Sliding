@@ -356,8 +356,8 @@ La credencial plastificada colgada de una cinta amarilla de 3rem con bordes de t
 - Mientras no hay Administrador, la página es de lectura con banda amarilla y muestra el id de la cuenta en un recuadro con regla de 2px, fácil de seleccionar.
 
 ### Claves para Agentes
-- Página del Dueño con el marco de la moderación: la ruta «Tus presentaciones», el h1 en la talla del panel, una línea de tinta suave, la línea en 600 que da el enlace a `/llms.txt` para el Agente y la caja de «Nueva carpeta» con «Nombre de la clave», el campo («Claude en mi Mac»), «Crear clave» (tinta) y una ayuda en tinta suave.
-- **Clave recién creada:** en lugar de la caja, un campo amarillo entre reglas con «Tu clave «…»» en condensada, el aviso en 600 («Cópiala ahora…»), la clave en monoespaciada sobre una caja de cartulina con regla de 2px (se selecciona entera), «Copiar la clave» (tinta; al copiar, verde con «Clave copiada») y el botón pequeño «Ya la copié», que vuelve a la página sin la clave.
+- Página del Dueño con el marco de la moderación: la ruta «Tus presentaciones», el h1 en la talla del panel, una línea de tinta suave, una línea en 600 que dice cómo se usa (crear, copiar el mensaje, pegárselo al Agente) y la caja de «Nueva carpeta» con «Nombre de la clave», el campo («Claude en mi Mac»), «Crear clave» (tinta) y una ayuda en tinta suave.
+- **Clave recién creada:** en lugar de la línea y la caja, un campo amarillo entre reglas con «Tu clave «…»» en condensada, el aviso en 600 («Copia este mensaje y pégaselo a tu Agente…»), el mensaje para el Agente (el pedido, el enlace a `/llms.txt` y la clave) en 600 sobre una caja de cartulina con regla de 2px y radio de 10px, de hasta 62ch, que se selecciona entera; «Copiar mensaje para tu Agente» (tinta) y «Copiar solo la clave» (al copiar, verde con «Mensaje copiado» o «Clave copiada»), y el botón pequeño «Ya lo copié», que vuelve a la página sin la clave.
 - **Hileras:** sin código de pista; el nombre, «Usada por última vez el …» o «Todavía no se usa» y la fecha de creación, y «Revocar» pequeño (pide confirmación, hover naranja). En el celular, «Revocar» baja bajo el nombre.
 
 ### Visor de la presentación

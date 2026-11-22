@@ -53,8 +53,11 @@ describe("las Claves para Agentes (#7)", () => {
     const { response, html, key, id } = await createKey(b);
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toBe("no-store");
-    expect(html).toContain("Cópiala ahora");
+    expect(html).toContain("Hazlo ahora: Sliding no vuelve a mostrar la clave.");
     expect(html).toContain(`data-copy="${key}"`);
+    // El mensaje para el Agente: el pedido, sus instrucciones y la clave.
+    const message = `Publica mi presentación en Sliding.\nInstrucciones para Agentes: ${ORIGIN}/llms.txt\nMi Clave para Agentes: ${key}`;
+    expect(html).toContain(`data-copy="${message}"`);
 
     const row = await env.DB.prepare("SELECT * FROM agent_keys WHERE id = ?").bind(id).first<Record<string, unknown>>();
     expect(row).toMatchObject({ owner_id: ownerId, name: "Claude en mi Mac", last_used_at: null });
@@ -139,6 +142,7 @@ describe("las Claves para Agentes (#7)", () => {
     const { b } = await person("Ada", "en");
     const { html } = await createKey(b);
     expect(html).toContain("<h1>Agent keys</h1>");
-    expect(html).toContain("Copy it now");
+    expect(html).toContain("Copy message for your agent");
+    expect(html).toContain(`Instructions for agents: ${ORIGIN}/llms.txt\nMy agent key: sliding_`);
   });
 });

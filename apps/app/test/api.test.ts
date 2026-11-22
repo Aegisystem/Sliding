@@ -161,6 +161,8 @@ describe("/llms.txt (#8)", () => {
       '-H "Authorization: Bearer $SLIDING_KEY"',
       '-F "file=@index.html"',
       ".sliding.json",
+      "~/.config/sliding/key",
+      'SLIDING_KEY="${SLIDING_KEY:-$(cat ~/.config/sliding/key 2>/dev/null)}"',
       `${ORIGIN}/panel/agentes`,
       "presentingLink",
       "not-found",
@@ -171,8 +173,11 @@ describe("/llms.txt (#8)", () => {
     expect(text).not.toMatch(/presentación|diapositiva/);
   });
 
-  it("la página de las claves lleva a /llms.txt", async () => {
+  it("el mensaje para el Agente lleva a /llms.txt", async () => {
     const { b } = await owner();
-    expect(await (await b.request("/panel/agentes")).text()).toContain(`<a href="${ORIGIN}/llms.txt">${ORIGIN}/llms.txt</a>`);
+    const form = new FormData();
+    form.append("nombre", "Otra");
+    const page = await (await b.request("/panel/agentes", { method: "POST", body: form, headers: { origin: ORIGIN } })).text();
+    expect(page).toContain(`Instrucciones para Agentes: ${ORIGIN}/llms.txt\nMi Clave para Agentes: sliding_`);
   });
 });

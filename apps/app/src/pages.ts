@@ -1152,7 +1152,7 @@ export const agentKeysPage = ({
         </nav>
         <h1>${a.title}</h1>
         <p class="mod-lead">${a.lead}</p>
-        <p class="key-guide">${a.guide} <a href="${origin}/llms.txt">${origin}/llms.txt</a></p>
+        ${created ? "" : html`<p class="key-guide">${a.guide}</p>`}
         ${created
           ? ""
           : html`<form class="new-folder key-new" method="post" action="/panel/agentes">
@@ -1169,9 +1169,10 @@ export const agentKeysPage = ({
         ? html`<section class="key-created track-amarillo" aria-labelledby="clave-nueva">
             <h2 id="clave-nueva">${a.createdTitle(created.name)}</h2>
             <p class="key-created-text">${a.createdText}</p>
+            <p class="key-value" aria-label="${a.messageLabel}">${a.message(`${origin}/llms.txt`, created.key)}</p>
             <div class="key-created-row">
-              <code class="key-value">${created.key}</code>
-              <button class="btn btn-ink copy" type="button" data-copy="${created.key}" data-copied="${a.copied}">${a.copy}</button>
+              <button class="btn btn-ink copy" type="button" data-copy="${a.message(`${origin}/llms.txt`, created.key)}" data-copied="${a.messageCopied}">${a.copyMessage}</button>
+              <button class="btn copy" type="button" data-copy="${created.key}" data-copied="${a.copied}">${a.copy}</button>
             </div>
             <a class="btn btn-small key-done" href="/panel/agentes">${a.done}</a>
           </section>`

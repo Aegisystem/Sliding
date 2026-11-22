@@ -915,16 +915,16 @@ body > main {
   width: min(100%, 40rem);
 }
 
-/* El enlace a /llms.txt va completo: el Dueño se lo copia a su Agente. */
+/* Cómo se usa: crear, copiar el mensaje y pegárselo al Agente. */
 .key-guide {
   max-width: 60ch;
   margin: 0;
   font-weight: 600;
-  overflow-wrap: anywhere;
 }
 
 /* La clave recién creada: un aviso de éxito a escala de sección, entre
-   reglas, con la clave en una caja de cartulina que se selecciona entera. */
+   reglas, con el mensaje para el Agente en una caja de cartulina que se
+   selecciona entera. */
 .key-created {
   display: grid;
   justify-items: start;
@@ -954,16 +954,15 @@ body > main {
 }
 
 .key-value {
-  display: block;
   min-width: 0;
-  max-width: 100%;
-  padding: 0.7rem 0.9rem;
+  max-width: 62ch;
+  margin: 0;
+  padding: 0.8rem 1rem;
   border: var(--rule);
   border-radius: var(--radius);
   background: var(--paper);
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 1rem;
   font-weight: 600;
+  white-space: pre-line;
   overflow-wrap: anywhere;
   user-select: all;
 }
